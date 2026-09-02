@@ -1,13 +1,13 @@
 import { Outlet } from 'react-router-dom'
 import Navbar from './Navbar.jsx'
 
-function Layout() {
+function Layout({ context }) {
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 text-slate-900">
       <Navbar />
 
       <main className="w-full flex-1 bg-[#fff8f5] pt-20 sm:pt-24">
-        <Outlet />
+        <Outlet context={context}/>
       </main>
 
       <footer className="border-t border-slate-200 bg-white">
