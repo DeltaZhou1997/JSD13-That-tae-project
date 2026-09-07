@@ -2,8 +2,6 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import gsap from "gsap";
 
-import logo from "../assets/logo_brown_3d.png";
-
 const links = [
   { label: "หน้าแรก", to: "/" },
   { label: "เกี่ยวกับเรา", to: "/about" },
@@ -91,24 +89,29 @@ export default function Navbar() {
   return (
     <header
       ref={headerRef}
-      className="fixed inset-x-0 top-0 z-[100] px-3 pt-3 sm:px-5 sm:pt-4"
+      className="fixed inset-x-0 top-0 z-[100] px-3 pt-9 sm:px-5 sm:pt-4"
     >
       <nav
-        className="mx-auto w-full max-w-[1200px] rounded-[2rem] border border-white/40 bg-[#f1ead7]/90 p-2 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-[16px] backdrop-saturate-[70%] md:grid md:grid-cols-[auto_minmax(0,1fr)_auto] md:items-center md:gap-4 md:rounded-[64px]"
+        className="mx-auto w-full max-w-[1200px] rounded-[3rem] border border-white/40
+         bg-[#f1ead7]/75 p-1.5
+        shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-[8px] 
+        backdrop-saturate-[70%] 
+        lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center 
+        lg:gap-4 lg:rounded-[64px]"
         aria-label="เมนูหลัก"
       >
-        <div className="flex w-full items-center justify-between px-1 md:w-auto md:px-0">
+        <div className="flex w-full items-center justify-between px-1 lg:w-auto lg:px-0">
           <Link
             to="/"
             aria-label="หน้าหลัก"
             className="ml-1 inline-flex shrink-0 items-center"
           >
-            <img src={logo} alt="ธาตุแท้" className="h-11 w-auto md:h-14" />
+            <img src={logo} alt="ธาตุแท้" className="h-20 w-auto md:h-18" />
           </Link>
 
           <button
             type="button"
-            className="mr-1 grid h-11 w-11 place-items-center rounded-full bg-[#3d2c2e] text-white shadow-[0_8px_20px_rgba(61,44,46,.22)] md:hidden"
+            className="my-0.75 mr-0.3 grid h-18 w-18 place-items-center rounded-full bg-[#3d2c2e] text-white shadow-[0_8px_20px_rgba(61,44,46,.22)] lg:hidden"
             aria-label={isOpen ? "ปิดเมนู" : "เปิดเมนู"}
             aria-expanded={isOpen}
             aria-controls="mobile-navigation"
@@ -131,12 +134,16 @@ export default function Navbar() {
           </button>
         </div>
 
-        <div className="hidden min-w-0 items-center justify-center gap-1 whitespace-nowrap md:flex lg:gap-2">
+        <div className="hidden min-w-0 items-center justify-center gap-1 whitespace-nowrap lg:flex lg:gap-2">
           {links.slice(0, -1).map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              className="rounded-full px-3 py-2 text-sm font-medium text-[#3d2c2e] transition-[background-color,transform] duration-200 hover:-translate-y-0.5 hover:bg-[#8d593a]/12 lg:px-4 lg:text-base"
+              className="rounded-full px-2 py-1 text-xl font-bold text-[#201a1a]
+              opacity-75 transition-[opacity,background-color,transform]
+              duration-500 ease-out
+               hover:bg-[#8d593a]/24 hover:opacity-100
+              lg:px-4 lg:text-xl"
             >
               {link.label}
             </Link>
@@ -145,7 +152,7 @@ export default function Navbar() {
 
         <Link
           to={links.at(-1)?.to || "/login"}
-          className="mr-1 hidden whitespace-nowrap rounded-full bg-[#4c1f08] px-5 py-3 text-sm font-bold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215] md:inline-flex md:text-base"
+          className="mr-1 hidden whitespace-nowrap rounded-full bg-[#4c1f08] px-5 py-3 text-sm font-bold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215] lg:inline-flex md:text-xl"
         >
           {links.at(-1)?.label || "เข้าสู่ระบบ"}
         </Link>
@@ -153,7 +160,7 @@ export default function Navbar() {
         <div
           ref={dropdownRef}
           id="mobile-navigation"
-          className={`max-h-[calc(100svh-88px)] h-0 overflow-x-hidden overflow-y-auto opacity-0 md:hidden ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
+          className={`max-h-[calc(100svh-88px)] h-0 overflow-x-hidden overflow-y-auto opacity-0 lg:hidden ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
         >
           <div className="px-2 pb-2 pt-4">
             <div className="grid gap-1">
@@ -165,12 +172,6 @@ export default function Navbar() {
                   className="group flex items-center rounded-xl px-3 py-3 text-[#3d2c2e] transition-colors hover:bg-[#8d593a]/10"
                 >
                   <span className="font-medium">{link.label}</span>
-                  <span
-                    className="ml-auto transition-transform group-hover:translate-x-1"
-                    aria-hidden="true"
-                  >
-                    →
-                  </span>
                 </Link>
               ))}
             </div>
@@ -180,7 +181,7 @@ export default function Navbar() {
             <Link
               data-mobile-menu-item
               to="/login"
-              className="flex items-center gap-3 rounded-3xl bg-[#3d2c2e] p-4 text-white shadow-[0_10px_25px_rgba(61,44,46,.18)]"
+              className="flex items-center gap-3 rounded-full bg-[#3d2c2e] p-4 text-white shadow-[0_10px_25px_rgba(61,44,46,.18)]"
             >
               <span className="grid h-11 w-11 place-items-center rounded-full bg-white/12 text-xl">
                 👋
@@ -191,12 +192,7 @@ export default function Navbar() {
                   กรุณาเข้าสู่ระบบ
                 </span>
               </span>
-              <span className="ml-auto text-xl" aria-hidden="true">
-                →
-              </span>
             </Link>
-
-
           </div>
         </div>
       </nav>

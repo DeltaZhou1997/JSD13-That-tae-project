@@ -1,6 +1,11 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Layout } from './components/index.js'
 import HomePage from './pages/Home.jsx'
+import MenuOverview from './pages/MenuOverview'
+import MenuDetail from './pages/MenuDetail'
+
+import { AppProvider } from './context/AppContext.jsx';
+
   const router = createBrowserRouter([
     {
       path: "/",
@@ -11,7 +16,15 @@ import HomePage from './pages/Home.jsx'
           element: <HomePage />
         }
       ]
-    }
+    },
+    {
+        path: "/menus", 
+        element: <MenuOverview /> 
+      },
+          {
+        path: "/menus/:id", 
+        element: <MenuDetail /> 
+      }
   ]);
 
 function App() {

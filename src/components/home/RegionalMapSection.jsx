@@ -335,6 +335,15 @@ export default function RegionalMapSection() {
             <p data-region-content className="mt-2 text-[#6f675f]">
               {active.description}
             </p>
+            //เติมเข้ามาเพื่อไปหน้าร้านค้า
+            <div data-region-content className="mt-5">
+              <Link 
+                to={`/menus?region=${active.dataRegion}`} 
+                className="inline-block rounded-full bg-[#8d5b47] px-6 py-2.5 text-sm font-bold text-white shadow-md transition-colors hover:bg-[#684334]"
+              >
+                ดูเมนู{active.label}ทั้งหมด →
+              </Link>
+            </div>
             <div
               data-region-content
               className="regional-marquee-viewport mt-6 overflow-hidden py-1"
