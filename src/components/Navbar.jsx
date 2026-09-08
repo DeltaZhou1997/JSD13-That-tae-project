@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import gsap from "gsap";
 
+import logo from "../assets/logo_brown_choc.png";
+
 const links = [
   { label: "หน้าแรก", to: "/" },
   { label: "เกี่ยวกับเรา", to: "/about" },

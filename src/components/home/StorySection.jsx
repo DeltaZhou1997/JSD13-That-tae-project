@@ -17,17 +17,14 @@ export default function StorySection() {
             alt="เกษตรกรท้องถิ่นกับผลผลิตสด"
             className="aspect-[1.05] w-full rounded-[2rem] object-cover"
           />
-          <div className="absolute bottom-3 left-3 rounded-2xl bg-white/90 p-4 text-[#3d2c2e] backdrop-blur sm:bottom-5 sm:left-5 sm:p-5">
+          <div className="absolute bottom-3 left-3 rounded-3xl text-2xl bg-white/90 p-4 text-[#3d2c2e] backdrop-blur sm:bottom-5 sm:left-5 sm:p-5">
             <strong>รู้ที่มาในทุกกล่อง</strong>
-            <span className="mt-1 block text-sm">
+            <span className="mt-1 block text-lg">
               จากแหล่งผลิตที่ตรวจสอบได้
             </span>
           </div>
         </div>
         <div>
-          <span className="text-xs font-bold uppercase tracking-[.22em] text-[#c8b6a6]">
-            Local sourcing
-          </span>
           <h2 className="mt-4 text-3xl font-bold sm:text-5xl">
             สดจากชุมชน เติบโตไปพร้อมเกษตรกร
           </h2>
@@ -42,14 +39,15 @@ export default function StorySection() {
                 key={value}
                 className="rounded-2xl border border-white/10 bg-white/5 p-5"
               >
-                <strong className="text-2xl text-[#f2c89f]">{value}</strong>
-                <p className="mt-2 text-sm leading-6 text-[#d8c8bb]">{label}</p>
+                <strong className="text-3xl text-[#f2c89f]">{value}</strong>
+                <p className="mt-2 text-lg leading-6 text-[#d8c8bb]">{label}</p>
               </article>
             ))}
           </div>
           <a
             href="#kits"
-            className="mt-8 inline-flex rounded-full bg-white px-6 py-3 font-bold text-[#3d2c2e] hover:bg-[#f1dec9]"
+            className="mt-8 inline-flex rounded-full
+             bg-white px-6 py-3 font-bold text-[#3d2c2e] text-xl hover:bg-[#f1dec9]"
           >
             เลือกเมนูจากท้องถิ่น →
           </a>

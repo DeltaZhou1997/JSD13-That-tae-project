@@ -55,7 +55,7 @@ export default function MenuOverview() {
         </h1>
         <p className="mx-auto mt-3 max-w-2xl text-sm sm:text-base opacity-70">
           {language === 'th'
-            ? 'เลือกเมนู Cooking Kit สไตล์เอิร์ธโทน ปรุงสดใหม่ ส่งตรงถึงบ้านคุณ'
+            ? 'เลือกเมนู Cooking Kit ปรุงสดใหม่ ส่งตรงถึงบ้านคุณ'
             : 'Select the menus you want for health and taste, prepared fresh.'}
         </p>
       </section>

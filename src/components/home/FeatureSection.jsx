@@ -114,24 +114,32 @@ export default function FeatureSection() {
         .from(
           "[data-feature-card]",
           {
-            x: 34,
+            y: 18,
+            autoAlpha: 0,
             duration: 0.65,
-            stagger: 0.1,
+            stagger: 0.08,
             ease: "power3.out",
+            clearProps: "transform,opacity,visibility",
           },
           0.25,
         );
 
-      gsap.to("[data-feature-collage]", {
-        y: mobileViewport ? -10 : -30,
-        ease: "none",
-        scrollTrigger: {
-          trigger: section,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: 1.2,
+      gsap.fromTo(
+        "[data-cooking-scroll]",
+        { y: 20, scale: 0.985 },
+        {
+          y: -20,
+          scale: 1.015,
+          ease: "none",
+          scrollTrigger: {
+            trigger: section,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: 1.1,
+            invalidateOnRefresh: true,
+          },
         },
-      });
+      );
 
       gsap.fromTo(
         "[data-cooking-float]",
@@ -229,7 +237,25 @@ export default function FeatureSection() {
       });
     }, section);
 
-    return () => context.revert();
+    const images = Array.from(section.querySelectorAll("img"));
+    const refreshScrollTriggers = () => ScrollTrigger.refresh();
+
+    images.forEach((image) => {
+      if (!image.complete) {
+        image.addEventListener("load", refreshScrollTriggers, { once: true });
+        image.addEventListener("error", refreshScrollTriggers, { once: true });
+      }
+    });
+
+    ScrollTrigger.refresh();
+
+    return () => {
+      images.forEach((image) => {
+        image.removeEventListener("load", refreshScrollTriggers);
+        image.removeEventListener("error", refreshScrollTriggers);
+      });
+      context.revert();
+    };
   }, []);
 
   return (
@@ -250,24 +276,24 @@ export default function FeatureSection() {
         <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(253,251,247,.88)_0%,rgba(253,251,247,.72)_42%,rgba(253,251,247,.9)_100%)]" />
       </div>
 
-      <div className="pointer-events-none absolute inset-0 z-10 overflow-hidden lg:hidden">
+      <div className="pointer-events-none absolute inset-0  overflow-hidden lg:hidden">
         <img
           data-mobile-element
           src={windElement}
           alt=""
-          className="absolute -right-4 top-[10%] h-20 w-20 object-contain opacity-80 drop-shadow-[0_8px_12px_rgba(62,88,70,.2)]"
+          className="absolute -right-4 top-[10%] h-20 w-20 z-30 object-contain opacity-80 drop-shadow-[0_8px_12px_rgba(62,88,70,.2)]"
         />
         <img
           data-mobile-element
           src={fireElement}
           alt=""
-          className="absolute -left-4 top-[34%] h-20 w-20 object-contain opacity-80 drop-shadow-[0_8px_12px_rgba(136,55,20,.22)]"
+          className="absolute -left-4 top-[34%] h-20 w-20  z-30 object-contain opacity-80 drop-shadow-[0_8px_12px_rgba(136,55,20,.22)]"
         />
         <img
           data-mobile-element
           src={earthElement}
           alt=""
-          className="absolute -right-5 top-[58%] h-20 w-20 object-contain opacity-75 drop-shadow-[0_8px_12px_rgba(50,30,18,.2)]"
+          className="absolute -right-5 top-[58%] h-20 w-20 z-30 object-contain opacity-75 drop-shadow-[0_8px_12px_rgba(50,30,18,.2)]"
         />
         <img
           data-mobile-element
@@ -288,17 +314,19 @@ export default function FeatureSection() {
             data-feature-image
             className="absolute inset-[9%] z-10 sm:inset-[7%]"
           >
-            <figure
-              data-cooking-float
-              className="relative h-full w-full overflow-hidden rounded-[1.8rem] border-4 border-white bg-[#f8ecd7] shadow-[0_28px_70px_rgba(61,44,46,0.24)] sm:rounded-[2.5rem] sm:border-[7px]"
-            >
-              <img
-                src={cookingImage}
-                alt="มือกำลังปรุงแกงสมุนไพรไทยในกระทะ"
-                className="h-full w-full scale-[1.02] object-cover object-center"
-              />
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,rgba(37,25,17,.32)_100%)]" />
-            </figure>
+            <div data-cooking-scroll className="h-full w-full will-change-transform">
+              <figure
+                data-cooking-float
+                className="relative h-full w-full overflow-hidden rounded-[1.8rem] border-4 border-white bg-[#f8ecd7] shadow-[0_28px_70px_rgba(61,44,46,0.24)] sm:rounded-[2.5rem] sm:border-[7px]"
+              >
+                <img
+                  src={cookingImage}
+                  alt="มือกำลังปรุงแกงสมุนไพรไทยในกระทะ"
+                  className="h-full w-full scale-[1.02] object-cover object-center"
+                />
+                <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_55%,rgba(37,25,17,.32)_100%)]" />
+              </figure>
+            </div>
           </div>
 
           <div
@@ -309,19 +337,19 @@ export default function FeatureSection() {
           </div>
           <div
             data-element
-            className="pointer-events-none absolute bottom-[6%] right-[-1%] z-20 w-[18%] drop-shadow-[0_10px_12px_rgba(24,73,92,.22)] sm:w-[22%] lg:bottom-[5%] lg:right-[-7%] lg:w-[25%] lg:drop-shadow-[0_12px_14px_rgba(24,73,92,.24)]"
+            className="pointer-events-none absolute bottom-[6%] right-[-1%] z-100 w-[35%] drop-shadow-[0_10px_12px_rgba(24,73,92,.22)] sm:w-[22%] lg:bottom-[5%] lg:right-[-7%] lg:w-[25%] lg:drop-shadow-[0_12px_14px_rgba(24,73,92,.24)]"
           >
             <img data-element-float src={waterElement} alt="" className="w-full" />
           </div>
           <div
             data-element
-            className="pointer-events-none absolute left-[-2%] top-[1%] z-20 w-[22%] drop-shadow-[0_11px_13px_rgba(62,88,70,.22)] sm:w-[27%] lg:left-[-11%] lg:top-[-3%] lg:w-[32%] lg:drop-shadow-[0_16px_18px_rgba(62,88,70,.24)]"
+            className="pointer-events-none absolute left-[-2%] top-[1%] z-100 w-[25%] drop-shadow-[0_11px_13px_rgba(62,88,70,.22)] sm:w-[27%] lg:left-[-11%] lg:top-[-3%] lg:w-[32%] lg:drop-shadow-[0_16px_18px_rgba(62,88,70,.24)]"
           >
             <img data-element-float src={windElement} alt="" className="w-full" />
           </div>
           <div
             data-element
-            className="pointer-events-none absolute right-[1%] top-[4%] z-20 w-[15%] drop-shadow-[0_8px_10px_rgba(136,55,20,.28)] sm:w-[18%] lg:right-[-3%] lg:top-[2%] lg:w-[20%] lg:drop-shadow-[0_10px_13px_rgba(136,55,20,.32)]"
+            className="pointer-events-none absolute right-[1%] top-[4%] z-100 w-[45%] drop-shadow-[0_8px_10px_rgba(136,55,20,.28)] sm:w-[18%] lg:right-[-3%] lg:top-[2%] lg:w-[35%] lg:drop-shadow-[0_10px_13px_rgba(136,55,20,.32)]"
           >
             <img data-element-float src={fireElement} alt="" className="w-full" />
           </div>
@@ -330,12 +358,12 @@ export default function FeatureSection() {
 
         <div className="order-1 lg:order-2">
           <div data-feature-copy>
-            <span className="home-eyebrow">Eat for your element</span>
+        
             <h2 className="mt-5 max-w-xl text-3xl font-bold leading-[1.22] sm:text-5xl sm:leading-[1.18]">
               ธาตุแท้ เริ่มจากการ
               <span className="text-[#a56c48]">รู้จักร่างกาย</span>
             </h2>
-            <p className="mt-5 max-w-xl text-[1.04rem] leading-8 text-[#6f675f]">
+            <p className="mt-5 max-w-xl text-xl leading-8 text-[#6f675f]">
               เพราะอาหารที่ดีไม่จำเป็นต้องเหมือนกันสำหรับทุกคน
               เราจึงเปลี่ยนข้อมูลสุขภาพที่ซับซ้อน ให้กลายเป็นมื้อไทยที่เลือกง่าย
               อร่อย และเข้ากับชีวิตประจำวัน
@@ -356,20 +384,17 @@ export default function FeatureSection() {
                   <div className="flex items-baseline gap-2">
                     <h3 className="text-lg font-bold sm:text-xl">{title}</h3>
                   </div>
-                  <p className="mt-1 text-sm leading-6 text-[#6f675f]">
+                  <p className="mt-1 text-lg leading-6 text-[#6f675f]">
                     {text}
                   </p>
                 </div>
-                <span className="hidden text-2xl text-[#bcae9e] transition-transform group-hover:translate-x-1 sm:block">
-                  →
-                </span>
               </div>
             ))}
           </div>
 
           <a
             href="#kits"
-            className="mt-8 inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#3d2c2e] px-6 py-3.5 font-bold text-white shadow-[0_12px_30px_rgba(61,44,46,0.2)] transition hover:-translate-y-0.5 hover:bg-[#563f42] sm:w-auto"
+            className="mt-8 text-xl inline-flex w-full items-center justify-center gap-3 rounded-full bg-[#3d2c2e] px-6 py-3.5 font-bold text-white shadow-[0_12px_30px_rgba(61,44,46,0.2)] transition hover:-translate-y-0.5 hover:bg-[#563f42] sm:w-auto"
           >
             สำรวจเมนูที่ใช่สำหรับคุณ
             <span aria-hidden="true">→</span>

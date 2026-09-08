@@ -6,7 +6,7 @@ import MenuDetail from './pages/MenuDetail'
 
 import { AppProvider } from './context/AppContext.jsx';
 
-  const router = createBrowserRouter([
+const router = createBrowserRouter([
     {
       path: "/",
       element: <Layout />,
@@ -14,17 +14,19 @@ import { AppProvider } from './context/AppContext.jsx';
         {
           index: true,
           element: <HomePage />
+        },
+        
+        {
+          path: "/menus", 
+          element: <MenuOverview /> 
+        },
+        
+        {
+          path: "/menus/:id", 
+          element: <MenuDetail /> 
         }
       ]
     },
-    {
-        path: "/menus", 
-        element: <MenuOverview /> 
-      },
-          {
-        path: "/menus/:id", 
-        element: <MenuDetail /> 
-      }
   ]);
 
 function App() {

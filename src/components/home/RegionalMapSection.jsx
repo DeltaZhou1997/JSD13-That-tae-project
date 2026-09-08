@@ -1,124 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import gsap from "gsap";
 import thailandMap from "../../assets/thailand-map.svg";
-import { dishes } from "../../mock-data/index.js";
-
-const regions = [
-  {
-    id: "north",
-    dataRegion: "northern",
-    label: "ภาคเหนือ",
-    accent: "#9b6747",
-    description: "รสนุ่ม หอมเครื่องเทศและสมุนไพรจากภูเขา",
-    provinceIds: [
-      "TH50",
-      "TH51",
-      "TH52",
-      "TH53",
-      "TH54",
-      "TH55",
-      "TH56",
-      "TH57",
-      "TH58",
-      "TH60",
-      "TH62",
-      "TH63",
-      "TH64",
-      "TH65",
-      "TH66",
-      "TH67",
-    ],
-  },
-  {
-    id: "northeast",
-    dataRegion: "northeastern",
-    label: "ภาคอีสาน",
-    accent: "#a77b45",
-    description: "รสแซ่บ สดชื่นจากสมุนไพร และสนุกกับการกินร่วมกัน",
-    provinceIds: [
-      "TH30",
-      "TH31",
-      "TH32",
-      "TH33",
-      "TH34",
-      "TH35",
-      "TH36",
-      "TH37",
-      "TH38",
-      "TH39",
-      "TH40",
-      "TH41",
-      "TH42",
-      "TH43",
-      "TH44",
-      "TH45",
-      "TH46",
-      "TH47",
-      "TH48",
-      "TH49",
-    ],
-  },
-  {
-    id: "central",
-    dataRegion: "central",
-    label: "ภาคกลาง",
-    accent: "#6f7b52",
-    description: "ครบรส กลมกล่อม และประณีตแบบสำรับไทย",
-    provinceIds: [
-      "TH10",
-      "TH11",
-      "TH12",
-      "TH13",
-      "TH14",
-      "TH15",
-      "TH16",
-      "TH17",
-      "TH18",
-      "TH19",
-      "TH20",
-      "TH21",
-      "TH22",
-      "TH23",
-      "TH24",
-      "TH25",
-      "TH26",
-      "TH27",
-      "TH61",
-      "TH70",
-      "TH71",
-      "TH72",
-      "TH73",
-      "TH74",
-      "TH75",
-      "TH76",
-      "TH77",
-      "THS",
-    ],
-  },
-  {
-    id: "south",
-    dataRegion: "southern",
-    label: "ภาคใต้",
-    accent: "#8d5b47",
-    description: "เข้มข้น จัดจ้าน หอมพริกแกงและเครื่องเทศ",
-    provinceIds: [
-      "TH80",
-      "TH81",
-      "TH82",
-      "TH83",
-      "TH84",
-      "TH85",
-      "TH86",
-      "TH90",
-      "TH91",
-      "TH92",
-      "TH93",
-      "TH94",
-      "TH95",
-      "TH96",
-    ],
-  },
-];
+import { dishes, regions } from "../../mock-data/index.js";
 
 export default function RegionalMapSection() {
   const [activeIndex, setActiveIndex] = useState(0);
@@ -176,6 +60,15 @@ export default function RegionalMapSection() {
         scale: region.id === regions[activeIndex].id ? 1.035 : 1,
       });
     });
+
+    // ตัดพื้นที่ว่างเดิมของ SVG ออก เพื่อให้ตัวแผนที่ขยายเต็มกรอบจริง ๆ
+    const bounds = featureLayer.getBBox();
+    const padding = 35;
+    svg.setAttribute(
+      "viewBox",
+      `${bounds.x - padding} ${bounds.y - padding} ${bounds.width + padding * 2} ${bounds.height + padding * 2}`,
+    );
+    svg.setAttribute("preserveAspectRatio", "xMinYMid meet");
   }, [activeIndex, selectRegion]);
 
   // เมื่อไม่ได้ชี้แผนที่ ระบบจะสุ่มภูมิภาคใหม่ทุก 15 วินาที
@@ -246,28 +139,14 @@ export default function RegionalMapSection() {
   return (
     <section id="kits" className="home-section scroll-mt-24 bg-[#efe5d8]">
       <div className="home-container">
-        <div className="mb-7 max-w-3xl sm:mb-10">
-          <h2 className="mt-4 text-3xl font-bold sm:text-5xl">
-            เมนูไทยหลากหลาย จากเหนือสู่ใต้
-          </h2>
-          <p className="mt-4 leading-7 text-[#6f675f]">
-            <span className="hidden lg:inline">
-              ลองวางเมาส์บนแผนที่เพื่อเปิดรสชาติของแต่ละภูมิภาค หากไม่ได้เลือก
-              ระบบจะพาเที่ยวทั่วไทยทุก 10 วินาที
-            </span>
-            <span className="lg:hidden">
-              เลือกภูมิภาคที่สนใจ แล้วสำรวจเมนูไทยที่เลื่อนมาให้ชมได้ทันที
-            </span>
-          </p>
-        </div>
-
-        <div className="grid items-center gap-8 lg:grid-cols-[minmax(300px,400px)_minmax(0,1fr)] lg:gap-12">
+        <div className="grid gap-4 xl:grid-cols-2 xl:items-start xl:gap-12 xl:grid-cols-[minmax(0,3fr)_minmax(0,6fr)]
+        2xl:grid-cols-[minmax(0,20fr)_minmax(0,80fr)]">
           <div
-            className="relative mx-auto hidden w-full max-w-[390px] lg:block lg:mx-0"
+            className="relative hidden xl:block xl:w-full xl:w-[400px] 2xl:-translate-x-60  3xl:-translate-x-80 2xl:w-[440px]"
             onMouseEnter={() => setIsInteracting(true)}
             onMouseLeave={() => setIsInteracting(false)}
           >
-            <div className="relative aspect-square p-2">
+            <div className="relative h-[560px] w-full lg:h-[650px] xl:h-[750px]">
               <object
                 ref={mapObjectRef}
                 data={thailandMap}
@@ -280,7 +159,7 @@ export default function RegionalMapSection() {
 
             <div
               ref={labelRef}
-              className="pointer-events-none mx-auto  w-fit rounded-full border border-white/80 bg-[#3d2c2e]/95 px-5 py-2.5 text-sm font-bold text-white shadow-xl backdrop-blur"
+              className="pointer-events-none mx-auto  w-fit rounded-full border border-white/80 bg-[#3d2c2e]/95 px-5 py-2.5 text-xl font-bold text-white shadow-xl backdrop-blur"
             >
               {active.label}
             </div>
@@ -304,38 +183,48 @@ export default function RegionalMapSection() {
             </div>
           </div>
 
-          <div
-            className="hide-scrollbar flex w-full gap-2 overflow-x-auto pb-1 lg:hidden"
-            aria-label="เลือกภูมิภาค"
-          >
-            {regions.map((region, index) => (
-              <button
-                key={region.id}
-                type="button"
-                onClick={() => setActiveIndex(index)}
-                className={`shrink-0 rounded-full border px-5 py-2.5 text-sm font-bold transition-colors ${active.id === region.id ? "border-[#3d2c2e] bg-[#3d2c2e] text-white" : "border-[#cdbdac] bg-white/55 text-[#6f5b4e]"}`}
-                aria-pressed={active.id === region.id}
-              >
-                {region.label}
-              </button>
-            ))}
-          </div>
+          <div className="min-w-0">
+            <div className="mb-7 max-w-3xl sm:mb-10">
+              <h2 className="text-3xl font-bold sm:text-5xl">
+                เมนูไทยหลากหลาย จากเหนือสู่ใต้
+              </h2>
+              <p className="mt-4 leading-7 text-[#6f675f]">
+                <span className="inline text-xl md:text-xl">
+                  ชุด Cooking Kit พร้อมปรุง รวบรวมอาหารไทยจานเด็ด พร้อมให้ทุกคนได้ลิ้มลอง
+                </span>
+              </p>
+            </div>
 
-          <div ref={detailsRef} key={active.id} aria-live="polite">
+            <div
+              className="hide-scrollbar mb-7 flex w-full gap-2 overflow-x-auto pb-1 xl:hidden"
+              aria-label="เลือกภูมิภาค"
+            >
+              {regions.map((region, index) => (
+                <button
+                  key={region.id}
+                  type="button"
+                  onClick={() => setActiveIndex(index)}
+                  className={`cursor-pointer shrink-0 rounded-full border px-5 py-2.5 text-xl transition-colors ${active.id === region.id ? "border-[#3d2c2e] bg-[#3d2c2e] text-white" : "border-[#cdbdac] bg-white/55 text-[#6f5b4e]"}`}
+                  aria-pressed={active.id === region.id}
+                >
+                  {region.label}
+                </button>
+              ))}
+            </div>
+
+            <div ref={detailsRef} key={active.id} aria-live="polite">
             <div data-region-content className="flex items-center gap-3">
               <span
                 className="h-3 w-3 rounded-full"
                 style={{ backgroundColor: active.accent }}
               />
-              <span className="font-bold text-[#7b6658]">{active.label}</span>
+              <span className="font-bold text-4xl text-[#5e5046]">{active.label}</span>
             </div>
-            <h3 data-region-content className="mt-3 text-2xl font-bold sm:text-3xl">
-              เมนูเด่นจาก{active.label}
-            </h3>
-            <p data-region-content className="mt-2 text-[#6f675f]">
+
+            <p data-region-content className="mt-2 text-xl text-[#6f675f]">
               {active.description}
             </p>
-            //เติมเข้ามาเพื่อไปหน้าร้านค้า
+
             <div data-region-content className="mt-5">
               <Link 
                 to={`/menus?region=${active.dataRegion}`} 
@@ -355,22 +244,23 @@ export default function RegionalMapSection() {
                 {[0, 1].map((copyIndex) => (
                   <div
                     key={copyIndex}
-                    className="flex shrink-0 gap-4 pr-4"
+                    className="flex shrink-0 gap-8 pr-4"
                     aria-hidden={copyIndex === 1}
                   >
                     {activeDishes.map((dish) => (
                       <article
                         key={`${copyIndex}-${dish._id}`}
-                        className="group w-[82vw] max-w-[400px] shrink-0 overflow-hidden rounded-2xl bg-[#fdfbf7] shadow-sm transition-shadow duration-300 hover:shadow-lg sm:w-[400px]"
+                        className="group min-h-[580px] max-w-100 shrink-0 overflow-hidden 
+                        rounded-3xl bg-[#fdfbf7] shadow-sm transition-shadow duration-300 hover:shadow-lg w-[480px] "
                       >
                         <img
                           src={dish.imageUrl[0]}
                           alt={copyIndex === 0 ? dish.nameTh : ""}
-                          className="h-[180px] w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.035]"
+                          className="h-[400px] w-[full] object-cover transition-transform duration-500 ease-out group-hover:scale-[1.035]"
                         />
-                        <div className="p-4">
-                          <h4 className="font-bold text-2xl">{dish.nameTh}</h4>
-                          <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#766b63]">
+                        <div className="p-7">
+                          <h4 className="font-bold text-3xl">{dish.nameTh}</h4>
+                          <p className="mt-3 line-clamp-2 text-lg leading-5 text-[#766b63]">
                             {dish.description}
                           </p>
                         </div>
@@ -380,6 +270,7 @@ export default function RegionalMapSection() {
                 ))}
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>
