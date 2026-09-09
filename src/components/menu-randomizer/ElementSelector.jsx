@@ -13,7 +13,7 @@ const ELEMENTS = [
 
 export default function ElementSelector({ selectedElement, onSelect }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       {ELEMENTS.map((item) => {
         const isSelected = selectedElement === item.id;
         return (
