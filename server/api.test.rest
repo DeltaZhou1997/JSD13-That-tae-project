@@ -1,0 +1,64 @@
+@baseUrl = http://localhost:5000
+
+## Health Check (ตรวจว่า Server รันติดหรือไม่)
+GET {{baseUrl}}/
+Accept: application/json
+
+###
+
+## สร้างสินค้าตัวอย่าง (Seed Product) เพื่อเอา ID ไปเทส Checkout
+POST {{baseUrl}}/api/test/seed-product
+Content-Type: application/json
+
+{
+  "name": "ชุดทำอาหารไทย น้ำพริกอ่องสูตรต้นตำรับ",
+  "price": 189,
+  "quantity": 50
+}
+
+###
+
+## ทดสอบดึงข้อมูล Cart ของ User (GET /api/cart/:user_id)
+# ถ้ายังไม่มี cart ในระบบ จะได้ { "items": [] }
+GET {{baseUrl}}/api/cart/64b1f234567890abcdef1234
+Accept: application/json
+
+###
+
+## ทดสอบ Checkout สั่งซื้อสินค้า (POST /api/checkout)
+# - อย่าลืมนำ _id ของสินค้าจากขั้นตอนที่ 2 มาใส่ใน productId
+# - userId สามารถใส่เป็น MongoDB ObjectId 24 ตัวอักษร
+POST {{baseUrl}}/api/checkout
+Content-Type: application/json
+
+{
+  "userId": "64b1f234567890abcdef1234",
+  "items": [
+    {
+      "productId": "6aa59b3031c1360c14b93dcd",
+      "productName": "ชุดทำอาหารไทย น้ำพริกอ่องสูตรต้นตำรับ",
+      "price": 189,
+      "quantity": 2
+    }
+  ],
+  "planType": "SINGLE_KIT",
+  "shippingAddress": {
+    "fullName": "สมชาย ใจดี",
+    "phone": "0812345678",
+    "address": "123/45 ถนนสุขุมวิท ซอย 21",
+    "district": "คลองเตยเหนือ",
+    "province": "กรุงเทพมหานคร",
+    "zipcode": "10110",
+    "deliveryDate": "2026-09-20"
+  },
+  "paymentMethod": "PROMPTPAY",
+  "itemsSubtotal": 378,
+  "grandTotal": 438,
+  "earnedPoints": 37
+}
+
+###
+
+## ทดสอบกรณีเรียก Route ที่ไม่มีอยู่ (ทดสอบ 404 Handler)
+
+GET {{baseUrl}}/api/not-exist-route

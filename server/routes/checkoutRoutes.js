@@ -1,8 +1,9 @@
-const express = require("express");
+import express from "express";
+import mongoose from "mongoose";
+import Cart from "../models/Cart.js";
+import Order from "../models/Order.js";
+
 const router = express.Router();
-const mongoose = require("mongoose");
-const Cart = require("../models/Cart");
-const Order = require("../models/Order");
 
 // GET /api/cart/:user_id - ดึงรายการสินค้าในตะกร้าของ User ID
 router.get("/cart/:user_id", async (req, res) => {
@@ -95,4 +96,4 @@ router.post("/checkout", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
