@@ -15,7 +15,7 @@ function Login() {
         } else {
           alert("เข้าสูระบบแล้ว");
         }
-        navigate("/src/pages/Login.jsx"); /**** อย่าลืมเปลี่ยนฮุกไปหน้า admin ****/ 
+        navigate("/admin/products");
     };
     return (
     <div className="max-w-md mx-auto my-10 p-6 bg-white rounded-lg shadow-md">

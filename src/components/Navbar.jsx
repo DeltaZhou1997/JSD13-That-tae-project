@@ -157,7 +157,7 @@ export default function Navbar() {
         >
           <div className="px-2 pb-2 pt-4">
             <div className="grid gap-1">
-              {links.slice(0, -1).map((link, index) => (
+              {links.slice(0, -1).map((link) => (
                 <Link
                   data-mobile-menu-item
                   key={link.to}
