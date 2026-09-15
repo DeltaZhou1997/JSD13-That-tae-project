@@ -5,7 +5,6 @@ import CheckoutPage from "./pages/CheckoutPage.jsx";
 import OrderSuccess from "./pages/OrderSuccess.jsx";
 import ElementQuizPage from "./pages/ElementQuizPage.jsx";
 import MenuRandomizerPage from "./pages/MenuRandomizerPage.jsx";
-import SpinningWheel from "./pages/SpinningWheel.jsx";
 
 const router = createBrowserRouter([
   {
@@ -32,10 +31,6 @@ const router = createBrowserRouter([
       {
         path: "menu-randomizer",
         element: <MenuRandomizerPage />,
-      },
-      {
-        path: "spinningWheel",
-        element: <SpinningWheel />,
       },
     ],
   },

@@ -61,7 +61,7 @@ export const SUBSCRIPTION_PLANS = {
 };
 
 export const PAYMENT_METHODS = {
-  PROMPTPAY: "promptpay",
-  CREDIT_CARD: "creditCard",
-  COD: "cod",
+  PROMPTPAY: "PROMPTPAY",
+  CREDIT_CARD: "CREDIT_CARD",
+  COD: "COD",
 };

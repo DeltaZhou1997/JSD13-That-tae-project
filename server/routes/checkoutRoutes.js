@@ -42,39 +42,57 @@ router.post("/checkout", async (req, res) => {
       earnedPoints,
     } = req.body;
 
-    // หมายเหตุ: ตัดสต็อกร่วมกับ Product Model ของเพื่อน
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      throw new Error("กรุณาระบุรายการสินค้าในคำสั่งซื้อ (items)");
+    }
+
+    // 1. ตัดสต็อกร่วมกับ Product Model
     const Product = mongoose.model("Product");
     for (const item of items) {
-      const product = await Product.findById(item.productId).session(session);
+      // รองรับทั้งคนที่ส่งชื่อ productId หรือ product
+      const targetProductId = item.productId || item.product;
+
+      const product = await Product.findById(targetProductId).session(session);
       if (!product) {
-        throw new Error(`ไม่พบสินค้าไอดี: ${item.productId}`);
+        throw new Error(`ไม่พบสินค้าไอดี: ${targetProductId}`);
       }
       if (product.quantity < item.quantity) {
-        throw new Error(`สินค้า "${product.name}" มีจำนวนไม่พอในคลัง`);
+        throw new Error(
+          `สินค้า "${product.name}" มีจำนวนไม่พอในคลัง (เหลือ ${product.quantity} ชิ้น)`,
+        );
       }
 
       product.quantity -= item.quantity;
       await product.save({ session });
     }
 
+    // 2. จัดรูปแบบ items ให้มีฟิลด์ `product` ตรงตาม Schema ของ Order.js
+    const formattedItems = items.map((item) => ({
+      product: item.product || item.productId, // ใส่ฟิลด์ product เสมอ
+      productName: item.productName || "สินค้า",
+      price: item.price || 0,
+      quantity: item.quantity || 1,
+    }));
+
+    // 3. สร้าง Order ใหม่
     const generatedOrderId =
       "ORD-" + Math.floor(100000 + Math.random() * 900000);
     const newOrder = new Order({
       orderId: generatedOrderId,
       user: userId,
-      items,
-      planType,
+      items: formattedItems,
+      planType: planType || "SINGLE_KIT",
       shippingAddress,
       paymentMethod,
       itemsSubtotal,
       grandTotal,
-      earnedPoints,
+      earnedPoints: earnedPoints || 0,
       status: "PAID",
     });
 
     await newOrder.save({ session });
 
-    // ล้าง Cart ของ User เมื่อสั่งซื้อสำเร็จ
+    // 4. ล้าง Cart ของ User เมื่อสั่งซื้อสำเร็จ (ถ้ามีตะกร้า)
     await Cart.findOneAndUpdate(
       { userId },
       { $set: { items: [] } },

@@ -35,7 +35,7 @@ Content-Type: application/json
   "userId": "64b1f234567890abcdef1234",
   "items": [
     {
-      "productId": "6aa59b3031c1360c14b93dcd",
+      "productId": "6aa59d1fa4b7649215206d3f",
       "productName": "ชุดทำอาหารไทย น้ำพริกอ่องสูตรต้นตำรับ",
       "price": 189,
       "quantity": 2
