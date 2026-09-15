@@ -1,11 +1,9 @@
 import { createContext, useContext } from "react";
 import { dishes } from "../mock-data/index.js";
 
-// ค่าตั้งต้นที่ mock data ยังไม่มี แต่ฟอร์มจัดการสินค้าต้องใช้
 const DEFAULT_QUANTITY = 20;
 const DEFAULT_CALORIES = 350;
 
-// คืนวันที่วันนี้ในรูปแบบ YYYY-MM-DD สำหรับ input type="date"
 export function getTodayInputValue() {
   return new Date().toISOString().split("T")[0];
 }
@@ -18,10 +16,6 @@ export const regionMap = {
   fusion: "ไทยฟิวชั่น",
 };
 
-/**
- * แปลงข้อมูลเมนูจาก mock-data ให้เป็นรูปแบบเดียวกับที่หน้า Admin ใช้
- * mock-data ยังไม่มี quantity / calories / date / tags จึงเติมค่าจำลองให้ก่อน
- */
 export function mapDishToProduct(dish) {
   return {
     _id: dish._id,

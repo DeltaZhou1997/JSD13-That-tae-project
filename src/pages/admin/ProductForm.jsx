@@ -76,7 +76,7 @@ function ProductForm() {
       ? value.split(",").map((tag) => tag.trim()).filter(Boolean)
       : value || [];
 
-  // *** Validation Logic ตามข้อกำหนด Sprint 2 ***
+  // *** Validation Logic ***
   const validateForm = () => {
     const newErrors = {};
 
@@ -107,7 +107,7 @@ function ProductForm() {
       newErrors.quantity = "จำนวนชุด Cooking Kit ต้องเป็นจำนวนเต็มตั้งแต่ 0 ขึ้นไป";
     }
 
-    // 5. Date: วันที่เริ่มวางขาย/วันหมดอายุวัตถุดิบ ต้องไม่เป็นอดีต
+    // 5. Date: วันที่เริ่มวางขาย/วันหมดอายุวัตถุดิบ
     if (!formData.date) {
       newErrors.date = "กรุณาระบุวันที่วางขาย/วันหมดอายุวัตถุดิบ";
     } else {

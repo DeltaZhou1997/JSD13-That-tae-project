@@ -1,8 +1,5 @@
-// In-memory store สำหรับ Mock API — จำลองพฤติกรรมของ ProductsProvider.jsx ฝั่ง frontend
-// แต่รันเป็น Node process แยกต่างหาก เพื่อให้ยิง HTTP จริงได้ก่อนจะต่อ MongoDB ใน Phase 2
 import dishes from "../../src/mock-data/dishes.js";
 
-// ค่าตั้งต้นที่ mock data ยังไม่มี แต่ ProductForm ต้องใช้ (เหมือนใน ProductsContext.js)
 const DEFAULT_QUANTITY = 20;
 const DEFAULT_CALORIES = 350;
 
@@ -18,8 +15,6 @@ function getTodayInputValue() {
   return new Date().toISOString().split("T")[0];
 }
 
-// แปลงข้อมูลเมนูจาก mock-data ให้เป็นรูปแบบเดียวกับที่หน้า Admin ใช้
-// (ก็อปมาจาก src/context/ProductsContext.js เพราะไฟล์นั้น import "react" ใช้ฝั่ง server ตรงๆ ไม่ได้)
 function mapDishToProduct(dish) {
   return {
     _id: dish._id,
@@ -39,7 +34,6 @@ function mapDishToProduct(dish) {
   };
 }
 
-// state ในหน่วยความจำ — รีสตาร์ท server แล้วกลับเป็นค่าตั้งต้นจาก mock-data เหมือนฝั่ง frontend
 let products = Object.values(dishes).map(mapDishToProduct);
 
 export function getAllProducts() {
@@ -50,7 +44,6 @@ export function getProductById(id) {
   return products.find((product) => product._id === id);
 }
 
-// สร้าง _id ใหม่ต่อจากเลขสูงสุดที่มีอยู่ เช่น dish_031 (ตรรกะเดียวกับ ProductsProvider.jsx)
 function createNextId() {
   const maxNumber = products.reduce((max, product) => {
     const current = Number(String(product._id).replace(/\D/g, ""));

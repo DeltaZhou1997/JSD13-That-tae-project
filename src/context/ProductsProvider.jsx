@@ -5,10 +5,6 @@ import {
   createInitialProducts,
 } from "./ProductsContext.js";
 
-/**
- * เก็บรายการสินค้าไว้ที่เดียว เพื่อให้หน้ารายการและฟอร์มเห็นข้อมูลชุดเดียวกัน
- * ยังเป็น state ในหน่วยความจำ (รีเฟรชแล้วกลับเป็นค่าตั้งต้นจาก mock-data)
- */
 export default function ProductsProvider({ children }) {
   const [products, setProducts] = useState(createInitialProducts);
 
@@ -17,7 +13,6 @@ export default function ProductsProvider({ children }) {
     [products],
   );
 
-  // สร้าง _id ใหม่ต่อจากเลขสูงสุดที่มีอยู่ เช่น dish_031
   const createNextId = useCallback(() => {
     const maxNumber = products.reduce((max, product) => {
       const current = Number(String(product._id).replace(/\D/g, ""));

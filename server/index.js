@@ -1,6 +1,5 @@
 // Mock API server — CRUD /api/products บน in-memory store (src/mock-data/dishes.js)
-// จุดประสงค์: ให้ทดสอบยิง HTTP จริงได้ก่อนต่อ MongoDB จริงใน Phase 2
-// รัน: npm run server (หรือ npm run server:dev สำหรับ auto-restart ตอนแก้โค้ด)
+// npm run server
 import express from "express";
 import cors from "cors";
 import productsRouter from "./routes/products.js";
