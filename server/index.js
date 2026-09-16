@@ -1,8 +1,13 @@
 // Mock API server — CRUD /api/products บน in-memory store (src/mock-data/dishes.js)
 // npm run server
+import path from "path";
+import { fileURLToPath } from "url";
+import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import productsRouter from "./routes/products.js";
+
+dotenv.config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), ".env") });
 
 const app = express();
 const PORT = process.env.PORT || 4000;
