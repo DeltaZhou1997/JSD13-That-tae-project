@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-// 🟢 [อัปเดตใหม่] นำเข้า useNavigate เพื่อส่งผู้ใช้ไปหน้า OrderSuccess หลังสั่งซื้อ
 import { useNavigate } from "react-router-dom";
 
 import { users } from "../mock-data/users";
@@ -16,32 +15,40 @@ import PaymentMethodSelector from "../components/checkout/PaymentMethodSelector"
 import CheckoutSummary from "../components/checkout/CheckoutSummary";
 
 export default function CheckoutPage() {
-  // 🟢 [อัปเดตใหม่] เรียกใช้งาน Hook สำหรับเปลี่ยนหน้า
   const navigate = useNavigate();
 
-  // =========================================================================
-  // 📌 [จุดที่จะต้องเปลี่ยน 1: ข้อมูลผู้ใช้ (Auth Context จากคุณเน็ท)]
+  // จุดเชื่อมต่อคนที่ 5: Core Infrastructure & Auth Context (คุณเน็ท)
   // -------------------------------------------------------------------------
-  // 🔴 ปัจจุบัน: Mock User ID ไว้เป็น "USR-001" และดึงจาก mock-data
-  // 🟢 ตอนรวมงานกับคุณเน็ท (ทำระบบ ล็อกอิน/สมาชิก):
-  //    - ลบ 2 บรรทัดล่างนี้ออก แล้วดึง currentUser จาก Context ของระบบ เช่น:
+  // 🔴 ปัจจุบัน: Mock User ID ไว้เป็น "USR-001" และดึงจาก mock-data/users.js
+  // 🟢 ตอนรวมงานกับคนที่ 5 (ทำระบบ Login / Auth Context):
+  //    - ลบ 2 บรรทัดนี้ออก แล้วเรียกใช้ Context เช่น:
   //      const { currentUser } = useAuth();
-  // =========================================================================
+  //    - ตรวจสอบว่า currentUser มีฟิลด์ firstName, lastName, tierStatus, biaPoints ครบไหม
+
   const [currentUserId] = useState("USR-001");
   const currentUser = users.find((u) => u.id === currentUserId) || users[0];
 
-  const [selectedPlan] = useState(SUBSCRIPTION_PLANS.M);
-
-  // =========================================================================
-  // 📌 [จุดที่จะต้องเปลี่ยน 2: รายการสินค้าในตะกร้า (จากน้องครีม หรือ Backend)]
+  // จุดเชื่อมต่อหน้าที่ตัวเอง - คนที่ 4: รูปแบบการสั่งซื้อ (Plan Selector)
   // -------------------------------------------------------------------------
-  // 🔴 ปัจจุบัน: ใช้ State จำลอง array ของสินค้า เพื่อให้หน้าตาเหมือน DB จริง
-  // 🟢 ตอนรวมงานกับน้องครีม (Frontend ตะกร้าสินค้า):
-  //    - เปลี่ยน useState ตรงนี้ไปเรียกใช้ CartContext ของน้องครีม เช่น:
+  // 🟢 ค่าเริ่มต้น: ตั้งเป็น null เพื่อให้เปิดหน้าเว็บมาเป็นการซื้อแบบ "A La Carte (รายชุด)" ตามปกติ
+  //    ไม่บล็อกปุ่มชำระเงินตั้งแต่แรกเปิดหน้า และคำนวณราคาตามรายการจริงในตะกร้า
+  // 🟢 เมื่อผู้ใช้คลิกเลือกแพ็กเกจ (SIZE S/M/L/XL): ระบบจะเข้าสู่โหมดคำนวณโควต้า Subscription
+
+  const [selectedPlan, setSelectedPlan] = useState(null);
+
+  // 🟢 State สำหรับเก็บข้อความ Inline Error แจ้งเตือนสีแดงใต้ช่องกรอก
+  const [errors, setErrors] = useState({});
+
+  // จุดเชื่อมต่อคนที่ 3: Cart Management & State Operations (น้องครีม)
+  // -------------------------------------------------------------------------
+  // 🔴 ปัจจุบัน: ใช้ State จำลองรายการสินค้า 4 เมนู เพื่อให้เห็นภาพการคำนวณ
+  // 🟢 ตอนรวมงานกับคนที่ 3 (ทำระบบ CartContext ใน React):
+  //    - ลบ useState ก้อนนี้ออก แล้วดึง State ตะกร้าของน้องครีมมาใช้ เช่น:
   //      const { cartItems, clearCart } = useCart();
-  // 🟢 ตอนรวมงานกับตัวเอง (Backend API ดึงข้อมูลตะกร้า):
-  //    - ปลดล็อกโค้ด useEffect ข้างล่างนี้เพื่อให้ยิง API ไปเอาตะกร้าจริงจาก DB
-  // =========================================================================
+  //    - ตรวจสอบ format ของ Object สินค้าว่าใช้ key ชื่อ `id` หรือ `_id` ให้ตรงกัน
+  // 🟢 หรือถ้าดึงจาก Backend ของตัวเอง (GET /api/cart/:user_id):
+  //    - ปลดล็อกโค้ด useEffect ด้านล่างนี้เพื่อดึงข้อมูลตะกร้าจริงจาก MongoDB
+
   const [cartItems, setCartItems] = useState([
     {
       id: "PROD-001",
@@ -74,23 +81,22 @@ export default function CheckoutPage() {
   ]);
 
   /* 
-  // 🟢 [ตัวอย่างโค้ดถ้าต้องดึงตะกร้าสินค้าจาก Backend (ตัวเองทำ)]
+  // 🟢 โค้ด ถ้าดึงข้อมูลตะกร้าผ่าน Backend API ของตัวเอง อาจจะต้องมีเปลี่ยน
   useEffect(() => {
     async function fetchCartData() {
       try {
         const response = await fetch(`/api/cart/${currentUserId}`);
         const data = await response.json();
-        setCartItems(data.items); // เอาข้อมูลสินค้าจริงจาก DB มาลง State
+        setCartItems(data.items || []);
       } catch (err) {
         console.error("ดึงข้อมูลตะกร้าไม่สำเร็จ:", err);
       }
     }
-    fetchCartData();
+    if (currentUserId) fetchCartData();
   }, [currentUserId]);
   */
 
-  // -------------------------------------------------------------------------
-  // State สำหรับจัดการฟอร์มที่อยู่ และ ข้อมูลบัตรเครดิต
+  // State จัดการข้อมูลฟอร์มจัดส่ง และ ข้อมูลบัตรเครดิต
   // -------------------------------------------------------------------------
   const [formData, setFormData] = useState({
     fullName: `${currentUser.firstName} ${currentUser.lastName}`,
@@ -111,20 +117,35 @@ export default function CheckoutPage() {
 
   const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS.PROMPTPAY);
 
+  // ระบบคำนวณโควต้าแพ็กเกจ & คำนวณราคาสินค้า
   // -------------------------------------------------------------------------
-  // ส่วนคำนวณราคาและสร้าง QR Code
-  // -------------------------------------------------------------------------
-  const itemsSubtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+  // 1. totalKitsCount: จำนวนชุดอาหารรวมทั้งหมดในตะกร้า
+  // 2. requiredKits: จำนวนชุดที่แพ็กเกจต้องการ (เช่น SIZE M ต้องการ 6 ชุด)
+  // 3. kitsDifference: ผลต่าง (ติดลบ = เลือกขาด | เป็น 0 = ครบพอดี | เป็นบวก = เลือกเกิน)
+
+  const totalKitsCount = cartItems.reduce(
+    (sum, item) => sum + item.quantity,
     0,
   );
+  const requiredKits = selectedPlan ? selectedPlan.kitsPerWeek : 0;
+  const kitsDifference = selectedPlan ? totalKitsCount - requiredKits : 0;
+
+  // คำนวณยอดรวมสินค้า: ถ้าเลือก Plan จะคิดราคาเหมาตามแพ็กเกจ แต่ถ้าไม่เลือก (null) จะคิดรวมรายชุดตามจริง
+  const itemsSubtotal = selectedPlan
+    ? selectedPlan.price
+    : cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
   const earnedPoints = calculateEarnedPoints(itemsSubtotal);
   const grandTotal = calculateGrandTotal(itemsSubtotal);
-  const promptPayQrUrl = generatePromptPayQrUrl("0812345678", grandTotal); // ตรงนี้ใส่เบอร์โทรจริงหรืออ เลขประชาชนจริงที่เชื่อมกับพร้อมเพย์ได้เลย
+  const promptPayQrUrl = generatePromptPayQrUrl("0812345678", grandTotal);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // ล้างข้อความเตือนเมื่อผู้ใช้เริ่มพิมพ์แก้ไข
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: null }));
+    }
   };
 
   const handleCardInputChange = (e) => {
@@ -132,44 +153,65 @@ export default function CheckoutPage() {
     setCardData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // =========================================================================
-  // 📌 [จุดที่จะต้องเปลี่ยน 3: การกดส่งข้อมูลสั่งซื้อและการเด้งไปหน้า OrderSuccess]
+  // จุดเชื่อมต่อการชำระเงิน และ บันทึกคำสั่งซื้อ (เชื่อมคน 1, 3, 4, 5)
   // -------------------------------------------------------------------------
-  // 🔴 ปัจจุบัน: สุ่ม orderId ชั่วคราว และพาผู้ใช้เด้งไปหน้า /order-success ทันที
-  // 🟢 ตอนรวมงานกับตัวเอง (Backend Admin & Order API):
-  //    - ปลดล็อกโค้ด fetch() ข้างล่าง เพื่อส่งข้อมูลไปบันทึกใน Database จริงๆ ก่อน
-  //    - เมื่อบันทึกสำเร็จ (response.ok) ค่อยพาเด้งไปหน้า /order-success
-  // =========================================================================
+  // 1. ตรวจสอบ Validation ฟอร์ม (Inline Errors ไม่ใช้ alert)
+  // 2. จัดโครงสร้าง Payload ต้องดูดีๆอีกทีตอนรวมโค้ด
+  //    - เชื่อมคนที่ 1 (Admin/Products): ตรวจว่าส่ง productId และ quantity ตรงกับ Schema ที่คน 1 ตั้งไว้ไหม
+  //    - เชื่อมคนที่ 4 (ตัวเอง): ส่งเข้า POST /api/checkout เพื่อสร้าง Order, ตัด Stock และล้าง Cart ใน DB
+  //    - เชื่อมคนที่ 3 (Cart): เรียก clearCart() ของน้องครีมเพื่อล้างตะกร้าฝั่ง Frontend เมื่อสั่งซื้อสำเร็จ
+  //    - เชื่อมคนที่ 5 (Toast Notification): เรียก showToast("สั่งซื้อสำเร็จ!", "success")
+
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
 
-    // 1. ตรวจสอบว่ากรอกข้อมูลที่อยู่ครบถ้วนหรือไม่
-    if (
-      !formData.fullName.trim() ||
-      !formData.phone.trim() ||
-      !formData.address.trim()
-    ) {
-      alert("กรุณากรอกข้อมูลชื่อ เบอร์โทรศัพท์ และที่อยู่จัดส่งให้ครบถ้วน");
+    // 1. ตรวจสอบความถูกต้องของข้อมูลที่อยู่จัดส่ง
+    const newErrors = {};
+
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "กรุณากรอกชื่อ-นามสกุล";
+    }
+    if (!formData.phone.trim()) {
+      newErrors.phone = "กรุณากรอกเบอร์โทรศัพท์";
+    } else if (!/^[0-9\-]{9,12}$/.test(formData.phone.trim())) {
+      newErrors.phone = "รูปแบบเบอร์โทรศัพท์ไม่ถูกต้อง";
+    }
+    if (!formData.address.trim()) {
+      newErrors.address = "กรุณากรอกที่อยู่จัดส่ง";
+    }
+    if (!formData.district.trim()) {
+      newErrors.district = "กรุณากรอกอำเภอ/เขต";
+    }
+    if (!formData.province.trim()) {
+      newErrors.province = "กรุณากรอกจังหวัด";
+    }
+    if (!formData.zipcode.trim()) {
+      newErrors.zipcode = "กรุณากรอกรหัสไปรษณีย์";
+    } else if (!/^\d{5}$/.test(formData.zipcode.trim())) {
+      newErrors.zipcode = "รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก";
+    }
+
+    // 2. ตรวจสอบข้อมูลบัตรเครดิตกรณีเลือกจ่ายด้วยบัตร
+    if (paymentMethod === PAYMENT_METHODS.CREDIT_CARD) {
+      if (!cardData.cardNumber) newErrors.cardNumber = "กรุณากรอกหมายเลขบัตร";
+      if (!cardData.cardName) newErrors.cardName = "กรุณากรอกชื่อบนบัตร";
+      if (!cardData.expiry) newErrors.expiry = "กรุณากรอกวันหมดอายุ";
+      if (!cardData.cvc) newErrors.cvc = "กรุณากรอกรหัส CVC";
+    }
+
+    // หากมีช่องที่กรอกไม่ครบ ให้หยุดทำงานและโชว์ Error สีแดง
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
-    // 2. ถ้าเลือกชำระด้วยบัตรเครดิต ต้องตรวจสอบข้อมูลบัตรด้วย
-    if (paymentMethod === PAYMENT_METHODS.CREDIT_CARD) {
-      if (
-        !cardData.cardNumber ||
-        !cardData.cardName ||
-        !cardData.expiry ||
-        !cardData.cvc
-      ) {
-        alert("กรุณากรอกข้อมูลบัตรเครดิตให้ครบถ้วน");
-        return;
-      }
-    }
+    setErrors({});
 
-    // 3. จัดกลุ่มข้อมูล (Payload) ตามมาตรฐานที่จะส่งให้ Backend
+    // 3. จัดกลุ่มข้อมูล Payload ตามมาตรฐาน OrderSchema
     const orderPayload = {
-      orderId: `ORD-${Math.floor(100000 + Math.random() * 900000)}`, // สุ่ม ID จำลองขึ้นมาก่อน
+      orderId: `ORD-${Math.floor(100000 + Math.random() * 900000)}`,
       userId: currentUserId,
+      planType: selectedPlan ? selectedPlan.id : "SINGLE_KIT",
       items: cartItems.map((item) => ({
         productId: item.id,
         productName: item.name,
@@ -184,11 +226,11 @@ export default function CheckoutPage() {
         deliveryDate: formData.deliveryDate,
       },
       payment: {
-        method: paymentMethod, // ค่าที่เป็นไปได้: 'PROMPTPAY' | 'CREDIT_CARD' | 'COD'
+        method: paymentMethod, // 'PROMPTPAY' | 'CREDIT_CARD' | 'COD'
         cardDetails:
           paymentMethod === PAYMENT_METHODS.CREDIT_CARD
             ? {
-                cardNumber: cardData.cardNumber.replace(/\s/g, ""), // ตัดช่องว่างออก
+                cardNumber: cardData.cardNumber.replace(/\s/g, ""),
                 cardName: cardData.cardName,
                 expiry: cardData.expiry,
               }
@@ -196,23 +238,25 @@ export default function CheckoutPage() {
       },
       pricing: {
         subtotal: itemsSubtotal,
-        shippingFee: 65,
+        shippingFee: 60,
         grandTotal: grandTotal,
         earnedPoints: earnedPoints,
       },
       createdAt: new Date().toISOString(),
     };
 
-    console.log("🚀 Payload พร้อมส่งให้ Backend (ตัวเองทำ):", orderPayload);
+    console.log(
+      "🚀 Payload พร้อมส่งเข้า Backend POST /api/checkout:",
+      orderPayload,
+    );
 
-    // 🟢 [อัปเดตใหม่] ทำงานแบบจำลองก่อน (เปลี่ยนจากการ alert() เป็นพาเด้งไปหน้า OrderSuccess)
-    // พาผู้ใช้ย้ายไปหน้า /order-success พร้อมส่งข้อมูล orderPayload ไปด้วยผ่าน state
+    // ปัจจุบัน: จำลองการย้ายไปหน้าสำเร็จทันที
     navigate("/order-success", { state: { order: orderPayload } });
 
     /* 
-    // 🟢 [ตัวอย่างโค้ดที่จะต้องปลดล็อกเมื่อทำ Backend ยิง API จริง]
+    // 🟢 โค้ดยิง API จริงลง MongoDB เมื่อรวมงาน
     try {
-      const response = await fetch('/api/orders', {
+      const response = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderPayload),
@@ -221,12 +265,13 @@ export default function CheckoutPage() {
       if (response.ok) {
         const result = await response.json();
         
-        // 📌 [ขั้นตอนที่ต้องทำหลังยิง API สำเร็จ]
-        // 1. ล้างสินค้าในตะกร้าออก (ถ้ามี CartContext ของน้องครีม): clearCart();
-        // 2. เด้งไปหน้าสำเร็จโดยใช้ orderId จริงจาก DB:
-        navigate("/order-success", { state: { order: result } });
+        // 1. ล้างตะกร้าของคนที่ 3: clearCart();
+        // 2. เด้งแจ้งเตือนของคนที่ 5: showToast("สั่งซื้อสำเร็จแล้ว!", "success");
+        // 3. พาไปหน้า OrderSuccess:
+        navigate("/order-success", { state: { order: result.order } });
       } else {
-        alert("เกิดข้อผิดพลาดในการบันทึกข้อมูลคำสั่งซื้อ กรุณาลองใหม่อีกครั้ง");
+        const err = await response.json();
+        alert(err.message || "เกิดข้อผิดพลาดในการบันทึกคำสั่งซื้อ");
       }
     } catch (err) {
       console.error("ส่งคำสั่งซื้อไม่สำเร็จ:", err);
@@ -234,13 +279,11 @@ export default function CheckoutPage() {
     */
   };
 
-  // =========================================================================
-  // 📌 [จุดที่จะต้องเปลี่ยน 4: กรณีไม่มีสินค้าในตะกร้า (Empty Cart Handling)]
+  // จุดเชื่อมต่อคนที่ 2: กรณีไม่มีสินค้าในตะกร้า (Product Storefront)
   // -------------------------------------------------------------------------
-  // 🔴 ปัจจุบัน: ปุ่มกดใช้ navigate("/") เพื่อย้ายไปหน้าหลัก
-  // 🟢 ตอนรวมงานกับเพื่อนที่มี Routing:
-  //    - ถ้าหน้าเมนูอาหารของเพื่อนใช้เส้นทางอื่น เช่น "/menu" ให้เปลี่ยนตรง navigate()
-  // =========================================================================
+  // 🔴 ปัจจุบัน: ปุ่มกดใช้ navigate("/") เพื่อพากลับหน้าแรก
+  // 🟢 ตอนรวมงานกับคนที่ 2 (ทำหน้า Catalog & Storefront):
+  //    - ถ้าหน้าร้านของคนที่ 2 ใช้ path อื่น เช่น "/catalog" หรือ "/menu" ให้เปลี่ยนตรงนี้
   if (!cartItems || cartItems.length === 0) {
     return (
       <div className="min-h-[70vh] bg-[#fdfbf7] flex flex-col items-center justify-center p-6 text-center text-[#2f2119]">
@@ -255,7 +298,7 @@ export default function CheckoutPage() {
           ที่คุณชื่นชอบลงตะกร้าก่อนดำเนินการชำระเงิน
         </p>
         <button
-          onClick={() => navigate("/")} // 🟢 [อัปเดตใหม่] ใช้ navigate แทน window.location.href
+          onClick={() => navigate("/")}
           className="bg-[#3d2c2e] text-white px-8 py-3.5 rounded-full font-bold hover:bg-[#8d593a] transition-all shadow-md active:scale-95"
         >
           กลับไปเลือกเมนูอาหาร
@@ -264,9 +307,7 @@ export default function CheckoutPage() {
     );
   }
 
-  // -------------------------------------------------------------------------
   // เรนเดอร์หน้าจอปกติเมื่อมีสินค้าในตะกร้า
-  // -------------------------------------------------------------------------
   return (
     <div className="min-h-screen bg-[#fdfbf7] py-10 px-4 sm:px-6 lg:px-8 text-[#2f2119]">
       <div className="max-w-6xl mx-auto">
@@ -279,8 +320,59 @@ export default function CheckoutPage() {
           </h1>
         </div>
 
+        {/* ส่วนแสดงข้อมูลผู้ใช้และแต้มสะสม (เชื่อมคนที่ 5) */}
         <CheckoutUserStatus currentUser={currentUser} />
 
+        {/* UI ส่วนเลือกรูปแบบการสั่งซื้อ ซื้อรายชุด (A La Carte) หรือ สมัครแพ็กเกจรายสัปดาห์ (Plan Selector) */}
+        <div className="mb-8 bg-[#fcf8f2] border border-[#e8dfd1] rounded-3xl p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-[#3d2c2e] mb-3 flex items-center gap-2">
+            <span>📦</span> เลือกรูปแบบการสั่งซื้อ
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            {/* ตัวเลือก A La Carte (ซื้อแยกรายชุดตามจริง) */}
+            <button
+              type="button"
+              onClick={() => setSelectedPlan(null)}
+              className={`p-3.5 rounded-2xl border text-center transition-all ${
+                selectedPlan === null
+                  ? "bg-[#3d2c2e] text-white border-[#3d2c2e] shadow-md"
+                  : "bg-white text-[#2f2119] border-[#e8dfd1] hover:border-[#8d593a]"
+              }`}
+            >
+              <div className="font-bold text-sm">A La Carte</div>
+              <div className="text-xs opacity-80 mt-0.5">ซื้อแยกรายชุด</div>
+            </button>
+
+            {/* ตัวเลือก Subscription Plans (S, M, L, XL) */}
+            {Object.values(SUBSCRIPTION_PLANS).map((plan) => (
+              <button
+                key={plan.id}
+                type="button"
+                onClick={() => setSelectedPlan(plan)}
+                className={`p-3.5 rounded-2xl border text-center transition-all relative ${
+                  selectedPlan?.id === plan.id
+                    ? "bg-[#3d2c2e] text-white border-[#3d2c2e] shadow-md"
+                    : "bg-white text-[#2f2119] border-[#e8dfd1] hover:border-[#8d593a]"
+                }`}
+              >
+                {plan.isPopular && (
+                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[9px] bg-[#8d593a] text-white px-2 py-0.5 rounded-full font-bold">
+                    ยอดนิยม
+                  </span>
+                )}
+                <div className="font-bold text-sm">{plan.name}</div>
+                <div className="text-xs opacity-90 font-semibold mt-0.5">
+                  ฿{plan.price}/สัปดาห์
+                </div>
+                <div className="text-[10px] opacity-75 mt-0.5">
+                  ({plan.kitsPerWeek} Kits)
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ฟอร์มข้อมูลจัดส่งและสรุปรายการสั่งซื้อ */}
         <form
           onSubmit={handleSubmitOrder}
           className="grid grid-cols-1 lg:grid-cols-12 gap-8"
@@ -292,6 +384,7 @@ export default function CheckoutPage() {
               onDateChange={(date) =>
                 setFormData((prev) => ({ ...prev, deliveryDate: date }))
               }
+              errors={errors}
             />
             <PaymentMethodSelector
               paymentMethod={paymentMethod}
@@ -309,6 +402,9 @@ export default function CheckoutPage() {
               itemsSubtotal={itemsSubtotal}
               grandTotal={grandTotal}
               earnedPoints={earnedPoints}
+              totalKitsCount={totalKitsCount}
+              requiredKits={requiredKits}
+              kitsDifference={kitsDifference}
             />
           </div>
         </form>
