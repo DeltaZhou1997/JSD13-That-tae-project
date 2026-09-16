@@ -16,6 +16,7 @@
 | **Rin** | **4. Checkout & Order Flow** | Checkout UI, User ID Context, Order Summary | Fetch User Cart API (`GET` `/api/cart/:user_id`), Checkout & Stock Cut |
 | **Nate** | **5. Core Arch & Global Layout** | React Routing, Global Layout (Navbar/Footer), Toast Alert UI | Mongoose Setup, Express Server Config, Centralized Error Middleware |
 
+
 ---
 
 ## Member Roles & Task Details
@@ -24,7 +25,7 @@
 > **Goal:** ทำระบบหลังบ้านให้ Admin เพิ่ม/แก้ไข/ลบ เมนู Cooking Kit และ InfoCard โภชนาการ พร้อมตรวจสอบข้อมูล (Validation)
 * **Frontend (React Tasks):**
   * `ProductForm.jsx`: สร้างฟอร์มสร้าง/แก้ไข Cooking Kit (ชื่อเมนู, ภาคอาหาร เช่น เหนือ/ใต้, แคลอรี/โภชนาการ, ราคา, สต็อก, ลิงก์รูปภาพ)
-  * **Validation Logic:** ตรวจสอบข้อมูลก่อน 제출 (Submit)
+  * **Validation Logic:** ตรวจสอบข้อมูลก่อน (Submit)
     * `Name`: ไม่เป็นค่าว่าง, ยาวอย่างน้อย 3 ตัวอักษร
     * `Description`: รายละเอียดเมนู/ประวัติอาหาร ต้องไม่เป็นค่าว่าง
     * `Price`: เป็นตัวเลขมากกว่า 0
