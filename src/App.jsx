@@ -6,6 +6,7 @@ import Register from "./pages/Register.jsx"
 import AdminProductList from './pages/admin/AdminProductList.jsx'
 import ProductForm from './pages/admin/ProductForm.jsx'
 import ProductsProvider from './context/ProductsProvider.jsx'
+import AuthProvider from './context/AuthProvider.jsx'
 
 const router = createBrowserRouter([
   {
@@ -42,9 +43,11 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <ProductsProvider>
-      <RouterProvider router={router} />
-    </ProductsProvider>
+    <AuthProvider>
+      <ProductsProvider>
+        <RouterProvider router={router} />
+      </ProductsProvider>
+    </AuthProvider>
   );
 }
 

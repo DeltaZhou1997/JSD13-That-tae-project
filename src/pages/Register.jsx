@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { users } from "../mock-data/index";
 
 function Register(){
     // เก็บค่าทุกช่องไว้ใน object เดียว เพื่อใช้ handleChange ร่วมกันได้
@@ -26,6 +27,35 @@ function Register(){
             setErrorMsg("รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน");
             return;
         }
+
+        const emailExists = users.some(user => user.email === formData.email);
+        if (emailExists) {
+            setErrorMsg("อีเมลนี้มีผู้ใช้งานในระบบแล้ว");
+            return;
+        }
+
+        // ชื่อ-นามสกุล ในฟอร์มเป็นช่องเดียว แยกเป็น firstName/lastName ให้ตรงกับ shape ของ users.js
+        const [firstName, ...rest] = formData.name.trim().split(/\s+/);
+        const now = new Date().toISOString();
+ 
+        users.push({
+            id: `USR-${String(users.length + 1).padStart(3, "0")}`,
+            firstName: firstName || formData.name,
+            lastName: rest.join(" "),
+            email: formData.email,
+            phone: "",
+            birthDate: "",
+            gender: "",
+            bloodType: "",
+            tierStatus: "Bronze",
+            role: "customer",
+            biaPoints: 0,
+            isSubscribed: false,
+            conditions: [],
+            lastActiveAt: now,
+            createdAt: now,
+            updatedAt: now,
+        });
 
         alert("สมัครสมาชิกสำเร็จ!");
         navigate("/login");

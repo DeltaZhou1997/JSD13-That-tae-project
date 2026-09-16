@@ -1,21 +1,31 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { users } from "../mock-data/index" //เดี๋ยวลอง mock user ก่อน
+import { useAuth } from "../context/AuthContext.js";
 
 function Login() {
     const [email, setEmail] = useState("");
     const [pwd, setPwd] = useState("");
-    const navigate = useNavigate(); //hook ไปหน้า admin ตามเงื่อนไข
+    const navigate = useNavigate(); //hook ไปหน้า ตามเงื่อนไข
+    const { login } = useAuth();
     // ลองใช้ user จาก users.js
     const handleLogin = (event) => {
         event.preventDefault();
         const isUser = users.find(user => user.email === email);
-        if(isUser){
-          alert(`ยินดีต้อนรับ ${isUser.firstName} (${isUser.role}) จ้า`);
-        } else {
-          alert("เข้าสูระบบแล้ว");
+
+        if (!isUser) {
+          alert("ไม่พบบัญชีผู้ใช้นี้ในระบบ");
+          return;
         }
-        navigate("/admin/products");
+
+        login(isUser);
+        alert(`ยินดีต้อนรับ ${isUser.firstName} (${isUser.role}) จ้า`);
+
+        if (isUser.role === "admin") {
+          navigate("/admin/products");
+        } else {
+          navigate("/");
+        }
     };
     return (
     <div className="max-w-md mx-auto my-10 p-6 bg-white rounded-lg shadow-md">

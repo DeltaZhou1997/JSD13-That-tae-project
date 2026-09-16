@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import gsap from "gsap";
 
 import logo from "../assets/logo_brown_3d.png";
+import { useAuth } from "../context/AuthContext.js";
 
 const links = [
   { label: "หน้าแรก", to: "/" },
@@ -19,6 +20,13 @@ export default function Navbar() {
   const dropdownRef = useRef(null);
   const timelineRef = useRef(null);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { currentUser, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
 
   useLayoutEffect(() => {
     const context = gsap.context(() => {
@@ -143,12 +151,35 @@ export default function Navbar() {
           ))}
         </div>
 
-        <Link
-          to={links.at(-1)?.to || "/login"}
-          className="mr-1 hidden whitespace-nowrap rounded-full bg-[#4c1f08] px-5 py-3 text-sm font-bold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215] md:inline-flex md:text-base"
-        >
-          {links.at(-1)?.label || "เข้าสู่ระบบ"}
-        </Link>
+        {currentUser ? (
+          <div className="mr-1 hidden items-center gap-3 md:flex">
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <span
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#4c1f08] text-sm font-bold text-white"
+                aria-hidden="true"
+              >
+                {currentUser.firstName?.charAt(0) || "U"}
+              </span>
+              <span className="text-sm font-medium text-[#3d2c2e] lg:text-base">
+                {currentUser.firstName}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="whitespace-nowrap rounded-full bg-[#4c1f08] px-5 py-3 text-sm font-bold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215] md:text-base"
+            >
+              ออกจากระบบ
+            </button>
+          </div>
+        ) : (
+          <Link
+            to={links.at(-1)?.to || "/login"}
+            className="mr-1 hidden whitespace-nowrap rounded-full bg-[#4c1f08] px-5 py-3 text-sm font-bold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215] md:inline-flex md:text-base"
+          >
+            {links.at(-1)?.label || "เข้าสู่ระบบ"}
+          </Link>
+        )}
 
         <div
           ref={dropdownRef}
@@ -177,24 +208,50 @@ export default function Navbar() {
 
             <div className="my-3 h-px bg-[#3d2c2e]/12" />
 
-            <Link
-              data-mobile-menu-item
-              to="/login"
-              className="flex items-center gap-3 rounded-3xl bg-[#3d2c2e] p-4 text-white shadow-[0_10px_25px_rgba(61,44,46,.18)]"
-            >
-              <span className="grid h-11 w-11 place-items-center rounded-full bg-white/12 text-xl">
-                👋
-              </span>
-              <span>
-                <strong className="block">สวัสดี</strong>
-                <span className="mt-0.5 block text-sm text-[#e7d8cb]">
-                  กรุณาเข้าสู่ระบบ
+            {currentUser ? (
+              <div
+                data-mobile-menu-item
+                className="flex items-center gap-3 rounded-3xl bg-[#3d2c2e] p-4 text-white shadow-[0_10px_25px_rgba(61,44,46,.18)]"
+              >
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/12 text-lg font-bold">
+                  {currentUser.firstName?.charAt(0) || "U"}
                 </span>
-              </span>
-              <span className="ml-auto text-xl" aria-hidden="true">
-                →
-              </span>
-            </Link>
+                <span className="min-w-0">
+                  <strong className="block truncate">
+                    {currentUser.firstName}
+                  </strong>
+                  <span className="mt-0.5 block text-sm text-[#e7d8cb]">
+                    {currentUser.role === "admin" ? "ผู้ดูแลระบบ" : "สมาชิก"}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="ml-auto shrink-0 rounded-full bg-white/12 px-3 py-2 text-sm font-medium transition-colors hover:bg-white/20"
+                >
+                  ออกจากระบบ
+                </button>
+              </div>
+            ) : (
+              <Link
+                data-mobile-menu-item
+                to="/login"
+                className="flex items-center gap-3 rounded-3xl bg-[#3d2c2e] p-4 text-white shadow-[0_10px_25px_rgba(61,44,46,.18)]"
+              >
+                <span className="grid h-11 w-11 place-items-center rounded-full bg-white/12 text-xl">
+                  👋
+                </span>
+                <span>
+                  <strong className="block">สวัสดี</strong>
+                  <span className="mt-0.5 block text-sm text-[#e7d8cb]">
+                    กรุณาเข้าสู่ระบบ
+                  </span>
+                </span>
+                <span className="ml-auto text-xl" aria-hidden="true">
+                  →
+                </span>
+              </Link>
+            )}
 
 
           </div>
