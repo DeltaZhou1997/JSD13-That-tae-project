@@ -1,0 +1,195 @@
+@import "tailwindcss";
+
+:root {
+  font-family: "IBM Plex Sans Thai", system-ui, sans-serif;
+  color: #0f172a;
+  background: #f4e9d7;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: linear-gradient(180deg, #f7efe4 0%, #fdfbf7 100%);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.home-page {
+  color: #251911;
+  line-height: 1.6;
+}
+.home-container {
+  width: min(1200px, calc(100% - 88px));
+  margin-inline: auto;
+}
+.home-section {
+  padding-block: 104px;
+}
+
+.regional-marquee-viewport {
+  width: calc(100% + max(44px, (100vw - 1200px) / 2));
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 52px,
+    #000 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 52px,
+    #000 100%
+  );
+}
+
+@media (max-width: 1023px) and (min-width: 901px) {
+  .regional-marquee-viewport {
+    width: 100vw;
+    margin-left: -44px;
+  }
+}
+
+.home-heading {
+  max-width: 760px;
+  margin: 0 auto 56px;
+  text-align: center;
+}
+.home-heading h2 {
+  margin: 0 0 16px;
+  font-size: clamp(1.9rem, 3vw, 2.55rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+.home-heading p {
+  color: #6f675f;
+  font-size: 1.02rem;
+  line-height: 1.85;
+}
+.home-eyebrow {
+  display: inline-block;
+  border-radius: 999px;
+  background: #eee5dc;
+  padding: 7px 14px;
+  color: #776d64;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+/* แสงบาง ๆ วิ่งผ่านปุ่มหลัก โดยปุ่มไม่ขยับตำแหน่ง */
+.shimmer-button {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.shimmer-button::after {
+  position: absolute;
+  inset-block: -45%;
+  left: -45%;
+  width: 28%;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.8),
+    transparent
+  );
+  transform: skewX(-20deg);
+  animation: button-shimmer 4.5s ease-in-out infinite;
+}
+
+@keyframes button-shimmer {
+  0%,
+  68% {
+    left: -45%;
+  }
+  100% {
+    left: 125%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-button::after {
+    animation: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .home-container {
+    width: min(100% - 40px, 1200px);
+  }
+  .regional-marquee-viewport {
+    width: 100vw;
+    margin-left: -20px;
+  }
+  .home-section {
+    padding-block: 76px;
+  }
+  .feature-section {
+    padding-block: 60px;
+  }
+}
+
+@media (max-width: 560px) {
+  .home-container {
+    width: calc(100% - 28px);
+  }
+  .regional-marquee-viewport {
+    width: 100vw;
+    margin-left: -14px;
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 32px,
+      #000 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      transparent 0,
+      #000 32px,
+      #000 100%
+    );
+  }
+  .home-section {
+    padding-block: 60px;
+  }
+  .feature-section {
+    padding-block: 44px;
+  }
+  .home-heading {
+    margin-bottom: 36px;
+  }
+  .home-heading p {
+    font-size: 0.98rem;
+    line-height: 1.75;
+  }
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}

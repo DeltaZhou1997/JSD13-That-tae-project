@@ -1,10 +1,29 @@
-node_modules
-dist
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Production build
+dist/
+client/dist/
+
+# Environment files
 .env
 .env.*
+*.env
 !.env.example
+client/.env
+client/.env.*
+server/.env
+server/.env.*
+!client/.env.example
+!server/.env.example
+atlas-credentials.env
+
+# Logs and local files
 *.local
 *.log
 .DS_Store
 .tmp_pypdf*
-atlas-credentials.env
+.vite/
+client/.vite/
