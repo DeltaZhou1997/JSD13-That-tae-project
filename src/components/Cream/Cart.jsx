@@ -1,7 +1,7 @@
 import dishes from "../../mock-data/dishes";
 import { useEffect, useState } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
-import CartItem from './CartItems';
+import CartItem from './CartItem';
 
 export default function Cart() {
   const { cartItems, handleUpdateQuantity, handleRemoveItem } = useOutletContext();
