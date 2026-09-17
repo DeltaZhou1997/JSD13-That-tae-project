@@ -12,7 +12,7 @@ export default function Cart() {
   const total = subtotal + shippingFee;
 
   useEffect(() => {
-    if (subtotal >= 1499) {
+    if (subtotal >= 1499 && !hasAlerted ) {
       alert("🎉ยอดสั่งซื้อของคุณถึง 1,499 บาท รับแต้มสะสม!");
       setHasAlerted(true);
       } else if (subtotal < 1499) {
