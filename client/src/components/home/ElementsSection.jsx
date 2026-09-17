@@ -5,6 +5,7 @@ const plans = [
     kits: 6,
     price: "899",
     note: "สมดุลสำหรับทุกสัปดาห์",
+    popular: true,
   },
   { size: "L", kits: 8, price: "1,169", note: "สำหรับคู่รักหรือครอบครัวเล็ก" },
   { size: "XL", kits: 12, price: "1,599", note: "อิ่มพร้อมหน้าทั้งครอบครัว" },

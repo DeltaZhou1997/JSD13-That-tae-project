@@ -1,3 +1,5 @@
+
+
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Layout } from './components/index.js'
 import HomePage from './pages/Home.jsx'
@@ -10,6 +12,10 @@ import ProductForm from './pages/admin/ProductForm.jsx'
 import ProductsProvider from './context/ProductsProvider.jsx'
 import AuthProvider from './context/AuthProvider.jsx'
 
+import CheckoutPage from "./pages/CheckoutPage.jsx";
+import OrderSuccess from "./pages/OrderSuccess.jsx";
+import ElementQuizPage from "./pages/ElementQuizPage.jsx";
+import MenuRandomizerPage from "./pages/MenuRandomizerPage.jsx";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -38,7 +44,24 @@ const router = createBrowserRouter([
       {
         path: "register",
         element: <Register />
-      }
+      },
+      {
+        path: "checkout",
+        element: <CheckoutPage />,
+      },
+      {
+        path: "order-success",
+        element: <OrderSuccess />,
+      },
+      {
+        path: "element-quiz",
+        element: <ElementQuizPage />,
+      },
+
+      {
+        path: "menu-randomizer",
+        element: <MenuRandomizerPage />,
+      },
     ]
   }
 ]);
