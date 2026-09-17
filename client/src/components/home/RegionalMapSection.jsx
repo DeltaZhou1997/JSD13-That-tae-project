@@ -202,11 +202,10 @@ export default function RegionalMapSection() {
               key={region.id}
               type="button"
               onClick={() => setActiveIndex(index)}
-              className={`cursor-pointer shrink-0 rounded-full border px-4 py-2 sm:px-5 sm:py-2.5 text-base sm:text-lg font-medium transition-all duration-200 ${
-                active.id === region.id
+              className={`cursor-pointer shrink-0 rounded-full border px-4 py-2 sm:px-5 sm:py-2.5 text-base sm:text-lg font-medium transition-all duration-200 ${active.id === region.id
                   ? "border-[#3d2c2e] bg-[#3d2c2e] text-white shadow-md scale-[1.02]"
                   : "border-[#cdbdac] bg-white/70 text-[#6f5b4e] hover:bg-white"
-              }`}
+                }`}
               aria-pressed={active.id === region.id}
             >
               {region.label}
@@ -256,11 +255,10 @@ export default function RegionalMapSection() {
                   onFocus={() => setIsInteracting(true)}
                   onBlur={() => setIsInteracting(false)}
                   onClick={() => setActiveIndex(index)}
-                  className={`h-2.5 rounded-full cursor-pointer transition-[width,background-color] duration-300 ${
-                    active.id === region.id
+                  className={`h-2.5 rounded-full cursor-pointer transition-[width,background-color] duration-300 ${active.id === region.id
                       ? "w-8 bg-[#3d2c2e]"
                       : "w-2.5 bg-[#bcae9e] hover:bg-[#8d7b68]"
-                  }`}
+                    }`}
                   aria-label={`แสดง${region.label}`}
                   aria-pressed={active.id === region.id}
                 />

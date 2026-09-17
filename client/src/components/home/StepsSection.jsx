@@ -47,7 +47,6 @@ export default function StepsSection() {
     <section className="home-section overflow-hidden bg-[linear-gradient(180deg,#f6e6d2_0%,#f1dec9_100%)]">
       <div className="home-container">
         <div className="home-heading mx-auto max-w-2xl text-center">
-
           <h2 className="mt-4">จากเมนูที่ชอบ สู่จานที่ภูมิใจ ที่คุณได้ปรุงเอง</h2>
           <span className="text-2xl">สามขั้นตอนสั้น ๆ สำหรับมื้อไทยที่สดใหม่และมีเรื่องราว</span>
         </div>
@@ -72,7 +71,6 @@ export default function StepsSection() {
             </article>
           ))}
         </div>
-
       </div>
     </section>
   );

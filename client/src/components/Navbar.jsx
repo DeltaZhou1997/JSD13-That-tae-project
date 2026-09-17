@@ -4,6 +4,7 @@ import gsap from "gsap";
 
 import logo from "../assets/logo_brown_choc.png";
 import customerAvatar from "../mock-data/assets/reviews/praew.jpg";
+import { useAuth } from "../context/AuthContext.js";
 
 function BasketIcon({ className = "h-10 w-10" }) {
   return (
