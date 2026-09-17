@@ -2,14 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import ElementSelector from "../components/menu-randomizer/ElementSelector.jsx";
 import RandomResultCard from "../components/menu-randomizer/RandomResultCard.jsx";
 
-import * as DishesModule from "../mock-data/dishes.js";
+import dishes from "../mock-data/dishes.js";
 
-const rawDishes =
-  DishesModule.default ||
-  DishesModule.dishes ||
-  DishesModule.mockDishes ||
-  DishesModule.DISHES ||
-  [];
+const rawDishes = dishes || {};
 
 export default function MenuRandomizerPage() {
   const [selectedElement, setSelectedElement] = useState("earth");
