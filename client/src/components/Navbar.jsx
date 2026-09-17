@@ -1,10 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import gsap from "gsap";
 
 import logo from "../assets/logo_brown_choc.png";
 import customerAvatar from "../mock-data/assets/reviews/praew.jpg";
 import { useAuth } from "../context/AuthContext.js";
+import useToast from "../hooks/useToast.js";
 
 function BasketIcon({ className = "h-10 w-10" }) {
   return (
@@ -26,21 +27,46 @@ function BasketIcon({ className = "h-10 w-10" }) {
 
 function ProfileMenuIcon({ type }) {
   const paths = {
-    profile: <><circle cx="12" cy="8" r="3.5" /><path d="M5.5 20a6.5 6.5 0 0 1 13 0" /></>,
-    orders: <><path d="M6 3h12v18H6z" /><path d="M9 7h6M9 11h6M9 15h4" /></>,
-    edit: <><path d="m4 20 4.2-1 10.6-10.6-3.2-3.2L5 15.8 4 20Z" /><path d="m13.8 7 3.2 3.2" /></>,
-    logout: <><path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10" /></>,
+    profile: (
+      <>
+        <circle cx="12" cy="8" r="3.5" />
+        <path d="M5.5 20a6.5 6.5 0 0 1 13 0" />
+      </>
+    ),
+    orders: (
+      <>
+        <path d="M6 3h12v18H6z" />
+        <path d="M9 7h6M9 11h6M9 15h4" />
+      </>
+    ),
+    edit: (
+      <>
+        <path d="m4 20 4.2-1 10.6-10.6-3.2-3.2L5 15.8 4 20Z" />
+        <path d="m13.8 7 3.2 3.2" />
+      </>
+    ),
+    logout: (
+      <>
+        <path d="M10 5H5v14h5M14 8l4 4-4 4M8 12h10" />
+      </>
+    ),
   };
 
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 shrink-0" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-5 w-5 shrink-0"
+      aria-hidden="true"
+    >
       {paths[type]}
     </svg>
   );
 }
-
-// เปลี่ยนค่านี้เป็น "guest", "customer" หรือ "admin" เพื่อดู Navbar แต่ละแบบ
-const NAV_PREVIEW_ROLE = "customer";
 
 const navigationByRole = {
   guest: {
@@ -64,19 +90,17 @@ const navigationByRole = {
       { label: "เกี่ยวกับเรา", to: "/about" },
     ],
     action: { label: "ตะกร้า", to: "/cart", badge: 2 },
-    profile: { name: "ณัฐชา", to: "/profile", avatar: customerAvatar },
     mobileTitle: "บัญชีลูกค้า",
     mobileDetail: "ดูตะกร้าและคำสั่งซื้อ",
   },
   admin: {
     links: [
-      { label: "แดชบอร์ด", to: "/admin" },
-      { label: "จัดการเมนู", to: "/admin/menus" },
-      { label: "คำสั่งซื้อ", to: "/admin/orders" },
-      { label: "ผู้ใช้งาน", to: "/admin/users" },
-      { label: "รีวิว", to: "/admin/reviews" },
+      { label: "หน้าแรก", to: "/" },
+      { label: "จัดการสินค้า", to: "/admin/products" },
+      { label: "เพิ่มสินค้าใหม่", to: "/admin/products/new" },
+      { label: "เมนูอาหาร", to: "/menus" },
     ],
-    action: { label: "แอดมิน", to: "/admin/profile", icon: "🛠️" },
+    action: { label: "จัดการระบบ", to: "/admin/products", icon: "🛠️" },
     mobileTitle: "ผู้ดูแลระบบ",
     mobileDetail: "จัดการข้อมูลเว็บไซต์",
   },
@@ -92,9 +116,32 @@ export default function Navbar() {
   const timelineRef = useRef(null);
   const profileTimelineRef = useRef(null);
   const location = useLocation();
+  const navigate = useNavigate();
+  const toast = useToast();
+
+  const { currentUser, logout } = useAuth();
+  const currentRole = currentUser?.role || "guest";
+
   const navigation =
-    navigationByRole[NAV_PREVIEW_ROLE] ?? navigationByRole.guest;
+    navigationByRole[currentRole] ?? navigationByRole.guest;
   const { links, action } = navigation;
+
+  const displayName =
+    currentUser?.firstName || (currentRole === "admin" ? "ผู้ดูแลระบบ" : "สมาชิก");
+  const displayRole =
+    currentRole === "admin"
+      ? "ผู้ดูแลระบบ"
+      : currentUser?.tierStatus
+        ? `สมาชิก ${currentUser.tierStatus}`
+        : "สมาชิก";
+
+  const handleLogout = () => {
+    logout();
+    setIsProfileOpen(false);
+    setIsOpen(false);
+    toast.success("ออกจากระบบเรียบร้อยแล้ว");
+    navigate("/");
+  };
 
   useLayoutEffect(() => {
     const context = gsap.context(() => {
@@ -227,7 +274,7 @@ export default function Navbar() {
           </Link>
 
           <div className="flex items-center gap-2 lg:hidden">
-            {NAV_PREVIEW_ROLE === "customer" && (
+            {currentRole === "customer" && (
               <Link
                 to={action.to}
                 aria-label={`ตะกร้า มีสินค้า ${action.badge} รายการ`}
@@ -242,7 +289,7 @@ export default function Navbar() {
 
             <button
               type="button"
-              className="grid h-12 w-12 place-items-center rounded-full bg-[#3d2c2e] text-white shadow-[0_8px_20px_rgba(61,44,46,.22)] sm:h-14 sm:w-14"
+              className="grid h-12 w-12 place-items-center rounded-full bg-[#3d2c2e] text-white shadow-[0_8px_20px_rgba(61,44,46,.22)] sm:h-14 sm:w-14 cursor-pointer"
               aria-label={isOpen ? "ปิดเมนู" : "เปิดเมนู"}
               aria-expanded={isOpen}
               aria-controls="mobile-navigation"
@@ -282,38 +329,49 @@ export default function Navbar() {
           ))}
         </div>
 
-        {NAV_PREVIEW_ROLE === "customer" ? (
+        {currentUser ? (
           <div className="mr-1 hidden items-center gap-2 lg:flex">
-            <Link
-              to={action.to}
-              aria-label={`ตะกร้า มีสินค้า ${action.badge} รายการ`}
-              className="relative grid h-13 w-13 shrink-0 place-items-center rounded-full text-[#4c1f08] transition-colors duration-200 hover:bg-[#8d593a]/15"
-            >
-              <BasketIcon />
-              <span className="absolute -right-1 -top-1 grid h-6 min-w-6 place-items-center rounded-full border-2 border-[#f1ead7] bg-[#c89465] px-1 text-xs font-bold text-white">
-                {action.badge}
-              </span>
-            </Link>
+            {currentRole === "customer" && (
+              <Link
+                to={action.to}
+                aria-label={`ตะกร้า มีสินค้า ${action.badge} รายการ`}
+                className="relative grid h-13 w-13 shrink-0 place-items-center rounded-full text-[#4c1f08] transition-colors duration-200 hover:bg-[#8d593a]/15"
+              >
+                <BasketIcon />
+                <span className="absolute -right-1 -top-1 grid h-6 min-w-6 place-items-center rounded-full border-2 border-[#f1ead7] bg-[#c89465] px-1 text-xs font-bold text-white">
+                  {action.badge}
+                </span>
+              </Link>
+            )}
 
             <div ref={profileMenuRef} className="relative">
               <button
                 type="button"
                 onClick={() => setIsProfileOpen((current) => !current)}
-                className="inline-flex h-13 items-center gap-2.5 whitespace-nowrap rounded-full bg-[#4c1f08] py-1.5 pl-1.5 pr-4 font-bold text-white shadow-sm cursor-pointer hover:bg-[#6b3215]"
+                className="inline-flex h-13 items-center gap-2.5 whitespace-nowrap rounded-full bg-[#4c1f08] py-1.5 pl-2 pr-4 font-bold text-white shadow-sm cursor-pointer hover:bg-[#6b3215] transition-colors"
                 aria-haspopup="menu"
                 aria-expanded={isProfileOpen}
-                aria-controls="customer-profile-menu"
+                aria-controls="profile-dropdown-menu"
               >
-                <img
-                  src={navigation.profile.avatar}
-                  alt=""
-                  className="h-10 w-10 rounded-full border-2 border-white/70 object-cover"
-                />
-                <span className="text-lg">{navigation.profile.name}</span>
+                {currentRole === "admin" ? (
+                  <span className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-lg">
+                    🛠️
+                  </span>
+                ) : (
+                  <img
+                    src={customerAvatar}
+                    alt=""
+                    className="h-10 w-10 rounded-full border-2 border-white/70 object-cover"
+                  />
+                )}
+                <div className="flex flex-col text-left">
+                  <span className="text-base leading-tight font-bold">{displayName}</span>
+                  <span className="text-xs font-normal text-[#e7d8cb] leading-none">{displayRole}</span>
+                </div>
                 <svg
                   viewBox="0 0 20 20"
                   fill="currentColor"
-                  className={`h-4 w-4 transition-transform ${isProfileOpen ? "rotate-180" : ""}`}
+                  className={`h-4 w-4 transition-transform duration-200 ${isProfileOpen ? "rotate-180" : ""}`}
                   aria-hidden="true"
                 >
                   <path d="m5.25 7.5 4.75 4.75 4.75-4.75" />
@@ -322,52 +380,82 @@ export default function Navbar() {
 
               <div
                 ref={profileDropdownRef}
-                id="customer-profile-menu"
+                id="profile-dropdown-menu"
                 role="menu"
                 aria-hidden={!isProfileOpen}
-                className={`invisible absolute right-0 top-[calc(100%+4px)] w-64 origin-top-right overflow-hidden rounded-4xl border border-[#dfd1c1] bg-[#fdfbf7] p-2 text-[#3d2c2e] opacity-0 shadow-[0_18px_45px_rgba(61,44,46,0.2)] ${isProfileOpen ? "pointer-events-auto" : "pointer-events-none"}`}
+                className={`invisible absolute right-0 top-[calc(100%+8px)] w-64 origin-top-right overflow-hidden rounded-3xl border border-[#dfd1c1] bg-[#fdfbf7] p-2 text-[#3d2c2e] opacity-0 shadow-[0_18px_45px_rgba(61,44,46,0.2)] ${isProfileOpen ? "pointer-events-auto" : "pointer-events-none"}`}
               >
-                <Link
-                  data-profile-menu-item
-                  to="/profile"
-                  role="menuitem"
-                  tabIndex={isProfileOpen ? 0 : -1}
-                  className="flex items-center gap-3 rounded-full px-4 py-3 font-medium transition-colors hover:bg-[#f1dec9]"
-                >
-                  <ProfileMenuIcon type="profile" />
-                  โปรไฟล์ของฉัน
-                </Link>
-                <Link
-                  data-profile-menu-item
-                  to="/orders"
-                  role="menuitem"
-                  tabIndex={isProfileOpen ? 0 : -1}
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 font-medium transition-colors hover:bg-[#f1dec9]"
-                >
-                  <ProfileMenuIcon type="orders" />
-                  รายการคำสั่งซื้อของฉัน
-                </Link>
-                <Link
-                  data-profile-menu-item
-                  to="/profile/edit"
-                  role="menuitem"
-                  tabIndex={isProfileOpen ? 0 : -1}
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 font-medium transition-colors hover:bg-[#f1dec9]"
-                >
-                  <ProfileMenuIcon type="edit" />
-                  แก้ไขข้อมูลส่วนตัว
-                </Link>
+                {currentRole === "customer" ? (
+                  <>
+                    <Link
+                      data-profile-menu-item
+                      to="/profile"
+                      role="menuitem"
+                      tabIndex={isProfileOpen ? 0 : -1}
+                      className="flex items-center gap-3 rounded-2xl px-4 py-3 font-medium transition-colors hover:bg-[#f1dec9]"
+                    >
+                      <ProfileMenuIcon type="profile" />
+                      โปรไฟล์ของฉัน
+                    </Link>
+                    <Link
+                      data-profile-menu-item
+                      to="/orders"
+                      role="menuitem"
+                      tabIndex={isProfileOpen ? 0 : -1}
+                      className="flex items-center gap-3 rounded-2xl px-4 py-3 font-medium transition-colors hover:bg-[#f1dec9]"
+                    >
+                      <ProfileMenuIcon type="orders" />
+                      รายการคำสั่งซื้อของฉัน
+                    </Link>
+                    <Link
+                      data-profile-menu-item
+                      to="/profile/edit"
+                      role="menuitem"
+                      tabIndex={isProfileOpen ? 0 : -1}
+                      className="flex items-center gap-3 rounded-2xl px-4 py-3 font-medium transition-colors hover:bg-[#f1dec9]"
+                    >
+                      <ProfileMenuIcon type="edit" />
+                      แก้ไขข้อมูลส่วนตัว
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      data-profile-menu-item
+                      to="/admin/products"
+                      role="menuitem"
+                      tabIndex={isProfileOpen ? 0 : -1}
+                      className="flex items-center gap-3 rounded-2xl px-4 py-3 font-medium transition-colors hover:bg-[#f1dec9]"
+                    >
+                      <ProfileMenuIcon type="orders" />
+                      จัดการรายการสินค้า
+                    </Link>
+                    <Link
+                      data-profile-menu-item
+                      to="/admin/products/new"
+                      role="menuitem"
+                      tabIndex={isProfileOpen ? 0 : -1}
+                      className="flex items-center gap-3 rounded-2xl px-4 py-3 font-medium transition-colors hover:bg-[#f1dec9]"
+                    >
+                      <ProfileMenuIcon type="edit" />
+                      เพิ่มสินค้าใหม่
+                    </Link>
+                  </>
+                )}
 
-                <Link
+                <div className="my-1 border-t border-[#dfd1c1]/60" />
+
+                <button
+                  type="button"
                   data-profile-menu-item
-                  to="/login"
+                  onClick={handleLogout}
                   role="menuitem"
                   tabIndex={isProfileOpen ? 0 : -1}
-                  className="flex items-center gap-3 rounded-b-3xl rounded-t-lg px-4 py-3 font-bold text-[#9b3f32] transition-colors hover:bg-[#f8e4df]"
+                  className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 font-bold text-[#9b3f32] transition-colors hover:bg-[#f8e4df] cursor-pointer text-left"
                 >
                   <ProfileMenuIcon type="logout" />
                   ออกจากระบบ
-                </Link>
+                </button>
               </div>
             </div>
           </div>
@@ -401,24 +489,34 @@ export default function Navbar() {
 
             <div className="my-3 h-px bg-[#3d2c2e]/12" />
 
-            {NAV_PREVIEW_ROLE === "customer" ? (
-              <div data-mobile-menu-item>
-                <Link
-                  to={navigation.profile.to}
-                  className="flex min-w-0 items-center gap-3 rounded-full bg-[#3d2c2e] p-2 pr-4 text-white shadow-[0_10px_25px_rgba(61,44,46,.18)]"
-                >
-                  <img
-                    src={navigation.profile.avatar}
-                    alt=""
-                    className="h-11 w-11 shrink-0 rounded-full border-2 border-white/70 object-cover"
-                  />
-                  <span className="min-w-0">
-                    <strong className="block truncate">{navigation.profile.name}</strong>
-                    <span className="block truncate text-sm text-[#e7d8cb]">
-                      บัญชีของฉัน
+            {currentUser ? (
+              <div data-mobile-menu-item className="space-y-2">
+                <div className="flex items-center gap-3 rounded-3xl bg-[#3d2c2e] p-3.5 text-white shadow-[0_10px_25px_rgba(61,44,46,.18)]">
+                  {currentRole === "admin" ? (
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/12 text-xl">
+                      🛠️
                     </span>
-                  </span>
-                </Link>
+                  ) : (
+                    <img
+                      src={customerAvatar}
+                      alt=""
+                      className="h-11 w-11 shrink-0 rounded-full border-2 border-white/70 object-cover"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <strong className="block truncate text-base">{displayName}</strong>
+                    <span className="block truncate text-xs text-[#e7d8cb]">
+                      {displayRole}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="shrink-0 rounded-full bg-white/15 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-white/25 cursor-pointer"
+                  >
+                    ออกจากระบบ
+                  </button>
+                </div>
               </div>
             ) : (
               <Link
