@@ -1,22 +1,20 @@
 {
-  "name": "server",
+  "name": "jsd13-that-tae",
   "version": "1.0.0",
-  "private": true,
+  "description": "monorepo with api + frontend",
+  "license": "ISC",
+  "author": "ctrlaltnate",
   "type": "module",
-  "main": "server.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js",
-    "mock": "node index.js",
-    "mock:dev": "node --watch index.js"
+    "dev": "node --env-file=.env --watch src/server.js"
   },
   "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "mongoose": "^8.10.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.9"
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.9.5"
   }
 }
