@@ -1,10 +1,9 @@
 
-
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Layout } from './components/index.js'
 import HomePage from './pages/Home.jsx'
 import ToastProvider from './context/ToastProvider.jsx'
-
+import { AppProvider } from './context/AppContext.jsx';
 import Login from "./pages/Login.jsx"
 import Register from "./pages/Register.jsx"
 import AdminProductList from './pages/admin/AdminProductList.jsx'
@@ -16,6 +15,12 @@ import CheckoutPage from "./pages/CheckoutPage.jsx";
 import OrderSuccess from "./pages/OrderSuccess.jsx";
 import ElementQuizPage from "./pages/ElementQuizPage.jsx";
 import MenuRandomizerPage from "./pages/MenuRandomizerPage.jsx";
+
+import MenuOverview from './pages/MenuOverview'
+import MenuDetail from './pages/MenuDetail'
+
+
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -62,6 +67,16 @@ const router = createBrowserRouter([
         path: "menu-randomizer",
         element: <MenuRandomizerPage />,
       },
+
+      {
+        path: "/menus",
+        element: <MenuOverview />
+      },
+
+      {
+        path: "/menus/:id",
+        element: <MenuDetail />
+      }
     ]
   }
 ]);
