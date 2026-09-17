@@ -1,47 +1,29 @@
-import dns from "node:dns";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 
-// แก้ไขปัญหา DNS ใน Windows / Router ไม่รองรับ querySrv ของ MongoDB Atlas (querySrv ECONNREFUSED)
-try {
-  dns.setServers(["8.8.8.8", "1.1.1.1"]);
-} catch (e) {
-  // ละเว้นหากสภาพแวดล้อมไม่รองรับ
-}
-
 dotenv.config();
-
-import "./models/Product.js";
-import "./models/Cart.js";
-import "./models/Order.js";
-
-import checkoutRoutes from "./routes/checkoutRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const MONGO_URI =
-  process.env.MONGO_URI || "mongodb://localhost:27017/jsd13_group4";
+const MONGODB_URI = process.env.MONGODB_URI;
 
-app.use(cors());
+// Middleware
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Request Logger: แสดง Log ทุกครั้งที่มีคนยิง API เข้ามา
-app.use((req, res, next) => {
-  const time = new Date().toLocaleTimeString();
-  console.log(`[${time}] ${req.method} ${req.originalUrl}`);
-  next();
-});
-
-// Health Check Route สำหรับทดสอบว่า Server รันติดปกติ
-app.get("/", (req, res) => {
-  res.json({
-    status: "success",
-    message: "🚀 Backend API is running successfully!",
-    database:
-      mongoose.connection.readyState === 1 ? "Connected" : "Disconnected",
+// Health Check Route
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    message: "Cooking Kit API Server is running",
     timestamp: new Date().toISOString(),
   });
 });
@@ -122,3 +104,46 @@ const startServer = async () => {
 };
 
 startServer();
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Cannot ${req.method} ${req.originalUrl}`,
+  });
+});
+
+// Centralized Error Handling Middleware
+app.use((err, req, res, next) => {
+  console.error("Server Error:", err.stack || err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+  });
+});
+
+// Database Connection & Server Start
+if (MONGODB_URI) {
+  mongoose
+    .connect(MONGODB_URI)
+    .then(() => {
+      console.log("Connected to MongoDB successfully");
+      app.listen(PORT, () => {
+        console.log(`Server running on http://localhost:${PORT}`);
+      });
+    })
+    .catch((error) => {
+      console.error("MongoDB connection failed:", error.message);
+      // Still start server so APIs can report status
+      app.listen(PORT, () => {
+        console.log(`Server running without DB on http://localhost:${PORT}`);
+      });
+    });
+} else {
+  console.warn("Warning: MONGODB_URI not set in environment variables");
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+export default app;

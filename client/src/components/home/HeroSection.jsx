@@ -93,19 +93,21 @@ export default function HeroSection() {
           <div className="mt-7 grid gap-3 min-[430px]:flex min-[430px]:flex-wrap sm:mt-8">
             <a
               href={slide.primary[1]}
-              className="shimmer-button rounded-full bg-white px-6 py-3.5 text-center font-bold text-[#3d2c2e] transition-colors hover:bg-[#f1dec9] sm:px-7"
+              className="shimmer-button rounded-full bg-white px-6 py-3.5 text-xl text-center font-bold text-[#3d2c2e] transition-colors hover:bg-[#f1dec9] sm:px-7"
             >
               {slide.primary[0]}
             </a>
             <a
               href={slide.secondary[1]}
-              className="rounded-full border border-white/40 bg-black/10 px-6 py-3.5 text-center font-bold backdrop-blur-sm transition-colors hover:bg-white/15 sm:px-7"
+              className="rounded-full border border-white/40 
+              bg-black/10 px-6 py-3.5 text-center font-bold backdrop-blur-sm text-xl
+              transition-colors hover:bg-white/15 sm:px-7"
             >
               {slide.secondary[0]}
             </a>
           </div>
           {slide.benefits && (
-            <div className="mt-9 flex flex-wrap gap-x-7 gap-y-2 text-sm text-white/75">
+            <div className="mt-9 flex flex-wrap gap-x-7 gap-y-2 text-lg text-white/75">
               {slide.benefits.map((item) => (
                 <span key={item}>✓ {item}</span>
               ))}
