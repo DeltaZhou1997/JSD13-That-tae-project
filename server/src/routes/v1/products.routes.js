@@ -5,8 +5,8 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
-} from "../../src/data/products.js";
-import { validateProduct } from "../../validation/validateProduct.js";
+} from "../../data/products.js";
+import { validateProduct } from "../../../validation/validateProduct.js";
 
 const router = Router();
 

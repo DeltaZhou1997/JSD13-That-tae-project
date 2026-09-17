@@ -2,12 +2,13 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import checkoutRoutes from "./src/routes/v1/checkout.routes.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
 
 // Middleware
 app.use(
@@ -83,67 +84,29 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ฟังก์ชันเริ่มการทำงานของ Server
 const startServer = async () => {
-  try {
-    await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 5000,
-    });
-    console.log("✅ เชื่อมต่อ MongoDB สำเร็จเรียบร้อยแล้ว");
-  } catch (err) {
-    console.error("⚠️ ไม่สามารถเชื่อมต่อ MongoDB ได้:", err.message);
-    console.log(
-      "👉 คุณสามารถรัน Server ทดสอบ route เบื้องต้นได้ หรือตั้งค่า MONGO_URI ใน .env ให้ถูกต้อง",
-    );
+  if (MONGO_URI) {
+    try {
+      await mongoose.connect(MONGO_URI, {
+        serverSelectionTimeoutMS: 5000,
+      });
+      console.log("✅ เชื่อมต่อ MongoDB สำเร็จเรียบร้อยแล้ว");
+    } catch (err) {
+      console.error("⚠️ ไม่สามารถเชื่อมต่อ MongoDB ได้:", err.message);
+      console.log(
+        "👉 คุณสามารถรัน Server ทดสอบ route เบื้องต้นได้ หรือตั้งค่า MONGO_URI ใน .env ให้ถูกต้อง",
+      );
+    }
+  } else {
+    console.warn("⚠️ คำเตือน: ยังไม่ได้ตั้งค่า MONGO_URI ในไฟล์ .env");
   }
 
   app.listen(PORT, () => {
     console.log(`🚀 Server กำลังรันอยู่ที่ http://localhost:${PORT}`);
-    console.log(`📡 ทดสอบ Health Check ได้ที่ http://localhost:${PORT}/`);
+    console.log(`📡 ทดสอบ Health Check ได้ที่ http://localhost:${PORT}/api/health`);
   });
 };
 
 startServer();
-// 404 Handler
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: `Cannot ${req.method} ${req.originalUrl}`,
-  });
-});
-
-// Centralized Error Handling Middleware
-app.use((err, req, res, next) => {
-  console.error("Server Error:", err.stack || err);
-  res.status(err.status || 500).json({
-    success: false,
-    message: err.message || "Internal Server Error",
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
-  });
-});
-
-// Database Connection & Server Start
-if (MONGODB_URI) {
-  mongoose
-    .connect(MONGODB_URI)
-    .then(() => {
-      console.log("Connected to MongoDB successfully");
-      app.listen(PORT, () => {
-        console.log(`Server running on http://localhost:${PORT}`);
-      });
-    })
-    .catch((error) => {
-      console.error("MongoDB connection failed:", error.message);
-      // Still start server so APIs can report status
-      app.listen(PORT, () => {
-        console.log(`Server running without DB on http://localhost:${PORT}`);
-      });
-    });
-} else {
-  console.warn("Warning: MONGODB_URI not set in environment variables");
-  app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-  });
-}
 
 export default app;

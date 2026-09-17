@@ -1,10 +1,14 @@
-import dishes from "../../mock-data/dishes";
 import { useEffect, useState } from 'react';
 import { useOutletContext, Link } from 'react-router-dom';
-import CartItem from './cartItems';
+import CartItem from './cartItems.jsx';
 
 export default function Cart() {
-  const { cartItems, handleUpdateQuantity, handleRemoveItem } = useOutletContext();
+  const context = useOutletContext() || {};
+  const {
+    cartItems = [],
+    handleUpdateQuantity = () => {},
+    handleRemoveItem = () => {},
+  } = context;
   const [hasAlerted, setHasAlerted] = useState(false);
 
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);

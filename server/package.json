@@ -5,9 +5,10 @@
   "license": "ISC",
   "author": "ctrlaltnate",
   "type": "module",
-  "main": "src/server.js",
+  "main": "server.js",
   "scripts": {
-    "dev": "node --env-file=.env --watch src/server.js"
+    "start": "node server.js",
+    "dev": "node --env-file=.env --watch server.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { users } from "../mock-data/users";
@@ -49,7 +49,7 @@ export default function CheckoutPage() {
   // 🟢 หรือถ้าดึงจาก Backend ของตัวเอง (GET /api/cart/:user_id):
   //    - ปลดล็อกโค้ด useEffect ด้านล่างนี้เพื่อดึงข้อมูลตะกร้าจริงจาก MongoDB
 
-  const [cartItems, setCartItems] = useState([
+  const [cartItems] = useState([
     {
       id: "PROD-001",
       name: "แกงส้มใต้ปลากะพงยอดยอดมะพร้าว",
@@ -173,7 +173,7 @@ export default function CheckoutPage() {
     }
     if (!formData.phone.trim()) {
       newErrors.phone = "กรุณากรอกเบอร์โทรศัพท์";
-    } else if (!/^[0-9\-]{9,12}$/.test(formData.phone.trim())) {
+    } else if (!/^[0-9-]{9,12}$/.test(formData.phone.trim())) {
       newErrors.phone = "รูปแบบเบอร์โทรศัพท์ไม่ถูกต้อง";
     }
     if (!formData.address.trim()) {
