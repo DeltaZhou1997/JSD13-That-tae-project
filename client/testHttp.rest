@@ -1,0 +1,147 @@
+### ต้องรัน mock API ก่อน: npm run server (หรือ npm run server:dev)
+### Base URL ของ mock server (แก้ PORT ได้ผ่าน env ตอนรัน server)
+@baseUrl = http://localhost:4000
+
+### 0. Health check
+GET {{baseUrl}}/
+
+
+### =========================================
+### GET /api/products — รายการสินค้าทั้งหมด
+### =========================================
+
+### 1. ดึงสินค้าทั้งหมด
+GET {{baseUrl}}/api/products
+
+
+### =========================================
+### GET /api/products/:id — สินค้าชิ้นเดียว
+### =========================================
+
+### 2. ดึงสินค้าที่มีอยู่จริง (ควรได้ 200)
+GET {{baseUrl}}/api/products/dish_001
+
+### 3. ดึงสินค้าที่ไม่มีอยู่ (ควรได้ 404)
+GET {{baseUrl}}/api/products/dish_999
+
+
+### =========================================
+### POST /api/products — สร้างสินค้าใหม่
+### =========================================
+
+### 4. สร้างสินค้าใหม่ด้วยข้อมูลถูกต้องครบ (ควรได้ 201 พร้อม _id ใหม่ เช่น dish_031)
+POST {{baseUrl}}/api/products
+Content-Type: application/json
+
+{
+  "name": "แกงฮังเลทดสอบ",
+  "region": "northern",
+  "regionNameTh": "ภาคเหนือ",
+  "description": "เมนูทดสอบสำหรับยิง API",
+  "history": "ทดสอบประวัติเมนู",
+  "price": 199,
+  "quantity": 15,
+  "calories": 400,
+  "date": "2026-12-31",
+  "tags": ["ภาคเหนือ", "ทดสอบ"],
+  "ingredients": "พริกแกง 1 ซอง\nหมูสามชั้น 300 กรัม",
+  "cookingSteps": "1. เตรียมวัตถุดิบ\n2. ปรุงให้สุก",
+  "imageUrl": ""
+}
+
+### 5. สร้างสินค้าด้วยข้อมูลผิดครบทุกข้อ (ควรได้ 400 พร้อม errors ทุก field)
+POST {{baseUrl}}/api/products
+Content-Type: application/json
+
+{
+  "name": "ab",
+  "description": "",
+  "price": 0,
+  "quantity": -1,
+  "date": "2020-01-01",
+  "tags": []
+}
+
+### 6. สร้างสินค้าโดยราคาไม่ใช่ตัวเลข (ควรได้ 400 เฉพาะ error ของ price)
+POST {{baseUrl}}/api/products
+Content-Type: application/json
+
+{
+  "name": "เมนูทดสอบราคา",
+  "description": "ทดสอบ",
+  "price": "ไม่ใช่ตัวเลข",
+  "quantity": 5,
+  "date": "2026-12-31",
+  "tags": ["ทดสอบ"]
+}
+
+
+### =========================================
+### PUT /api/products/:id — แก้ไขสินค้า
+### =========================================
+
+### 7. แก้ไขสินค้าที่มีอยู่จริงด้วยข้อมูลถูกต้อง (ควรได้ 200 พร้อมข้อมูลที่อัปเดตแล้ว)
+### หมายเหตุ: รัน request 4 ก่อน เพื่อสร้าง dish_031 ให้มีอยู่จริง แล้วค่อยรัน request นี้
+PUT {{baseUrl}}/api/products/dish_031
+Content-Type: application/json
+
+{
+  "name": "แกงฮังเลทดสอบ (แก้ไขแล้ว)",
+  "region": "northern",
+  "regionNameTh": "ภาคเหนือ",
+  "description": "แก้ไขรายละเอียดเมนูแล้ว",
+  "history": "ทดสอบประวัติเมนู",
+  "price": 219,
+  "quantity": 20,
+  "calories": 420,
+  "date": "2026-12-31",
+  "tags": ["ภาคเหนือ", "ทดสอบ", "แก้ไข"],
+  "ingredients": "พริกแกง 1 ซอง",
+  "cookingSteps": "1. เตรียมวัตถุดิบ",
+  "imageUrl": ""
+}
+
+### 8. แก้ไขสินค้าที่ไม่มีอยู่จริง (ควรได้ 404)
+PUT {{baseUrl}}/api/products/dish_999
+Content-Type: application/json
+
+{
+  "name": "ไม่มีจริง",
+  "description": "ทดสอบ",
+  "price": 100,
+  "quantity": 5,
+  "date": "2026-12-31",
+  "tags": ["ทดสอบ"]
+}
+
+### 9. แก้ไขสินค้าที่มีอยู่จริงแต่ข้อมูลไม่ผ่าน validation (ควรได้ 400)
+PUT {{baseUrl}}/api/products/dish_001
+Content-Type: application/json
+
+{
+  "name": "x",
+  "description": "",
+  "price": -5,
+  "quantity": 1.5,
+  "date": "",
+  "tags": []
+}
+
+
+### =========================================
+### DELETE /api/products/:id — ลบสินค้า
+### =========================================
+
+### 10. ลบสินค้าที่มีอยู่จริง (ควรได้ 200) — รัน request 4 ก่อนถ้ายังไม่มี dish_031
+DELETE {{baseUrl}}/api/products/dish_031
+
+### 11. ลบซ้ำอีกครั้ง / ลบสินค้าที่ไม่มีอยู่จริง (ควรได้ 404)
+DELETE {{baseUrl}}/api/products/dish_031
+
+
+### =========================================
+### เส้นทางที่ไม่รู้จัก (ควรได้ 404 จาก middleware กลาง)
+### =========================================
+
+### 12. path ที่ไม่มีอยู่จริงในระบบ
+GET {{baseUrl}}/api/unknown-route

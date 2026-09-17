@@ -30,4 +30,19 @@ export default [
       ],
     },
   },
+  {
+    // server/ รันบน Node ไม่ใช่เบราว์เซอร์ ต้องใช้ global set คนละแบบ (process, console เป็นต้น)
+    files: ['server/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.node,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+    },
+  },
 ]

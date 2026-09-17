@@ -8,66 +8,21 @@ import StepsSection from "../components/home/StepsSection.jsx";
 import ElementsSection from "../components/home/ElementsSection.jsx";
 import ReviewsSection from "../components/home/ReviewsSection.jsx";
 import useHomeAnimations from "../hooks/useHomeAnimations.js";
-import { useOutletContext } from "react-router-dom";
-import dishes from "../mock-data/dishes.js";
 
-function ProductList() {
-  const { handleAddToCart } = useOutletContext();
-  const dishList = Object.values(dishes);
-
-  return (
-    <div
-      className="product-grid"
-      style={{
-        display: "flex",
-        gap: "20px",
-        flexWrap: "wrap",
-        justifyContent: "center",
-        padding: "20px",
-      }}
-    >
-      {dishList.slice(0, 5).map((dish) => (
-        <div
-          key={dish._id}
-          className="card"
-          style={{
-            border: "1px solid #ccc",
-            padding: "15px",
-            borderRadius: "8px",
-          }}
-        >
-          <h3>{dish.nameTh}</h3>
-          <p>ราคา: {dish.price} บาท</p>
-          <button
-            onClick={() => handleAddToCart(dish)}
-            style={{ padding: "8px 12px", cursor: "pointer" }}
-          >
-            เพิ่มลงตะกร้า
-          </button>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-// 2. HomePage ตัวหลัก
 export default function HomePage() {
   const pageRef = useRef(null);
+
+  // เริ่ม animation และจำกัดการทำงานให้อยู่ภายในหน้า Home เท่านั้น
   useHomeAnimations(pageRef);
 
   return (
     <div ref={pageRef} className="home-page w-full">
+      {/* Hero แสดงเต็มความกว้างหน้าจอ */}
       <HeroSection />
 
       <div data-animate-section>
         <FeatureSection />
       </div>
-
-      <div data-animate-section>
-        <h2 style={{ textAlign: "center", marginTop: "20px" }}>HOT</h2>
-        <ProductList />
-      </div>
-
       <div data-animate-section>
         <RegionalMapSection />
       </div>

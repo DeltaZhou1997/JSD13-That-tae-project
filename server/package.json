@@ -1,0 +1,20 @@
+{
+  "name": "jsd13-that-tae",
+  "version": "1.0.0",
+  "description": "monorepo with api + frontend",
+  "license": "ISC",
+  "author": "ctrlaltnate",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node --env-file=.env --watch src/server.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.9.5"
+  }
+}

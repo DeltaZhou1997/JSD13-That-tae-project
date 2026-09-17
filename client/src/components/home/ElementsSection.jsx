@@ -13,48 +13,41 @@ const plans = [
 
 export default function ElementsSection() {
   return (
-    <section id="plans" className="home-section bg-[#fdfbf7]">
+    <section id="plans" className="home-section overflow-hidden bg-[#fdfbf7]">
       <div className="home-container">
-        <div className="home-heading">
-          <span className="home-eyebrow">Weekly plans</span>
+        <div className="home-heading max-w-3xl">
           <h2 className="mt-4">เลือกจำนวนมื้อให้พอดีกับชีวิต</h2>
-          <p>เปลี่ยนเมนูหรือหยุดรับกล่องได้ตามต้องการ ราคายังไม่รวมค่าจัดส่ง</p>
+          <span className="text-2xl">
+            เปลี่ยนเมนูหรือหยุดรับกล่องได้ตามต้องการ ราคายังไม่รวมค่าจัดส่ง
+          </span>
         </div>
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {plans.map((plan) => (
             <article
               key={plan.size}
-              className={`relative rounded-[1.8rem] border p-6 shadow-[0_18px_45px_rgba(61,44,46,0.06)] transition-shadow duration-300 hover:shadow-[0_22px_55px_rgba(61,44,46,0.12)] ${plan.popular ? "border-[#3d2c2e] bg-[#3d2c2e] text-white" : "border-[#e8dfd1] bg-white"}`}
+              className="relative flex h-full flex-col rounded-[1.8rem] border border-[#e8dfd1] bg-white p-6 text-[#2f2119] shadow-[0_18px_45px_rgba(61,44,46,0.06)]"
             >
-              <div
-                className={`absolute inset-x-0 top-0 h-1 ${plan.popular ? "bg-[#c89465]" : "bg-[#f3e4d5]"}`}
-              />
-              {plan.popular && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#c89465] px-4 py-1 text-xs font-bold text-white shadow-md">
-                  ยอดนิยม
-                </span>
-              )}
               <span
-                className={`text-xs font-bold uppercase tracking-widest ${plan.popular ? "text-[#d8c8bb]" : "text-[#8d7b68]"}`}
+                className="flex justify-center rounded-full bg-amber-800 px-3 py-2 text-xl font-bold uppercase tracking-widest text-white"
               >
                 Size {plan.size}
               </span>
               <div className="mt-5 flex items-end gap-2">
                 <strong className="text-5xl leading-none">{plan.kits}</strong>
-                <span className="pb-1">Kits / สัปดาห์</span>
+                <span className="pb-1 text-base font-medium">ชุด / สัปดาห์</span>
               </div>
               <p
-                className={`mt-4 min-h-12 text-sm leading-6 ${plan.popular ? "text-[#d8c8bb]" : "text-[#6f675f]"}`}
+                className="mt-4 min-h-14 text-base leading-7 text-[#6f675f]"
               >
                 {plan.note}
               </p>
               <div className="my-6 border-t border-current opacity-20" />
               <div className="flex items-end gap-2">
                 <strong className="text-3xl">฿{plan.price}</strong>
-                <span className="pb-1 text-sm">/ สัปดาห์</span>
+                <span className="pb-1 text-base">/ สัปดาห์</span>
               </div>
               <ul
-                className={`mt-5 space-y-2 text-sm ${plan.popular ? "text-[#efe2d8]" : "text-[#725f52]"}`}
+                className="mt-5 space-y-2 text-base leading-7 text-[#725f52]"
               >
                 <li>• เปลี่ยนเมนูได้ทุกสัปดาห์</li>
                 <li>• มีสูตรและข้อมูลโภชนาการ</li>
@@ -62,7 +55,7 @@ export default function ElementsSection() {
               </ul>
               <button
                 type="button"
-                className={`mt-6 w-full rounded-full py-3 font-bold transition-colors ${plan.popular ? "bg-white text-[#3d2c2e] hover:bg-[#f1dec9]" : "bg-[#f1dec9] text-[#3d2c2e] hover:bg-[#e5ccb2]"}`}
+                className="cursor-pointer mt-4 w-full rounded-full bg-[#f1dec9] px-4 py-3.5 text-lg font-bold text-[#3d2c2e] transition-colors hover:bg-[#3d2c2e] hover:text-white"
               >
                 เลือกแพ็กเกจ
               </button>

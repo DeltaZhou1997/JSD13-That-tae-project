@@ -4,28 +4,22 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-/**
- * รวม animation ของหน้า Home ไว้ที่เดียว เพื่อไม่ให้ component แต่ละส่วนมี logic ปะปน
- * element ที่ต้องการให้แสดงตอนเลื่อนถึง ให้ใส่ data-animate-section
- */
+// animations control
 export default function useHomeAnimations(pageRef) {
   useLayoutEffect(() => {
     const page = pageRef.current;
     if (!page) return undefined;
 
-    // เคารพการตั้งค่าระบบของผู้ใช้ที่ต้องการลดการเคลื่อนไหว
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
     const mobileViewport = window.matchMedia("(max-width: 767px)").matches;
     if (reduceMotion || mobileViewport) return undefined;
 
-    // จำกัด selector ให้อยู่ในหน้า Home และล้าง animation เมื่อออกจากหน้า
     const animationContext = gsap.context(() => {
       const sections = gsap.utils.toArray("[data-animate-section]");
 
       sections.forEach((section) => {
-        // เลือกเฉพาะรายการย่อยที่เหมาะกับการแสดงแบบไล่ลำดับ
         const items = section.querySelectorAll("article, blockquote, details");
 
         gsap.fromTo(
@@ -40,7 +34,6 @@ export default function useHomeAnimations(pageRef) {
           },
         );
 
-        // การ์ดหรือรายการย่อยจะค่อย ๆ แสดงตามกันมา
         if (items.length > 0) {
           gsap.fromTo(
             items,
