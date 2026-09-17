@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-<<<<<<< HEAD
-=======
-import { Link } from "react-router-dom";
->>>>>>> feature/delta-storefront-product-api
 import gsap from "gsap";
 import thailandMap from "../../assets/thailand-map.svg";
 import { dishes, regions } from "../../mock-data/index.js";
+import { Link } from "react-router-dom";
 
 export default function RegionalMapSection() {
   const [activeIndex, setActiveIndex] = useState(0);
