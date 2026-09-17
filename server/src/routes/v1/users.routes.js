@@ -30,7 +30,7 @@ router.get("/:id", (req, res) => {
 // 3. LOGIN - เข้าสู่ระบบและตรวจสอบรหัสผ่าน
 router.post("/login", async (req, res, next) => {
     try {
-        const { email, password } = req.body;
+        const { email, password } = req.body || {};
         if (!email || !password) {
             return res.status(400).json({ message: "กรุณาระบุอีเมลและรหัสผ่าน" });
         }
@@ -61,6 +61,12 @@ router.post("/login", async (req, res, next) => {
 // 4. CREATE USER / REGISTER - สร้างผู้ใช้ใหม่
 router.post("/", async (req, res, next) => {
     try {
+        if (!req.body || typeof req.body !== "object") {
+            return res.status(400).json({
+                message: "กรุณาส่งข้อมูล (Body) ในรูปแบบ JSON",
+            });
+        }
+
         const {
             firstName,
             lastName,
@@ -70,7 +76,7 @@ router.post("/", async (req, res, next) => {
             birthDate,
             gender,
             bloodType,
-        } = req.body;
+        } = req.body || {};
 
         // ตรวจสอบข้อมูลจำเป็น
         if (!firstName || !lastName || !email || !password || !phone) {
@@ -159,7 +165,7 @@ router.put("/:id", async (req, res, next) => {
             conditions,
             isSubscribed,
             tierStatus,
-        } = req.body;
+        } = req.body || {};
 
         // ถ้าเปลี่ยนอีเมล ต้องเช็คว่าซ้ำกับคนอื่นหรือไม่
         if (email && email.trim().toLowerCase() !== user.email.toLowerCase()) {

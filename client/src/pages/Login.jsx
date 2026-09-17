@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { users } from "../mock-data/index";
 import { useAuth } from "../context/AuthContext.js";
 import useToast from "../hooks/useToast.js";
 
@@ -11,24 +10,36 @@ function Login() {
   const { login } = useAuth();
   const toast = useToast();
 
-  const handleLogin = (event) => {
+  const handleLogin = async (event) => { // จัดการ การเข้าระบบ และเทียบรหัสสผ่าน
     event.preventDefault();
-    const isUser = users.find((user) => user.email === email.trim());
 
-    if (!isUser) {
-      toast.error("ไม่พบบัญชีผู้ใช้นี้ในระบบ กรุณาตรวจสอบอีเมลอีกครั้ง");
-      return;
-    }
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      const response = await fetch(`${apiUrl}/api/v1/users/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password: pwd,
+          }),
+        });
 
-    login(isUser);
-    toast.success(
-      `ยินดีต้อนรับคุณ ${isUser.firstName} (${isUser.role === "admin" ? "ผู้ดูแลระบบ" : "สมาชิก"})`,
-    );
+      const data = await response.json();
 
-    if (isUser.role === "admin") {
-      navigate("/admin/products");
-    } else {
-      navigate("/");
+      if (response.ok) {
+        login(data.user);
+        toast.success(
+          `ยินดีต้อนรับคุณ ${data.user.firstName} (${data.user.role === "admin" ? "ผู้ดูแลระบบ" : "สมาชิก"})`,
+        );
+        navigate(data.user.role === "admin" ? "/admin/products" : "/");
+      } else {
+        toast.error(data.message || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+      }
+    } catch (error) {
+      console.error("Error logging in:", error);
+      toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
     }
   };
 

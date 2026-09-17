@@ -1,0 +1,38 @@
+@baseUrl = http://localhost:3001/api/v1
+
+@id = USR-005
+
+### Read all user
+GET {{baseUrl}}/users
+
+### Read user by ID
+GET {{baseUrl}}/users/{{id}}
+
+### Login
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+    "email": "test@example.com",
+    "password": "12345678"
+}
+
+### Register
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+    "firstName": "Supanniga",
+    "lastName": "Doe",
+    "email": "supanniga@mail.com",
+    "password": "123456789",
+    "phone": "1234567890",
+    "birthDate": "1990-01-01",
+    "gender": "Male",
+    "bloodType": "A",
+    "conditions": ["none"],
+    "isSubscribed": false,
+    "tierStatus": "Bronze",
+    "role": "customer",
+    "biaPoints": 0
+}
