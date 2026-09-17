@@ -185,25 +185,10 @@ export default function Navbar() {
           },
           duration * 0.38,
         );
-
-      profileTimelineRef.current = gsap
-        .timeline({ paused: true, defaults: { ease: "power3.out" } })
-        .fromTo(
-          profileDropdownRef.current,
-          { autoAlpha: 0, y: -10, scale: 0.96 },
-          { autoAlpha: 1, y: 0, scale: 1, duration: reduceMotion ? 0.01 : 0.25 },
-        )
-        .fromTo(
-          "[data-profile-menu-item]",
-          { autoAlpha: 0, x: 10 },
-          { autoAlpha: 1, x: 0, stagger: reduceMotion ? 0 : 0.04, duration: reduceMotion ? 0.01 : 0.18 },
-          reduceMotion ? 0 : 0.06,
-        );
     }, headerRef);
 
     return () => {
       timelineRef.current = null;
-      profileTimelineRef.current = null;
       context.revert();
     };
   }, []);

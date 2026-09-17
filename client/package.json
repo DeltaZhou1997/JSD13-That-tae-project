@@ -7,17 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "server": "node ../server/index.js",
-    "server:dev": "node --watch ../server/index.js"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.0.14",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
     "gsap": "^3.15.0",
-    "lottie-react": "^3.1.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router": "^7.18.2",
