@@ -28,3 +28,4 @@ atlas-credentials.env
 .tmp_pypdf*
 .vite/
 client/.vite/
+.md
