@@ -1,4 +1,4 @@
-import dishes from "../../../client/src/mock-data/dishes.js";
+import dishes from "../mockDB/dishes.js";
 
 const DEFAULT_QUANTITY = 20;
 const DEFAULT_CALORIES = 350;
