@@ -20,7 +20,7 @@ import MenuRandomizerPage from "./pages/MenuRandomizerPage.jsx";
 import MenuOverview from './pages/MenuOverview'
 import MenuDetail from './pages/MenuDetail'
 
-import Cart from './components/Cream/Cart.jsx';
+import Cart from './components/cart/Cart.jsx';
 import OrdersPage from './pages/OrdersPage.jsx';
 import ProfilePage from './pages/ProfilePage.jsx';
 
