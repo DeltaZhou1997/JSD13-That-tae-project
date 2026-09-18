@@ -35,14 +35,24 @@ export default function MenuDetail() {
   const [quantity, setQuantity] = useState(1)
   const [selectedImage, setSelectedImage] = useState('')
 
+  const cleanUrl = (url) => {
+    if (!url || typeof url !== 'string') return '';
+    if (url.startsWith('file://')) {
+      const match = url.match(/assets\/([^\/]+)\/([^\/]+)$/);
+      return match ? `/assets/${match[1]}/${match[2]}` : url;
+    }
+    return url;
+  };
+
   useEffect(() => {
     const foundDish = dishes[id] || (getProductById ? getProductById(id) : null);
     if (foundDish) {
       setMenu(foundDish);
-      const images = Array.isArray(foundDish.imageUrl)
+      const rawImgs = Array.isArray(foundDish.imageUrl)
         ? foundDish.imageUrl
         : [foundDish.imageUrl].filter(Boolean);
-      setSelectedImage(images[0] || '');
+      const cleaned = (rawImgs.length > 0 ? rawImgs : (foundDish.images || [])).map(cleanUrl);
+      setSelectedImage(cleaned[0] || '');
     }
   }, [id, getProductById])
 
@@ -59,9 +69,10 @@ export default function MenuDetail() {
 
   const title = language === 'th' ? menu.nameTh : menu.nameEn || menu.nameTh;
   const regionName = language === 'th' ? menu.regionNameTh : menu.region;
-  const images = Array.isArray(menu.imageUrl)
+  const rawImages = Array.isArray(menu.imageUrl)
     ? menu.imageUrl
     : [menu.imageUrl].filter(Boolean);
+  const images = (rawImages.length > 0 ? rawImages : (menu.images || [])).map(cleanUrl);
 
   const recipe = Array.isArray(menu.recipe) ? menu.recipe : [];
   const nutrition = menu.nutritionCache || null;
@@ -84,9 +95,13 @@ export default function MenuDetail() {
       <section className="grid gap-9 lg:grid-cols-2 lg:items-center">
         <div>
           <img
-            src={selectedImage}
+            src={cleanUrl(selectedImage) || images[0] || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80"}
             alt={title}
-            className="h-96 w-full rounded-2xl border border-[#d4c5b0] object-cover shadow-md"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              e.currentTarget.src = (images && images[1]) || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80";
+            }}
+            className="h-96 w-full rounded-2xl border border-[#d4c5b0] object-cover shadow-md bg-[#f0e6d8] dark:bg-[#3d2c2e]"
           />
           {images.length > 1 && (
             <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
@@ -94,11 +109,19 @@ export default function MenuDetail() {
                 <button
                   key={index}
                   onClick={() => setSelectedImage(img)}
-                  className={`shrink-0 overflow-hidden rounded-lg border-2 ${
-                    selectedImage === img ? 'border-[#8b5e34]' : 'border-transparent'
+                  className={`shrink-0 overflow-hidden rounded-lg border-2 cursor-pointer ${
+                    cleanUrl(selectedImage) === cleanUrl(img) ? 'border-[#8b5e34]' : 'border-transparent'
                   }`}
                 >
-                  <img src={img} alt="" className="h-20 w-20 object-cover" />
+                  <img
+                    src={cleanUrl(img)}
+                    alt=""
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80";
+                    }}
+                    className="h-20 w-20 object-cover"
+                  />
                 </button>
               ))}
             </div>

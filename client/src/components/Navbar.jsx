@@ -1,13 +1,12 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import gsap from "gsap";
 
 import logo from "../assets/logo_brown_choc.png";
 import customerAvatar from "../mock-data/assets/reviews/praew.jpg";
 import { useAuth } from "../context/AuthContext.js";
 import useToast from "../hooks/useToast.js";
 
-function BasketIcon({ className = "h-10 w-10" }) {
+function BasketIcon({ className = "h-7 w-7" }) {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -80,43 +79,6 @@ function PlusCircleIcon({ className = "h-5 w-5" }) {
   );
 }
 
-function UserSilhouetteIcon({ className = "h-5 w-5" }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-      <circle cx="12" cy="7" r="4" />
-    </svg>
-  );
-}
-
-function LoginDoorIcon({ className = "h-5 w-5" }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-      <polyline points="10 17 15 12 10 7" />
-      <line x1="15" y1="12" x2="3" y2="12" />
-    </svg>
-  );
-}
-
 function ProfileMenuIcon({ type }) {
   const paths = {
     profile: (
@@ -129,12 +91,6 @@ function ProfileMenuIcon({ type }) {
       <>
         <path d="M6 3h12v18H6z" />
         <path d="M9 7h6M9 11h6M9 15h4" />
-      </>
-    ),
-    edit: (
-      <>
-        <path d="m4 20 4.2-1 10.6-10.6-3.2-3.2L5 15.8 4 20Z" />
-        <path d="m13.8 7 3.2 3.2" />
       </>
     ),
     logout: (
@@ -161,52 +117,30 @@ function ProfileMenuIcon({ type }) {
 }
 
 const navigationByRole = {
-  guest: {
-    links: [
-      { label: "หน้าแรก", to: "/" },
-      { label: "เมนูอาหาร", to: "/menus" },
-      { label: "บทความ", to: "/articles" },
-      { label: "ติดต่อ", to: "/contacts" },
-      { label: "เกี่ยวกับเรา", to: "/about" },
-    ],
-    action: { label: "เข้าสู่ระบบ", to: "/login" },
-    mobileTitle: "สวัสดี ยินดีต้อนรับ",
-    mobileDetail: "กรุณาเข้าสู่ระบบเพื่อสะสมแต้ม",
-  },
-  customer: {
-    links: [
-      { label: "หน้าแรก", to: "/" },
-      { label: "เมนูอาหาร", to: "/menus" },
-      { label: "บทความ", to: "/articles" },
-      { label: "ติดต่อ", to: "/contacts" },
-      { label: "เกี่ยวกับเรา", to: "/about" },
-    ],
-    action: { label: "ตะกร้า", to: "/cart" },
-    mobileTitle: "บัญชีลูกค้า",
-    mobileDetail: "ดูตะกร้าและคำสั่งซื้อ",
-  },
-  admin: {
-    links: [
-      { label: "หน้าแรก", to: "/" },
-      { label: "จัดการสินค้า", to: "/admin/products" },
-      { label: "เพิ่มสินค้าใหม่", to: "/admin/products/new" },
-      { label: "เมนูอาหาร", to: "/menus" },
-    ],
-    action: { label: "จัดการระบบ", to: "/admin/products" },
-    mobileTitle: "ผู้ดูแลระบบ",
-    mobileDetail: "จัดการข้อมูลสินค้าและระบบ",
-  },
+  guest: [
+    { label: "หน้าแรก", to: "/" },
+    { label: "เมนูอาหาร", to: "/menus" },
+    { label: "ทดสอบธาตุ", to: "/element-quiz" },
+    { label: "สุ่มเมนู", to: "/menu-randomizer" },
+  ],
+  customer: [
+    { label: "หน้าแรก", to: "/" },
+    { label: "เมนูอาหาร", to: "/menus" },
+    { label: "ทดสอบธาตุ", to: "/element-quiz" },
+    { label: "สุ่มเมนู", to: "/menu-randomizer" },
+  ],
+  admin: [
+    { label: "หน้าแรก", to: "/" },
+    { label: "เมนูอาหาร", to: "/menus" },
+    { label: "จัดการสินค้า", to: "/admin/products" },
+    { label: "เพิ่มสินค้าใหม่", to: "/admin/products/new" },
+  ],
 };
 
 export default function Navbar({ cartCount = 0 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const headerRef = useRef(null);
-  const dropdownRef = useRef(null);
   const profileMenuRef = useRef(null);
-  const profileDropdownRef = useRef(null);
-  const timelineRef = useRef(null);
-  const profileTimelineRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
   const toast = useToast();
@@ -214,238 +148,171 @@ export default function Navbar({ cartCount = 0 }) {
   const { currentUser, logout } = useAuth();
   const currentRole = currentUser?.role || "guest";
 
-  const navigation =
-    navigationByRole[currentRole] ?? navigationByRole.guest;
-  const { links, action } = navigation;
+  const links = navigationByRole[currentRole] ?? navigationByRole.guest;
 
   const displayName =
     currentUser?.firstName || (currentRole === "admin" ? "ผู้ดูแลระบบ" : "สมาชิก");
   const displayRole =
     currentRole === "admin"
-      ? "ผู้ดูแลระบบ"
+      ? "ผู้ดูแลระบบ (Admin)"
       : currentUser?.tierStatus
         ? `สมาชิก ${currentUser.tierStatus}`
-        : "สมาชิก";
+        : "ลูกค้าสมาชิก";
 
   const handleLogout = () => {
     logout();
     setIsProfileOpen(false);
     setIsOpen(false);
-    toast.success("ออกจากระบบเรียบร้อยแล้ว");
+    if (toast?.success) toast.success("ออกจากระบบเรียบร้อยแล้ว");
     navigate("/");
   };
 
-  useLayoutEffect(() => {
-    const context = gsap.context(() => {
-      const reduceMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)",
-      ).matches;
-      const duration = reduceMotion ? 0.01 : 0.42;
-
-      timelineRef.current = gsap
-        .timeline({ paused: true, defaults: { ease: "power3.inOut" } })
-        .to(
-          "[data-menu-line='top']",
-          { y: 6, rotation: 45, duration: duration * 0.8 },
-          0,
-        )
-        .to(
-          "[data-menu-line='middle']",
-          { scaleX: 0, autoAlpha: 0, duration: duration * 0.5 },
-          0,
-        )
-        .to(
-          "[data-menu-line='bottom']",
-          { y: -6, rotation: -45, duration: duration * 0.8 },
-          0,
-        )
-        .fromTo(
-          dropdownRef.current,
-          { height: 0, autoAlpha: 0, y: -10 },
-          { height: "auto", autoAlpha: 1, y: 0, duration },
-          0,
-        )
-        .fromTo(
-          "[data-mobile-menu-item]",
-          { autoAlpha: 0, x: -18 },
-          {
-            autoAlpha: 1,
-            x: 0,
-            stagger: reduceMotion ? 0 : 0.055,
-            duration: duration * 0.75,
-            ease: "power2.out",
-          },
-          duration * 0.38,
-        );
-    }, headerRef);
-
-    return () => {
-      timelineRef.current = null;
-      context.revert();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) timelineRef.current?.play();
-    else timelineRef.current?.reverse();
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isProfileOpen) profileTimelineRef.current?.play();
-    else profileTimelineRef.current?.reverse();
-  }, [isProfileOpen]);
-
+  // Close menus on route change
   useEffect(() => {
     setIsOpen(false);
     setIsProfileOpen(false);
   }, [location.pathname]);
 
+  // Close menus on Escape key
   useEffect(() => {
-    const closeOnEscape = (event) => {
-      if (event.key === "Escape") {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
         setIsOpen(false);
         setIsProfileOpen(false);
       }
     };
-
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Close profile dropdown when clicking outside
   useEffect(() => {
-    const closeProfileMenu = (event) => {
-      if (!profileMenuRef.current?.contains(event.target)) {
+    const handleClickOutside = (e) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) {
         setIsProfileOpen(false);
       }
     };
-
-    document.addEventListener("pointerdown", closeProfileMenu);
-    return () => document.removeEventListener("pointerdown", closeProfileMenu);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
-    <header
-      ref={headerRef}
-      className="fixed inset-x-0 top-0 z-[100] px-3 pt-4 sm:px-5"
-    >
+    <header className="fixed inset-x-0 top-0 z-[100] px-3 pt-3 sm:px-5">
       <nav
-        className="mx-auto w-full max-w-[1200px] rounded-[2rem] border border-white/40
-         bg-[#f1ead7]/75 p-1
-        shadow-[0_12px_32px_rgba(0,0,0,0.2)] backdrop-blur-[8px] 
-        backdrop-saturate-[70%] 
-        lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center 
-        lg:gap-4 lg:rounded-[64px] lg:p-1.5"
+        className="mx-auto w-full max-w-[1200px] rounded-[2rem] border border-white/50
+         bg-[#f4ebd9]/90 p-1.5 shadow-[0_12px_32px_rgba(61,44,46,0.15)] 
+         backdrop-blur-[12px] lg:flex lg:items-center lg:justify-between lg:rounded-[64px] lg:px-6 lg:py-2"
         aria-label="เมนูหลัก"
       >
-        <div className="flex w-full items-center justify-between px-1 lg:w-auto lg:px-0">
+        {/* Logo & Mobile Actions */}
+        <div className="flex w-full items-center justify-between px-2 lg:w-auto lg:px-0">
           <Link
             to="/"
             aria-label="หน้าหลัก"
-            className="ml-1 inline-flex shrink-0 items-center"
+            className="inline-flex shrink-0 items-center transition-transform hover:scale-105"
           >
             <img
               src={logo}
-              alt="ธาตุแท้"
-              className="h-14 w-auto sm:h-16 lg:h-18"
+              alt="ธาตุแท้ That Tae"
+              className="h-12 w-auto sm:h-14"
             />
           </Link>
 
+          {/* Mobile Right Icons (Cart & Hamburger) */}
           <div className="flex items-center gap-2 lg:hidden">
-            {currentRole === "customer" && (
-              <Link
-                to={action.to}
-                aria-label={`ตะกร้า มีสินค้า ${action.badge} รายการ`}
-                className="relative mr-1 grid h-10 w-10 place-items-center rounded-full text-[#4c1f08] transition-colors hover:bg-[#8d593a]/15 sm:h-11 sm:w-11"
-              >
-                <BasketIcon className="h-8 w-8" />
-                <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full border-2 border-[#f1ead7] bg-[#c89465] px-1 text-[10px] font-bold text-white">
-                  {action.badge}
-                </span>
-              </Link>
-            )}
-
-            <button
-              type="button"
-              className="grid h-12 w-12 place-items-center rounded-full bg-[#3d2c2e] text-white shadow-[0_8px_20px_rgba(61,44,46,.22)] sm:h-14 sm:w-14 cursor-pointer"
-              aria-label={isOpen ? "ปิดเมนู" : "เปิดเมนู"}
-              aria-expanded={isOpen}
-              aria-controls="mobile-navigation"
-              onClick={() => setIsOpen((current) => !current)}
-            >
-              <span className="flex w-5 flex-col gap-1">
-                <span
-                  data-menu-line="top"
-                  className="block h-0.5 w-5 origin-center rounded-full bg-current"
-                />
-                <span
-                  data-menu-line="middle"
-                  className="block h-0.5 w-5 origin-center rounded-full bg-current"
-                />
-                <span
-                  data-menu-line="bottom"
-                  className="block h-0.5 w-5 origin-center rounded-full bg-current"
-                />
-              </span>
-            </button>
-          </div>
-        </div>
-
-        <div className="hidden min-w-0 items-center justify-center gap-1 whitespace-nowrap lg:flex lg:gap-2">
-          {links.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className="rounded-full px-2 py-1 text-xl font-bold text-[#201a1a]
-              opacity-75 transition-[opacity,background-color,transform]
-              duration-500 ease-out
-               hover:bg-[#8d593a]/24 hover:opacity-100
-              lg:px-4 lg:text-xl"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
-
-        <div className="mr-1 hidden items-center gap-3 lg:flex">
-          {currentRole !== "admin" && (
             <Link
               to="/cart"
               aria-label={`ตะกร้า มีสินค้า ${cartCount} รายการ`}
-              className="relative grid h-12 w-12 shrink-0 place-items-center rounded-full text-[#4c1f08] transition-colors duration-200 hover:bg-[#8d593a]/15 cursor-pointer"
+              className="relative grid h-10 w-10 place-items-center rounded-full text-[#4c1f08] transition-colors hover:bg-[#8d593a]/15"
             >
-              <BasketIcon className="h-8 w-8" />
+              <BasketIcon className="h-6 w-6" />
               {cartCount > 0 && (
-                <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full border-2 border-[#f1ead7] bg-[#c89465] px-1 text-xs font-bold text-white shadow-sm">
+                <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[#8b5e34] px-1 text-[10px] font-bold text-white shadow-sm">
                   {cartCount}
                 </span>
               )}
             </Link>
-          )}
 
+            <button
+              type="button"
+              className="grid h-10 w-10 place-items-center rounded-full bg-[#4c1f08] text-white shadow-sm cursor-pointer hover:bg-[#6b3215] transition-colors"
+              aria-label={isOpen ? "ปิดเมนู" : "เปิดเมนู"}
+              aria-expanded={isOpen}
+              onClick={() => setIsOpen((prev) => !prev)}
+            >
+              {isOpen ? (
+                <svg className="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Desktop Navigation Links */}
+        <div className="hidden items-center justify-center gap-1.5 lg:flex">
+          {links.map((link) => {
+            const isActive = location.pathname === link.to;
+            return (
+              <Link
+                key={link.to}
+                to={link.to}
+                className={`rounded-full px-4 py-2 text-base font-semibold transition-all duration-200 ${
+                  isActive
+                    ? "bg-[#8b5e34] text-white shadow-sm"
+                    : "text-[#3b2a1a] hover:bg-[#8d593a]/15 hover:text-[#201a1a]"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Desktop Right Actions (Cart & Profile/Login) */}
+        <div className="hidden items-center gap-3 lg:flex">
+          {/* Cart Icon */}
+          <Link
+            to="/cart"
+            aria-label={`ตะกร้า มีสินค้า ${cartCount} รายการ`}
+            className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full text-[#4c1f08] transition-colors duration-200 hover:bg-[#8d593a]/15 cursor-pointer"
+          >
+            <BasketIcon className="h-6 w-6" />
+            {cartCount > 0 && (
+              <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full border-2 border-[#f4ebd9] bg-[#8b5e34] px-1 text-xs font-bold text-white shadow-sm">
+                {cartCount}
+              </span>
+            )}
+          </Link>
+
+          {/* User Profile Dropdown or Login Button */}
           {currentUser ? (
             <div ref={profileMenuRef} className="relative">
               <button
                 type="button"
-                onClick={() => setIsProfileOpen((current) => !current)}
-                className="inline-flex h-12 items-center gap-2.5 whitespace-nowrap rounded-full bg-[#4c1f08] py-1.5 pl-2 pr-4 font-bold text-white shadow-sm cursor-pointer hover:bg-[#6b3215] transition-colors"
+                onClick={() => setIsProfileOpen((prev) => !prev)}
+                className="inline-flex h-11 items-center gap-2.5 whitespace-nowrap rounded-full bg-[#4c1f08] py-1 pl-1.5 pr-3.5 font-bold text-white shadow-sm cursor-pointer hover:bg-[#6b3215] transition-colors"
                 aria-haspopup="menu"
                 aria-expanded={isProfileOpen}
-                aria-controls="profile-dropdown-menu"
               >
                 {currentRole === "admin" ? (
-                  <span className="grid h-10 w-10 place-items-center rounded-full bg-white/20 text-[#f1ead7]">
-                    <AdminToolsIcon className="h-5 w-5 text-white" />
+                  <span className="grid h-8 w-8 place-items-center rounded-full bg-white/20 text-[#f1ead7]">
+                    <AdminToolsIcon className="h-4 w-4 text-white" />
                   </span>
                 ) : (
                   <img
                     src={customerAvatar}
                     alt=""
-                    className="h-10 w-10 rounded-full border-2 border-white/70 object-cover"
+                    className="h-8 w-8 rounded-full border border-white/70 object-cover"
                   />
                 )}
                 <div className="flex flex-col text-left">
-                  <span className="text-base leading-tight font-bold">{displayName}</span>
-                  <span className="text-xs font-normal text-[#e7d8cb] leading-none">{displayRole}</span>
+                  <span className="text-sm leading-tight font-bold">{displayName}</span>
+                  <span className="text-[10px] font-normal text-[#e7d8cb] leading-none">{displayRole}</span>
                 </div>
                 <svg
                   viewBox="0 0 20 20"
@@ -457,66 +324,50 @@ export default function Navbar({ cartCount = 0 }) {
                 </svg>
               </button>
 
+              {/* Profile Dropdown Menu */}
               <div
-                ref={profileDropdownRef}
-                id="profile-dropdown-menu"
+                className={`absolute right-0 top-[calc(100%+8px)] w-60 origin-top-right overflow-hidden rounded-2xl border border-[#dfd1c1] bg-[#fdfbf7] p-2 text-[#3d2c2e] shadow-xl transition-all duration-200 z-50 ${
+                  isProfileOpen
+                    ? "opacity-100 scale-100 pointer-events-auto visible"
+                    : "opacity-0 scale-95 pointer-events-none invisible"
+                }`}
                 role="menu"
-                aria-hidden={!isProfileOpen}
-                className={`invisible absolute right-0 top-[calc(100%+8px)] w-64 origin-top-right overflow-hidden rounded-3xl border border-[#dfd1c1] bg-[#fdfbf7] p-2 text-[#3d2c2e] opacity-0 shadow-[0_18px_45px_rgba(61,44,46,0.2)] ${isProfileOpen ? "pointer-events-auto" : "pointer-events-none"}`}
               >
                 {currentRole === "customer" ? (
                   <>
                     <Link
-                      data-profile-menu-item
                       to="/profile"
-                      role="menuitem"
-                      tabIndex={isProfileOpen ? 0 : -1}
-                      className="flex items-center gap-3 rounded-2xl px-4 py-3 font-medium transition-colors hover:bg-[#f1dec9]"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
                     >
                       <ProfileMenuIcon type="profile" />
                       โปรไฟล์ของฉัน
                     </Link>
                     <Link
-                      data-profile-menu-item
                       to="/orders"
-                      role="menuitem"
-                      tabIndex={isProfileOpen ? 0 : -1}
-                      className="flex items-center gap-3 rounded-2xl px-4 py-3 font-medium transition-colors hover:bg-[#f1dec9]"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
                     >
                       <ProfileMenuIcon type="orders" />
                       รายการคำสั่งซื้อของฉัน
-                    </Link>
-                    <Link
-                      data-profile-menu-item
-                      to="/profile/edit"
-                      role="menuitem"
-                      tabIndex={isProfileOpen ? 0 : -1}
-                      className="flex items-center gap-3 rounded-2xl px-4 py-3 font-medium transition-colors hover:bg-[#f1dec9]"
-                    >
-                      <ProfileMenuIcon type="edit" />
-                      แก้ไขข้อมูลส่วนตัว
                     </Link>
                   </>
                 ) : (
                   <>
                     <Link
-                      data-profile-menu-item
                       to="/admin/products"
-                      role="menuitem"
-                      tabIndex={isProfileOpen ? 0 : -1}
-                      className="flex items-center gap-3 rounded-2xl px-4 py-3 font-medium transition-colors hover:bg-[#f1dec9]"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
                     >
-                      <PackageIcon className="h-5 w-5 text-[#8d593a]" />
+                      <PackageIcon className="h-4 w-4 text-[#8d593a]" />
                       จัดการรายการสินค้า
                     </Link>
                     <Link
-                      data-profile-menu-item
                       to="/admin/products/new"
-                      role="menuitem"
-                      tabIndex={isProfileOpen ? 0 : -1}
-                      className="flex items-center gap-3 rounded-2xl px-4 py-3 font-medium transition-colors hover:bg-[#f1dec9]"
+                      onClick={() => setIsProfileOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
                     >
-                      <PlusCircleIcon className="h-5 w-5 text-[#8d593a]" />
+                      <PlusCircleIcon className="h-4 w-4 text-[#8d593a]" />
                       เพิ่มสินค้าใหม่
                     </Link>
                   </>
@@ -526,11 +377,8 @@ export default function Navbar({ cartCount = 0 }) {
 
                 <button
                   type="button"
-                  data-profile-menu-item
                   onClick={handleLogout}
-                  role="menuitem"
-                  tabIndex={isProfileOpen ? 0 : -1}
-                  className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 font-bold text-[#9b3f32] transition-colors hover:bg-[#f8e4df] cursor-pointer text-left"
+                  className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold text-[#9b3f32] transition-colors hover:bg-[#f8e4df] cursor-pointer text-left"
                 >
                   <ProfileMenuIcon type="logout" />
                   ออกจากระบบ
@@ -540,138 +388,119 @@ export default function Navbar({ cartCount = 0 }) {
           ) : (
             <Link
               to="/login"
-              className="whitespace-nowrap rounded-full bg-[#4c1f08] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215]"
+              className="whitespace-nowrap rounded-full bg-[#4c1f08] px-5 py-2 text-sm font-bold text-white shadow-sm transition duration-200 hover:bg-[#6b3215]"
             >
               เข้าสู่ระบบ
             </Link>
           )}
         </div>
 
+        {/* Mobile Dropdown Navigation */}
         <div
-          ref={dropdownRef}
-          id="mobile-navigation"
-          className={`max-h-[calc(100svh-76px)] h-0 overflow-x-hidden overflow-y-auto opacity-0 lg:hidden ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
+          className={`overflow-hidden transition-all duration-300 lg:hidden ${
+            isOpen ? "max-h-[500px] opacity-100 py-3 border-t border-[#dfd1c1] mt-2" : "max-h-0 opacity-0 py-0 pointer-events-none"
+          }`}
         >
-          <div className="px-2 pb-2 pt-4">
-            <div className="grid gap-1">
-              {links.map((link) => (
+          <div className="flex flex-col gap-1 px-1">
+            {links.map((link) => {
+              const isActive = location.pathname === link.to;
+              return (
                 <Link
-                  data-mobile-menu-item
                   key={link.to}
                   to={link.to}
-                  className="group flex items-center rounded-xl px-3 py-3 text-[#3d2c2e] transition-colors hover:bg-[#8d593a]/10"
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center rounded-xl px-3 py-2.5 text-base font-semibold transition-colors ${
+                    isActive
+                      ? "bg-[#8b5e34] text-white"
+                      : "text-[#3b2a1a] hover:bg-[#8d593a]/15"
+                  }`}
                 >
-                  <span className="font-medium">{link.label}</span>
+                  {link.label}
                 </Link>
-              ))}
-            </div>
+              );
+            })}
 
-            <div className="my-3 h-px bg-[#3d2c2e]/12" />
+            <div className="my-2 h-px bg-[#dfd1c1]" />
 
             {currentUser ? (
-              <div data-mobile-menu-item className="space-y-2">
-                <div className="flex items-center gap-3 rounded-3xl bg-[#3d2c2e] p-3.5 text-white shadow-[0_10px_25px_rgba(61,44,46,.18)]">
-                  {currentRole === "admin" ? (
-                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/20 text-[#f1ead7]">
-                      <AdminToolsIcon className="h-6 w-6 text-white" />
-                    </span>
-                  ) : (
-                    <img
-                      src={customerAvatar}
-                      alt=""
-                      className="h-11 w-11 shrink-0 rounded-full border-2 border-white/70 object-cover"
-                    />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <strong className="block truncate text-base">{displayName}</strong>
-                    <span className="block truncate text-xs text-[#e7d8cb]">
-                      {displayRole}
-                    </span>
+              <div className="space-y-2 pt-1">
+                <div className="flex items-center justify-between rounded-2xl bg-[#4c1f08] p-3 text-white">
+                  <div className="flex items-center gap-2.5">
+                    {currentRole === "admin" ? (
+                      <span className="grid h-9 w-9 place-items-center rounded-full bg-white/20 text-[#f1ead7]">
+                        <AdminToolsIcon className="h-5 w-5 text-white" />
+                      </span>
+                    ) : (
+                      <img
+                        src={customerAvatar}
+                        alt=""
+                        className="h-9 w-9 rounded-full border border-white/70 object-cover"
+                      />
+                    )}
+                    <div>
+                      <strong className="block text-sm leading-tight">{displayName}</strong>
+                      <span className="text-[11px] text-[#e7d8cb]">{displayRole}</span>
+                    </div>
                   </div>
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="shrink-0 rounded-full bg-white/15 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-white/25 cursor-pointer"
+                    className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold text-white hover:bg-white/25 cursor-pointer"
                   >
-                    ออกจากระบบ
+                    ออก
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  {currentRole === "customer" && (
+                <div className="grid grid-cols-2 gap-2">
+                  {currentRole === "customer" ? (
                     <>
                       <Link
-                        to="/cart"
-                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-[#e7dcce] transition-colors"
+                        to="/profile"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center justify-center gap-2 rounded-xl bg-white/80 p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-white shadow-xs"
                       >
-                        <BasketIcon className="h-4 w-4 text-[#8d593a]" />
-                        <span>ตะกร้า ({cartCount})</span>
+                        <ProfileMenuIcon type="profile" />
+                        โปรไฟล์
                       </Link>
                       <Link
                         to="/orders"
-                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-[#e7dcce] transition-colors"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center justify-center gap-2 rounded-xl bg-white/80 p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-white shadow-xs"
                       >
-                        <PackageIcon className="h-4 w-4 text-[#8d593a]" />
-                        <span>คำสั่งซื้อ</span>
-                      </Link>
-                      <Link
-                        to="/profile"
-                        className="col-span-2 flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-[#e7dcce] transition-colors"
-                      >
-                        <UserSilhouetteIcon className="h-4 w-4 text-[#8d593a]" />
-                        <span>โปรไฟล์ของฉัน</span>
+                        <ProfileMenuIcon type="orders" />
+                        คำสั่งซื้อ
                       </Link>
                     </>
-                  )}
-                  {currentRole === "admin" && (
+                  ) : (
                     <>
                       <Link
                         to="/admin/products"
-                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-[#e7dcce] transition-colors"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center justify-center gap-2 rounded-xl bg-white/80 p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-white shadow-xs"
                       >
-                        <PackageIcon className="h-4 w-4 text-[#8d593a]" />
-                        <span>รายการสินค้า</span>
+                        <PackageIcon className="h-4 w-4" />
+                        สินค้า
                       </Link>
                       <Link
                         to="/admin/products/new"
-                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-[#e7dcce] transition-colors"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center justify-center gap-2 rounded-xl bg-white/80 p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-white shadow-xs"
                       >
-                        <PlusCircleIcon className="h-4 w-4 text-[#8d593a]" />
-                        <span>เพิ่มสินค้า</span>
+                        <PlusCircleIcon className="h-4 w-4" />
+                        เพิ่มสินค้า
                       </Link>
                     </>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="pt-2">
                 <Link
-                  data-mobile-menu-item
-                  to="/cart"
-                  className="flex items-center justify-between rounded-full bg-[#f1ead7] px-5 py-3 text-[#3d2c2e] font-bold text-sm"
-                >
-                  <span className="flex items-center gap-2">
-                    <BasketIcon className="h-4 w-4 text-[#8d593a]" />
-                    <span>ตะกร้าสินค้า</span>
-                  </span>
-                  <span className="bg-[#8d593a] text-white text-xs px-2.5 py-0.5 rounded-full">
-                    {cartCount} รายการ
-                  </span>
-                </Link>
-                <Link
-                  data-mobile-menu-item
                   to="/login"
-                  className="flex items-center gap-3 rounded-full bg-[#3d2c2e] p-4 text-white shadow-[0_10px_25px_rgba(61,44,46,.18)]"
+                  onClick={() => setIsOpen(false)}
+                  className="flex w-full items-center justify-center rounded-xl bg-[#4c1f08] py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#6b3215]"
                 >
-                  <span className="grid h-11 w-11 place-items-center rounded-full bg-white/12 text-white">
-                    <LoginDoorIcon className="h-5 w-5" />
-                  </span>
-                  <span>
-                    <strong className="block">เข้าสู่ระบบ</strong>
-                    <span className="mt-0.5 block text-sm text-[#e7d8cb]">
-                      เข้าสู่ระบบเพื่อสะสมแต้มและสั่งซื้อ
-                    </span>
-                  </span>
+                  เข้าสู่ระบบ
                 </Link>
               </div>
             )}

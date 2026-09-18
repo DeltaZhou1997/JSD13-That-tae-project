@@ -15,6 +15,16 @@ function getTodayInputValue() {
   return new Date().toISOString().split("T")[0];
 }
 
+function normalizeImageUrl(url) {
+  if (!url || typeof url !== "string") return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  const match = url.match(/assets\/([^\/]+)\/([^\/]+)$/);
+  if (match) {
+    return `/assets/${match[1]}/${match[2]}`;
+  }
+  return url;
+}
+
 function mapDishToProduct(dish) {
   const calories =
     dish.nutritionCache?.perServing?.calories ||
@@ -24,6 +34,12 @@ function mapDishToProduct(dish) {
   const ingredientsSummary = Array.isArray(dish.recipe)
     ? dish.recipe.map((r) => `${r.nameTh} (${r.quantity}${r.unit || "g"})`).join(", ")
     : "";
+
+  const rawImages = Array.isArray(dish.imageUrl)
+    ? dish.imageUrl
+    : [dish.imageUrl].filter(Boolean);
+  const normalizedImages = rawImages.map(normalizeImageUrl);
+  const primaryImage = normalizedImages[0] || "";
 
   return {
     _id: dish._id,
@@ -46,8 +62,8 @@ function mapDishToProduct(dish) {
     cookingSteps: dish.cookingSteps || [],
     storageInstruction: dish.storageInstruction || "",
     reheatingInstruction: dish.reheatingInstruction || "",
-    imageUrl: Array.isArray(dish.imageUrl) ? dish.imageUrl[0] : dish.imageUrl || "",
-    images: Array.isArray(dish.imageUrl) ? dish.imageUrl : [dish.imageUrl].filter(Boolean),
+    imageUrl: primaryImage,
+    images: normalizedImages,
   };
 }
 

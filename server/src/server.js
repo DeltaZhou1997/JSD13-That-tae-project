@@ -1,9 +1,14 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "path";
+import { fileURLToPath } from "url";
 import { connectDB } from "./config/db.js";
 import mainRouter from "./routes/index.js";
 import v1Router from "./routes/v1/index.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -18,6 +23,9 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static images for cooking kit dishes
+app.use("/assets", express.static(path.join(__dirname, "mockDB/assets")));
 
 // Health Check & Root Endpoints
 app.get("/", (req, res) => {

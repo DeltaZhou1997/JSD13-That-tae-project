@@ -14,11 +14,12 @@ export default function MenuOverview() {
   const [status, setStatus] = useState('loading')
   
   const initialRegion = searchParams.get('region');
+  const initialElement = searchParams.get('element');
   const [filters, setFilters] = useState({ 
     search: '', 
     region: initialRegion ? [initialRegion] : [],
     health: [],
-    element: '' 
+    element: initialElement || '' 
   })
 
   useEffect(() => {
@@ -51,6 +52,16 @@ export default function MenuOverview() {
           return false;
         }
       }
+
+      if (filters.element) {
+        const target = filters.element;
+        const matchesDominant = menu.dominantElement === target;
+        const matchesSuitability = Array.isArray(menu.elementSuitability) && menu.elementSuitability.includes(target);
+        if (!matchesDominant && !matchesSuitability) {
+          return false;
+        }
+      }
+
       return true;
     });
   }, [menus, filters]);
