@@ -1,6 +1,6 @@
-import praewAvatar from "./assets/reviews/praew.jpg";
-import artFamilyAvatar from "./assets/reviews/art-family.jpg";
-import mayAvatar from "./assets/reviews/may.jpg";
+const praewAvatar = "/assets/reviews/praew.jpg";
+const artFamilyAvatar = "/assets/reviews/art-family.jpg";
+const mayAvatar = "/assets/reviews/may.jpg";
 
 const reviews = [
   {
