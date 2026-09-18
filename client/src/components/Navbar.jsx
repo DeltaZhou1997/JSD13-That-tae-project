@@ -25,6 +25,98 @@ function BasketIcon({ className = "h-10 w-10" }) {
   );
 }
 
+function AdminToolsIcon({ className = "h-5 w-5" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+    </svg>
+  );
+}
+
+function PackageIcon({ className = "h-5 w-5" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="m16.5 9.4-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+      <line x1="12" y1="22.08" x2="12" y2="12" />
+    </svg>
+  );
+}
+
+function PlusCircleIcon({ className = "h-5 w-5" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="8" x2="12" y2="16" />
+      <line x1="8" y1="12" x2="16" y2="12" />
+    </svg>
+  );
+}
+
+function UserSilhouetteIcon({ className = "h-5 w-5" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
+function LoginDoorIcon({ className = "h-5 w-5" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+      <polyline points="10 17 15 12 10 7" />
+      <line x1="15" y1="12" x2="3" y2="12" />
+    </svg>
+  );
+}
+
 function ProfileMenuIcon({ type }) {
   const paths = {
     profile: (
@@ -77,9 +169,9 @@ const navigationByRole = {
       { label: "ติดต่อ", to: "/contacts" },
       { label: "เกี่ยวกับเรา", to: "/about" },
     ],
-    action: { label: "เข้าสู่ระบบ", to: "/login", icon: "👋" },
-    mobileTitle: "สวัสดี",
-    mobileDetail: "กรุณาเข้าสู่ระบบ",
+    action: { label: "เข้าสู่ระบบ", to: "/login" },
+    mobileTitle: "สวัสดี ยินดีต้อนรับ",
+    mobileDetail: "กรุณาเข้าสู่ระบบเพื่อสะสมแต้ม",
   },
   customer: {
     links: [
@@ -89,7 +181,7 @@ const navigationByRole = {
       { label: "ติดต่อ", to: "/contacts" },
       { label: "เกี่ยวกับเรา", to: "/about" },
     ],
-    action: { label: "ตะกร้า", to: "/cart", badge: 2 },
+    action: { label: "ตะกร้า", to: "/cart" },
     mobileTitle: "บัญชีลูกค้า",
     mobileDetail: "ดูตะกร้าและคำสั่งซื้อ",
   },
@@ -100,9 +192,9 @@ const navigationByRole = {
       { label: "เพิ่มสินค้าใหม่", to: "/admin/products/new" },
       { label: "เมนูอาหาร", to: "/menus" },
     ],
-    action: { label: "จัดการระบบ", to: "/admin/products", icon: "🛠️" },
+    action: { label: "จัดการระบบ", to: "/admin/products" },
     mobileTitle: "ผู้ดูแลระบบ",
-    mobileDetail: "จัดการข้อมูลเว็บไซต์",
+    mobileDetail: "จัดการข้อมูลสินค้าและระบบ",
   },
 };
 
@@ -341,8 +433,8 @@ export default function Navbar({ cartCount = 0 }) {
                 aria-controls="profile-dropdown-menu"
               >
                 {currentRole === "admin" ? (
-                  <span className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-lg">
-                    🛠️
+                  <span className="grid h-10 w-10 place-items-center rounded-full bg-white/20 text-[#f1ead7]">
+                    <AdminToolsIcon className="h-5 w-5 text-white" />
                   </span>
                 ) : (
                   <img
@@ -414,7 +506,7 @@ export default function Navbar({ cartCount = 0 }) {
                       tabIndex={isProfileOpen ? 0 : -1}
                       className="flex items-center gap-3 rounded-2xl px-4 py-3 font-medium transition-colors hover:bg-[#f1dec9]"
                     >
-                      <ProfileMenuIcon type="orders" />
+                      <PackageIcon className="h-5 w-5 text-[#8d593a]" />
                       จัดการรายการสินค้า
                     </Link>
                     <Link
@@ -424,7 +516,7 @@ export default function Navbar({ cartCount = 0 }) {
                       tabIndex={isProfileOpen ? 0 : -1}
                       className="flex items-center gap-3 rounded-2xl px-4 py-3 font-medium transition-colors hover:bg-[#f1dec9]"
                     >
-                      <ProfileMenuIcon type="edit" />
+                      <PlusCircleIcon className="h-5 w-5 text-[#8d593a]" />
                       เพิ่มสินค้าใหม่
                     </Link>
                   </>
@@ -480,8 +572,8 @@ export default function Navbar({ cartCount = 0 }) {
               <div data-mobile-menu-item className="space-y-2">
                 <div className="flex items-center gap-3 rounded-3xl bg-[#3d2c2e] p-3.5 text-white shadow-[0_10px_25px_rgba(61,44,46,.18)]">
                   {currentRole === "admin" ? (
-                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/12 text-xl">
-                      🛠️
+                    <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/20 text-[#f1ead7]">
+                      <AdminToolsIcon className="h-6 w-6 text-white" />
                     </span>
                   ) : (
                     <img
@@ -510,21 +602,24 @@ export default function Navbar({ cartCount = 0 }) {
                     <>
                       <Link
                         to="/cart"
-                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e]"
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-[#e7dcce] transition-colors"
                       >
-                        🛒 ตะกร้า ({cartCount})
+                        <BasketIcon className="h-4 w-4 text-[#8d593a]" />
+                        <span>ตะกร้า ({cartCount})</span>
                       </Link>
                       <Link
                         to="/orders"
-                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e]"
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-[#e7dcce] transition-colors"
                       >
-                        📦 คำสั่งซื้อ
+                        <PackageIcon className="h-4 w-4 text-[#8d593a]" />
+                        <span>คำสั่งซื้อ</span>
                       </Link>
                       <Link
                         to="/profile"
-                        className="col-span-2 flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e]"
+                        className="col-span-2 flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-[#e7dcce] transition-colors"
                       >
-                        👤 โปรไฟล์ของฉัน
+                        <UserSilhouetteIcon className="h-4 w-4 text-[#8d593a]" />
+                        <span>โปรไฟล์ของฉัน</span>
                       </Link>
                     </>
                   )}
@@ -532,15 +627,17 @@ export default function Navbar({ cartCount = 0 }) {
                     <>
                       <Link
                         to="/admin/products"
-                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e]"
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-[#e7dcce] transition-colors"
                       >
-                        📦 รายการสินค้า
+                        <PackageIcon className="h-4 w-4 text-[#8d593a]" />
+                        <span>รายการสินค้า</span>
                       </Link>
                       <Link
                         to="/admin/products/new"
-                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e]"
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-[#e7dcce] transition-colors"
                       >
-                        ➕ เพิ่มสินค้า
+                        <PlusCircleIcon className="h-4 w-4 text-[#8d593a]" />
+                        <span>เพิ่มสินค้า</span>
                       </Link>
                     </>
                   )}
@@ -553,7 +650,10 @@ export default function Navbar({ cartCount = 0 }) {
                   to="/cart"
                   className="flex items-center justify-between rounded-full bg-[#f1ead7] px-5 py-3 text-[#3d2c2e] font-bold text-sm"
                 >
-                  <span className="flex items-center gap-2">🛒 ตะกร้าสินค้า</span>
+                  <span className="flex items-center gap-2">
+                    <BasketIcon className="h-4 w-4 text-[#8d593a]" />
+                    <span>ตะกร้าสินค้า</span>
+                  </span>
                   <span className="bg-[#8d593a] text-white text-xs px-2.5 py-0.5 rounded-full">
                     {cartCount} รายการ
                   </span>
@@ -563,8 +663,8 @@ export default function Navbar({ cartCount = 0 }) {
                   to="/login"
                   className="flex items-center gap-3 rounded-full bg-[#3d2c2e] p-4 text-white shadow-[0_10px_25px_rgba(61,44,46,.18)]"
                 >
-                  <span className="grid h-11 w-11 place-items-center rounded-full bg-white/12 text-xl">
-                    👋
+                  <span className="grid h-11 w-11 place-items-center rounded-full bg-white/12 text-white">
+                    <LoginDoorIcon className="h-5 w-5" />
                   </span>
                   <span>
                     <strong className="block">เข้าสู่ระบบ</strong>

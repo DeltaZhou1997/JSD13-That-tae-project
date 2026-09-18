@@ -53,9 +53,12 @@ export default function QuizResult({ resultElement, onReset }) {
         </button>
         <a
           href="/menus"
-          className="flex-1 py-3 bg-[#3D2E2B] hover:bg-[#2A1F1D] text-white font-bold rounded-xl text-sm transition-all shadow-md flex items-center justify-center cursor-pointer"
+          className="flex-1 py-3 bg-[#3D2E2B] hover:bg-[#2A1F1D] text-white font-bold rounded-xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
         >
-          เลือกดูเมนูอาหาร 🍲
+          <span>เลือกดูเมนูอาหาร</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-white" aria-hidden="true">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
         </a>
       </div>
     </div>

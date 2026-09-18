@@ -26,7 +26,13 @@ export default function Cart() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h2 className="mb-6 text-2xl font-bold text-[#3d2c2e]">🛒 ตะกร้าสินค้า</h2>
+      <h2 className="mb-6 flex items-center gap-2.5 text-2xl font-bold text-[#3d2c2e]">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7 text-[#8d593a]" aria-hidden="true">
+          <path d="M3 9h18l-1.4 9H4.4L3 9Z" />
+          <path d="m8 9 4-5 4 5M8 13v2m4-2v2m4-2v2" />
+        </svg>
+        <span>ตะกร้าสินค้า</span>
+      </h2>
 
       {cartItems.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">

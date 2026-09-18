@@ -230,8 +230,11 @@ export default function CheckoutPage() {
   if (!cartItems || cartItems.length === 0) {
     return (
       <div className="min-h-[70vh] bg-[#fdfbf7] flex flex-col items-center justify-center p-6 text-center text-[#2f2119]">
-        <div className="w-24 h-24 bg-[#fcf8f2] border border-[#e8dfd1] rounded-full flex items-center justify-center text-4xl mb-4 shadow-inner">
-          🛒
+        <div className="w-24 h-24 bg-[#fcf8f2] border border-[#e8dfd1] rounded-full flex items-center justify-center text-[#8d593a] mb-4 shadow-inner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10" aria-hidden="true">
+            <path d="M3 9h18l-1.4 9H4.4L3 9Z" />
+            <path d="m8 9 4-5 4 5M8 13v2m4-2v2m4-2v2" />
+          </svg>
         </div>
         <h2 className="text-2xl font-bold text-[#3d2c2e] mb-2">
           ยังไม่มีสินค้าในตะกร้าของคุณ

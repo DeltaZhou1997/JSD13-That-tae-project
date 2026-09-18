@@ -28,8 +28,11 @@ export default function ProfilePage() {
   if (!currentUser) {
     return (
       <div className="min-h-[70vh] bg-[#fdfbf7] flex flex-col items-center justify-center p-6 text-center text-[#2f2119]">
-        <div className="w-20 h-20 bg-[#f6ede5] rounded-full flex items-center justify-center text-4xl mb-4 shadow-inner">
-          👤
+        <div className="w-20 h-20 bg-[#f6ede5] rounded-full flex items-center justify-center text-[#8d593a] mb-4 shadow-inner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9" aria-hidden="true">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
         </div>
         <h2 className="text-2xl font-bold text-[#3d2c2e] mb-2">กรุณาเข้าสู่ระบบ</h2>
         <p className="text-[#6f675f] text-sm max-w-md mb-6">
@@ -110,7 +113,7 @@ export default function ProfilePage() {
             MY ACCOUNT
           </span>
           <h1 className="text-3xl font-bold text-[#3d2c2e] mt-1">
-            โปรไฟล์ของฉัน 👤
+            โปรไฟล์ของฉัน
           </h1>
           <p className="text-sm text-[#6f675f] mt-1">
             ข้อมูลสมาชิก สิทธิประโยชน์แต้มสะสม และที่อยู่จัดส่งของคุณ
@@ -153,9 +156,12 @@ export default function ProfilePage() {
             <div className="mt-6">
               <Link
                 to="/orders"
-                className="block w-full text-center bg-white border border-[#8d593a] text-[#8d593a] font-bold py-2.5 rounded-full hover:bg-[#8d593a] hover:text-white transition-colors text-sm shadow-sm"
+                className="flex items-center justify-center gap-2 w-full text-center bg-white border border-[#8d593a] text-[#8d593a] font-bold py-2.5 rounded-full hover:bg-[#8d593a] hover:text-white transition-colors text-sm shadow-sm"
               >
-                ดูประวัติคำสั่งซื้อ 📦
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden="true">
+                  <path d="m16.5 9.4-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                </svg>
+                <span>ดูประวัติคำสั่งซื้อ</span>
               </Link>
             </div>
           </div>
@@ -167,9 +173,12 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => setIsEditing(!isEditing)}
-                className="text-xs font-bold text-[#8d593a] hover:underline cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#8d593a] hover:underline cursor-pointer"
               >
-                {isEditing ? "ยกเลิกการแก้ไข" : "✏️ แก้ไขข้อมูล"}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden="true">
+                  <path d="m18 2 4 4-10 10H8v-4z" />
+                </svg>
+                <span>{isEditing ? "ยกเลิกการแก้ไข" : "แก้ไขข้อมูล"}</span>
               </button>
             </div>
 

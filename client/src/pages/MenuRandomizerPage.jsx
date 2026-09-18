@@ -92,8 +92,14 @@ export default function MenuRandomizerPage() {
     <div className="min-h-screen bg-[#FDFBF7] py-10 px-4 flex flex-col items-center justify-center">
       {/* 🏡 หน้ากลาง (Landing Page) */}
       <div className="max-w-xl w-full bg-white rounded-3xl p-8 shadow-sm border border-[#F2EFE9] text-center">
-        <span className="text-xs font-bold text-[#C5A880] tracking-widest uppercase block mb-2">
-          ✨ MENU RANDOMIZER ✨
+        <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#C5A880] tracking-widest uppercase mb-2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-[#C5A880]" aria-hidden="true">
+            <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z" />
+          </svg>
+          <span>MENU RANDOMIZER</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-[#C5A880]" aria-hidden="true">
+            <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z" />
+          </svg>
         </span>
         <h1 className="text-3xl font-black text-[#3D2E2B] tracking-tight mb-3">
           วันนี้ทานอะไรดีนะ?

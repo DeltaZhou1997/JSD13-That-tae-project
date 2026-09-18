@@ -37,8 +37,10 @@ export default function OrderSuccess() {
     <div className="min-h-screen bg-[#fdfbf7] py-12 px-4 sm:px-6 lg:px-8 text-[#2f2119]">
       <div className="max-w-2xl mx-auto bg-[#fcf8f2] border border-[#e8dfd1] rounded-3xl p-8 shadow-sm text-center">
         {/* Icon Success */}
-        <div className="w-20 h-20 bg-[#f6ede5] border border-[#e8dfd1] text-[#8d593a] rounded-full flex items-center justify-center text-4xl mx-auto mb-6 shadow-inner">
-          🎉
+        <div className="w-20 h-20 bg-[#f6ede5] border border-[#e8dfd1] text-[#8d593a] rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-[#8d593a]" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
         </div>
 
         <span className="text-xs font-bold uppercase tracking-[.22em] text-[#8d593a]">

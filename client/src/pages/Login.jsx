@@ -29,7 +29,7 @@ function Login() {
       const data = await response.json();
 
       if (response.ok) {
-        login(data.user);
+        login(data.user, data.token);
         toast.success(
           `ยินดีต้อนรับคุณ ${data.user.firstName} (${data.user.role === "admin" ? "ผู้ดูแลระบบ" : "สมาชิก"})`,
         );

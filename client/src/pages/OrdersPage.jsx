@@ -54,8 +54,11 @@ export default function OrdersPage() {
   if (!currentUser) {
     return (
       <div className="min-h-[70vh] bg-[#fdfbf7] flex flex-col items-center justify-center p-6 text-center text-[#2f2119]">
-        <div className="w-20 h-20 bg-[#f6ede5] rounded-full flex items-center justify-center text-4xl mb-4 shadow-inner">
-          🔒
+        <div className="w-20 h-20 bg-[#f6ede5] rounded-full flex items-center justify-center text-[#8d593a] mb-4 shadow-inner">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9" aria-hidden="true">
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
         </div>
         <h2 className="text-2xl font-bold text-[#3d2c2e] mb-2">กรุณาเข้าสู่ระบบ</h2>
         <p className="text-[#6f675f] text-sm max-w-md mb-6">
@@ -78,8 +81,8 @@ export default function OrdersPage() {
           <span className="text-xs font-bold uppercase tracking-[.22em] text-[#8d593a]">
             ORDER HISTORY
           </span>
-          <h1 className="text-3xl font-bold text-[#3d2c2e] mt-1">
-            รายการคำสั่งซื้อของฉัน 📦
+          <h1 className="text-3xl font-bold text-[#3d2c2e] mt-1 flex items-center gap-2">
+            <span>รายการคำสั่งซื้อของฉัน</span>
           </h1>
           <p className="text-sm text-[#6f675f] mt-1">
             ติดตามสถานะและตรวจสอบประวัติการสั่งซื้อชุดอาหาร Cooking Kit ทั้งหมดของคุณ
@@ -93,8 +96,13 @@ export default function OrdersPage() {
           </div>
         ) : orders.length === 0 ? (
           <div className="bg-[#fcf8f2] border border-[#e8dfd1] rounded-3xl p-12 text-center shadow-sm">
-            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-3xl mx-auto mb-4 shadow-sm border border-[#e8dfd1]">
-              📋
+            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-[#8d593a] mx-auto mb-4 shadow-sm border border-[#e8dfd1]">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9" aria-hidden="true">
+                <rect width="16" height="20" x="4" y="2" rx="2" />
+                <line x1="8" x2="16" y1="6" y2="6" />
+                <line x1="8" x2="16" y1="10" y2="10" />
+                <line x1="8" x2="12" y1="14" y2="14" />
+              </svg>
             </div>
             <h3 className="text-xl font-bold text-[#3d2c2e] mb-2">ยังไม่มีประวัติคำสั่งซื้อ</h3>
             <p className="text-sm text-[#6f675f] max-w-md mx-auto mb-6">
@@ -155,11 +163,13 @@ export default function OrdersPage() {
                     {items.map((item, itemIdx) => (
                       <div key={itemIdx} className="py-3 first:pt-0 last:pb-0 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-12 h-12 rounded-xl bg-[#f6ede5] flex items-center justify-center text-xl shrink-0 border border-[#e8dfd1] overflow-hidden">
+                          <div className="w-12 h-12 rounded-xl bg-[#f6ede5] flex items-center justify-center text-[#8d593a] shrink-0 border border-[#e8dfd1] overflow-hidden">
                             {item.imageUrl ? (
                               <img src={item.imageUrl} alt={item.productName || item.name} className="w-full h-full object-cover" />
                             ) : (
-                              "🍲"
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6" aria-hidden="true">
+                                <path d="M12 2v3M8 3.5v2M16 3.5v2M3 11h18c0 4.97-4.03 9-9 9s-9-4.03-9-9z" />
+                              </svg>
                             )}
                           </div>
                           <div className="min-w-0">
@@ -182,7 +192,10 @@ export default function OrdersPage() {
                   {/* Order Footer */}
                   <div className="bg-[#faf6ef] px-6 py-3 border-t border-[#e8dfd1] flex items-center justify-between text-xs text-[#6f675f]">
                     <div className="flex items-center gap-1.5 text-amber-800 font-medium">
-                      <span>✨ ได้รับแต้มสะสม:</span>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 text-amber-600" aria-hidden="true">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                      <span>ได้รับแต้มสะสม:</span>
                       <span className="font-bold">+{points} แต้ม</span>
                     </div>
                     <span>จัดส่งถึง: {order.shippingAddress?.recipientName || order.shippingAddress?.fullName || currentUser?.firstName || "คุณ"}</span>
