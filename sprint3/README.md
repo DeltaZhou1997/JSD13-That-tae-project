@@ -51,7 +51,7 @@
 | **2. Delta** | [`02-delta-storefront-catalog.md`](./02-delta-storefront-catalog.md) | หน้าร้าน Product Catalog, MenuCard, MenuDetail, Mongoose Query กรองตามธาตุ/ภูมิภาค/แคลอรี และเชื่อมต่อ API `GET /api/v1/products` กับ MongoDB |
 | **3. Cream** | [`03-cream-cart-management.md`](./03-cream-cart-management.md) | ตะกร้าสินค้า Cart Drawer/Page, Mongoose `Cart` Model, API CRUD (`POST`, `PUT`, `DELETE` `/api/v1/cart`), ปรับจำนวน Realtime, Toast Alert เมื่อถึงยอดโปรโมชัน |
 | **4. Rin** | [`04-rin-checkout-payment.md`](./04-rin-checkout-payment.md) | หน้า Checkout, ระบบชำระเงินจริงด้วย **Stripe Payment Gateway** (Checkout Session + Webhook), Mongoose `Order` Model, และ Logic ตัด Stock |
-| **5. Nate** | [`05-nate-core-deployment.md`](./05-nate-core-deployment.md) | วางโครงสร้างฐานข้อมูล MongoDB Atlas, Mongoose Connection, Seed Script นำเข้า 30 เมนู, JWT Authentication, Global Error Handler, และ Deploy ขึ้น Vercel + Render |
+| **5. Nate** | [`05-nate-core-deployment.md`](./05-nate-core-deployment.md) | วางโครงสร้าง MongoDB Atlas, Seeding 30 เมนู 217 วัตถุดิบ, **Admin คลังวัตถุดิบ & Recipe Builder คำนวณธาตุ/โภชนาการตามสัดส่วน**, และ Deploy Vercel + Render |
 
 ---
 
