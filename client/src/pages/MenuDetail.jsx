@@ -19,6 +19,90 @@ const CATEGORY_LABELS = {
   other: 'วัตถุดิบ',
 };
 
+const getCategoryBadge = (category, categoryTh) => {
+  const cat = (category || '').toLowerCase();
+  const th = categoryTh || CATEGORY_LABELS[category] || '';
+  
+  if (cat.includes('meat') || cat.includes('poultry') || th.includes('เนื้อ') || th.includes('ไก่') || th.includes('หมู') || th.includes('เป็ด')) {
+    return {
+      label: th || 'เนื้อสัตว์ & โปรตีน',
+      className: 'bg-rose-50 text-rose-700 border-rose-200/80',
+    };
+  }
+  if (cat.includes('sea') || cat.includes('fish') || th.includes('ทะเล') || th.includes('ปลา') || th.includes('กุ้ง') || th.includes('หมึก')) {
+    return {
+      label: th || 'อาหารทะเล',
+      className: 'bg-sky-50 text-sky-700 border-sky-200/80',
+    };
+  }
+  if (cat.includes('veg') || th.includes('ผัก')) {
+    return {
+      label: th || 'ผัก & สมุนไพร',
+      className: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+    };
+  }
+  if (cat.includes('herb') || cat.includes('spice') || th.includes('พริก') || th.includes('เครื่องเทศ') || th.includes('สมุนไพร')) {
+    return {
+      label: th || 'พริก & เครื่องเทศ',
+      className: 'bg-orange-50 text-orange-800 border-orange-200/80',
+    };
+  }
+  if (cat.includes('season') || th.includes('เครื่องปรุง') || th.includes('ซอส')) {
+    return {
+      label: th || 'เครื่องปรุง & ซอส',
+      className: 'bg-purple-50 text-purple-700 border-purple-200/80',
+    };
+  }
+  if (cat.includes('dairy') || cat.includes('egg') || th.includes('ไข่') || th.includes('นม') || th.includes('กะทิ') || cat.includes('coconut')) {
+    return {
+      label: th || 'ไข่/นม/กะทิ',
+      className: 'bg-amber-50 text-amber-800 border-amber-200/80',
+    };
+  }
+  if (cat.includes('carb') || th.includes('แป้ง') || th.includes('เส้น')) {
+    return {
+      label: th || 'แป้ง & เส้น',
+      className: 'bg-stone-100 text-stone-700 border-stone-300/80',
+    };
+  }
+  return {
+    label: th || 'วัตถุดิบ',
+    className: 'bg-stone-100 text-stone-700 border-stone-200',
+  };
+};
+
+const getElementPill = (element) => {
+  const el = String(element || '').trim();
+  if (el.includes('ดิน') || el.toLowerCase().includes('earth')) {
+    return {
+      label: 'ดิน',
+      className: 'bg-amber-100 text-amber-900 border-amber-300',
+    };
+  }
+  if (el.includes('น้ำ') || el.toLowerCase().includes('water')) {
+    return {
+      label: 'น้ำ',
+      className: 'bg-sky-100 text-sky-900 border-sky-300',
+    };
+  }
+  if (el.includes('ลม') || el.toLowerCase().includes('wind') || el.toLowerCase().includes('air')) {
+    return {
+      label: 'ลม',
+      className: 'bg-teal-100 text-teal-900 border-teal-300',
+    };
+  }
+  if (el.includes('ไฟ') || el.toLowerCase().includes('fire')) {
+    return {
+      label: 'ไฟ',
+      className: 'bg-rose-100 text-rose-900 border-rose-300',
+    };
+  }
+  return {
+    label: el,
+    className: 'bg-stone-100 text-stone-700 border-stone-300',
+  };
+};
+
 const ELEMENT_BADGES = {
   ดิน: {
     badge: 'bg-amber-50 text-amber-900 border-amber-200/80',
@@ -50,7 +134,8 @@ export default function MenuDetail() {
   const [menu, setMenu] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState('');
-  const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'table'
+  const [viewMode, setViewMode] = useState('table'); // 'table' as default | 'cards'
+
 
   const cleanUrl = (url) => {
     if (!url || typeof url !== 'string') return '';
@@ -351,6 +436,7 @@ export default function MenuDetail() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 mt-6">
                 {recipe.map((item, idx) => {
                   const n = item.nutrientsPer100g || {};
+                  const catBadge = getCategoryBadge(item.category, item.categoryTh);
                   return (
                     <div
                       key={item.ingredientId || idx}
@@ -362,25 +448,35 @@ export default function MenuDetail() {
                           <h4 className="font-bold text-stone-900 text-sm leading-snug">
                             {item.nameTh}
                           </h4>
-                          <span className="shrink-0 bg-stone-200/70 text-stone-800 text-xs font-extrabold px-2.5 py-0.5 rounded-md">
+                          <span className="shrink-0 bg-stone-200/80 text-stone-800 text-xs font-extrabold px-2.5 py-0.5 rounded-md whitespace-nowrap">
                             {item.quantity} {item.unit || 'g'}
                           </span>
                         </div>
 
-                        {/* Category & Taste Badges */}
+                        {/* Category & Taste & Element Badges */}
                         <div className="flex flex-wrap items-center gap-1.5 mb-3">
-                          <span className="text-[11px] bg-stone-200/50 text-stone-600 px-2 py-0.5 rounded-md font-medium">
-                            {CATEGORY_LABELS[item.category] || item.categoryTh || 'วัตถุดิบ'}
+                          <span className={`text-[11px] px-2.5 py-0.5 rounded-md font-medium border whitespace-nowrap ${catBadge.className}`}>
+                            {catBadge.label}
                           </span>
                           {item.medicinalTaste && (
-                            <span className="text-[11px] bg-amber-50 text-amber-800 border border-amber-200/60 px-2 py-0.5 rounded-md font-medium">
-                              {item.medicinalTaste}
+                            <span className="text-[11px] bg-stone-100 text-stone-700 border border-stone-200 px-2 py-0.5 rounded-md font-medium whitespace-nowrap">
+                              รส{item.medicinalTaste.replace(/^รส/, '')}
                             </span>
                           )}
                           {Array.isArray(item.elements) && item.elements.length > 0 && (
-                            <span className="text-[11px] bg-sky-50 text-sky-800 border border-sky-200/60 px-2 py-0.5 rounded-md font-medium">
-                              {item.elements.join(', ')}
-                            </span>
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {item.elements.map((el) => {
+                                const elPill = getElementPill(el);
+                                return (
+                                  <span
+                                    key={el}
+                                    className={`text-[11px] px-2 py-0.5 rounded-md border whitespace-nowrap ${elPill.className}`}
+                                  >
+                                    ธาตุ{elPill.label}
+                                  </span>
+                                );
+                              })}
+                            </div>
                           )}
                         </div>
                       </div>
@@ -412,59 +508,74 @@ export default function MenuDetail() {
 
             {/* View 2: High-contrast Detailed Nutrition Table */}
             {viewMode === 'table' && (
-              <div className="overflow-x-auto mt-6 rounded-2xl border border-stone-200">
-                <table className="w-full text-left text-sm">
+              <div className="overflow-x-auto mt-6 rounded-2xl border border-stone-200 bg-white shadow-2xs">
+                <table className="w-full text-left text-sm min-w-[860px]">
                   <thead>
-                    <tr className="bg-stone-50 border-b border-stone-200 text-xs font-bold text-stone-600 uppercase tracking-wider">
-                      <th className="py-3 px-4">วัตถุดิบ (Ingredient)</th>
-                      <th className="py-3 px-3 text-center">หมวดหมู่</th>
-                      <th className="py-3 px-3 text-center">รสยา (แพทย์แผนไทย)</th>
-                      <th className="py-3 px-3 text-center">ธาตุที่ควรกิน</th>
-                      <th className="py-3 px-3 text-right">ปริมาณในชุด</th>
-                      <th className="py-3 px-3 text-right">พลังงาน (/100g)</th>
-                      <th className="py-3 px-3 text-right">โปรตีน (/100g)</th>
-                      <th className="py-3 px-3 text-right">คาร์บ (/100g)</th>
-                      <th className="py-3 px-4 text-right">ไขมัน (/100g)</th>
+                    <tr className="bg-stone-50/90 border-b border-stone-200 text-xs font-bold text-stone-700 uppercase tracking-wider">
+                      <th className="py-3.5 px-4 min-w-[200px]">วัตถุดิบ (Ingredient)</th>
+                      <th className="py-3.5 px-3 text-center min-w-[130px]">หมวดหมู่</th>
+                      <th className="py-3.5 px-3 text-center min-w-[120px]">รสยา (แพทย์แผนไทย)</th>
+                      <th className="py-3.5 px-3 text-center min-w-[110px]">ธาตุที่ควรกิน</th>
+                      <th className="py-3.5 px-3 text-right min-w-[100px]">ปริมาณในชุด</th>
+                      <th className="py-3.5 px-3 text-right min-w-[100px]">พลังงาน (/100g)</th>
+                      <th className="py-3.5 px-3 text-right min-w-[80px]">โปรตีน (/100g)</th>
+                      <th className="py-3.5 px-3 text-right min-w-[80px]">คาร์บ (/100g)</th>
+                      <th className="py-3.5 px-4 text-right min-w-[80px]">ไขมัน (/100g)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-100">
                     {recipe.map((item, index) => {
                       const n = item.nutrientsPer100g || {};
+                      const catBadge = getCategoryBadge(item.category, item.categoryTh);
                       return (
-                        <tr key={item.ingredientId || index} className="hover:bg-stone-50/70 transition">
-                          <td className="py-3 px-4 font-semibold text-stone-900">
-                            {item.nameTh}
+                        <tr key={item.ingredientId || index} className="hover:bg-amber-50/30 transition-colors">
+                          <td className="py-3.5 px-4 font-semibold text-stone-900 leading-snug break-words">
+                            <span>{item.nameTh}</span>
                           </td>
-                          <td className="py-3 px-3 text-center">
-                            <span className="text-xs bg-stone-100 text-stone-600 px-2 py-0.5 rounded-md font-medium">
-                              {CATEGORY_LABELS[item.category] || item.categoryTh || 'วัตถุดิบ'}
+                          <td className="py-3.5 px-3 text-center whitespace-nowrap">
+                            <span className={`inline-block text-xs px-2.5 py-1 rounded-md font-medium border ${catBadge.className}`}>
+                              {catBadge.label}
                             </span>
                           </td>
-                          <td className="py-3 px-3 text-center">
-                            <span className="text-xs text-stone-600 font-medium">
-                              {item.medicinalTaste || '-'}
+                          <td className="py-3.5 px-3 text-center whitespace-nowrap">
+                            <span className="text-xs text-stone-700 font-medium bg-stone-50 border border-stone-200/80 px-2 py-0.5 rounded-md">
+                              {item.medicinalTaste ? `รส${item.medicinalTaste.replace(/^รส/, '')}` : '-'}
                             </span>
                           </td>
-                          <td className="py-3 px-3 text-center">
-                            <div className="flex items-center justify-center gap-1 flex-wrap">
+                          <td className="py-3.5 px-3 text-center whitespace-nowrap">
+                            <div className="flex items-center justify-center gap-1.5 flex-wrap">
                               {Array.isArray(item.elements) && item.elements.length > 0 ? (
-                                item.elements.map((el) => (
-                                  <span key={el} className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-700">
-                                    {el}
-                                  </span>
-                                ))
+                                item.elements.map((el) => {
+                                  const elPill = getElementPill(el);
+                                  return (
+                                    <span
+                                      key={el}
+                                      className={`text-xs font-bold px-2 py-0.5 rounded-md border ${elPill.className}`}
+                                    >
+                                      {elPill.label}
+                                    </span>
+                                  );
+                                })
                               ) : (
                                 <span className="text-xs text-stone-400">-</span>
                               )}
                             </div>
                           </td>
-                          <td className="py-3 px-3 text-right font-bold text-[#8b5e34]">
+                          <td className="py-3.5 px-3 text-right font-bold text-[#8b5e34] whitespace-nowrap">
                             {item.quantity} {item.unit || 'g'}
                           </td>
-                          <td className="py-3 px-3 text-right font-mono font-medium text-stone-700">{n.calories ?? '-'} kcal</td>
-                          <td className="py-3 px-3 text-right font-mono font-medium text-stone-700">{n.protein !== undefined ? `${n.protein}g` : '-'}</td>
-                          <td className="py-3 px-3 text-right font-mono font-medium text-stone-700">{n.carbs !== undefined ? `${n.carbs}g` : '-'}</td>
-                          <td className="py-3 px-4 text-right font-mono font-medium text-stone-700">{n.fat !== undefined ? `${n.fat}g` : '-'}</td>
+                          <td className="py-3.5 px-3 text-right font-mono font-medium text-stone-700 whitespace-nowrap">
+                            {n.calories !== undefined ? `${n.calories} kcal` : '-'}
+                          </td>
+                          <td className="py-3.5 px-3 text-right font-mono font-medium text-stone-700 whitespace-nowrap">
+                            {n.protein !== undefined ? `${n.protein}g` : '-'}
+                          </td>
+                          <td className="py-3.5 px-3 text-right font-mono font-medium text-stone-700 whitespace-nowrap">
+                            {n.carbs !== undefined ? `${n.carbs}g` : '-'}
+                          </td>
+                          <td className="py-3.5 px-4 text-right font-mono font-medium text-stone-700 whitespace-nowrap">
+                            {n.fat !== undefined ? `${n.fat}g` : '-'}
+                          </td>
                         </tr>
                       );
                     })}
