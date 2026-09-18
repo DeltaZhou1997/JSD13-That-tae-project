@@ -19,9 +19,148 @@ const dishes = {
       "https://images.unsplash.com/photo-1548943487-a2e4f43b4850?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_pork_mince",
+                "nameTh": "หมูสับอนามัย",
+                "nameEn": "Minced Pork",
+                "category": "meat",
+                "quantity": 180,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 263,
+                      "protein": 17,
+                      "carbs": 0,
+                      "fat": 21,
+                      "fiber": 0,
+                      "sodium": 65
+                }
+          },
+          {
+                "ingredientId": "ing_tomato_cherry",
+                "nameTh": "มะเขือเทศสีดา",
+                "nameEn": "Cherry Tomatoes",
+                "category": "vegetable",
+                "quantity": 150,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 18,
+                      "protein": 0.9,
+                      "carbs": 3.9,
+                      "fat": 0.2,
+                      "fiber": 1.2,
+                      "sodium": 5
+                }
+          },
+          {
+                "ingredientId": "ing_garlic_thai",
+                "nameTh": "กระเทียมไทยแกะกลีบ",
+                "nameEn": "Thai Garlic Cloves",
+                "category": "herb_spice",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 149,
+                      "protein": 6.4,
+                      "carbs": 33.1,
+                      "fat": 0.5,
+                      "fiber": 2.1,
+                      "sodium": 17
+                }
+          },
+          {
+                "ingredientId": "ing_shallot",
+                "nameTh": "หอมแดงซอย",
+                "nameEn": "Sliced Shallots",
+                "category": "herb_spice",
+                "quantity": 30,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 72,
+                      "protein": 2.5,
+                      "carbs": 16.8,
+                      "fat": 0.1,
+                      "fiber": 3.2,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_chili_jinda",
+                "nameTh": "พริกขี้หนูจินดา",
+                "nameEn": "Bird's Eye Red Chili",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 40,
+                      "protein": 1.9,
+                      "carbs": 8.8,
+                      "fat": 0.4,
+                      "fiber": 1.5,
+                      "sodium": 9
+                }
+          },
+          {
+                "ingredientId": "ing_fish_sauce",
+                "nameTh": "น้ำปลาแท้เกรดพรีเมียม",
+                "nameEn": "Premium Fish Sauce",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 35,
+                      "protein": 6,
+                      "carbs": 2.5,
+                      "fat": 0,
+                      "fiber": 0,
+                      "sodium": 7200
+                }
+          },
+          {
+                "ingredientId": "ing_palm_sugar",
+                "nameTh": "น้ำตาลมะพร้าวอัมพวา",
+                "nameEn": "Pure Coconut Palm Sugar",
+                "category": "seasoning",
+                "quantity": 10,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 380,
+                      "protein": 0.2,
+                      "carbs": 95,
+                      "fat": 0.1,
+                      "fiber": 0,
+                      "sodium": 40
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 601,
+                "protein": 35.2,
+                "carbs": 28.7,
+                "fat": 38.3,
+                "fiber": 3.4,
+                "sodium": 1217
+          },
+          "perServing": {
+                "calories": 301,
+                "protein": 17.6,
+                "carbs": 14.4,
+                "fat": 19.2,
+                "fiber": 1.7,
+                "sodium": 608
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -47,9 +186,148 @@ const dishes = {
       "https://images.unsplash.com/photo-1562607635-4608ff48a859?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_chicken_drumstick",
+                "nameTh": "น่องไก่สด",
+                "nameEn": "Chicken Drumstick",
+                "category": "poultry",
+                "quantity": 250,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 172,
+                      "protein": 28.3,
+                      "carbs": 0,
+                      "fat": 5.7,
+                      "fiber": 0,
+                      "sodium": 86
+                }
+          },
+          {
+                "ingredientId": "ing_egg_noodle",
+                "nameTh": "บะหมี่ไข่เส้นแบน",
+                "nameEn": "Flat Egg Noodles",
+                "category": "carb",
+                "quantity": 150,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 280,
+                      "protein": 10.2,
+                      "carbs": 54.8,
+                      "fat": 2.5,
+                      "fiber": 2,
+                      "sodium": 180
+                }
+          },
+          {
+                "ingredientId": "ing_coconut_milk",
+                "nameTh": "หัวกะทิคั้นสด 100%",
+                "nameEn": "Fresh Coconut Milk",
+                "category": "coconut",
+                "quantity": 250,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 230,
+                      "protein": 2.3,
+                      "carbs": 5.5,
+                      "fat": 23.8,
+                      "fiber": 2.2,
+                      "sodium": 15
+                }
+          },
+          {
+                "ingredientId": "ing_curry_paste_khao_soi",
+                "nameTh": "พริกแกงข้าวซอยสูตรเมืองเหนือ",
+                "nameEn": "Northern Khao Soi Curry Paste",
+                "category": "seasoning",
+                "quantity": 50,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 118,
+                      "protein": 3.5,
+                      "carbs": 16.2,
+                      "fat": 4.3,
+                      "fiber": 5.2,
+                      "sodium": 1650
+                }
+          },
+          {
+                "ingredientId": "ing_shallot",
+                "nameTh": "หอมแดงซอย",
+                "nameEn": "Sliced Shallots",
+                "category": "herb_spice",
+                "quantity": 25,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 72,
+                      "protein": 2.5,
+                      "carbs": 16.8,
+                      "fat": 0.1,
+                      "fiber": 3.2,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_lime_juice",
+                "nameTh": "น้ำมะนาวแท้คั้นสด",
+                "nameEn": "Fresh Squeezed Lime Juice",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 25,
+                      "protein": 0.4,
+                      "carbs": 8.4,
+                      "fat": 0.1,
+                      "fiber": 0.4,
+                      "sodium": 2
+                }
+          },
+          {
+                "ingredientId": "ing_palm_sugar",
+                "nameTh": "น้ำตาลมะพร้าวอัมพวา",
+                "nameEn": "Pure Coconut Palm Sugar",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 380,
+                      "protein": 0.2,
+                      "carbs": 95,
+                      "fat": 0.1,
+                      "fiber": 0,
+                      "sodium": 40
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 1563,
+                "protein": 94.3,
+                "carbs": 123.8,
+                "fat": 79.7,
+                "fiber": 12,
+                "sodium": 1357
+          },
+          "perServing": {
+                "calories": 781,
+                "protein": 47.1,
+                "carbs": 61.9,
+                "fat": 39.9,
+                "fiber": 6,
+                "sodium": 678
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -75,9 +353,148 @@ const dishes = {
       "https://images.unsplash.com/photo-1633504581786-316c8002b1b9?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_pork_mince",
+                "nameTh": "หมูสับอนามัย",
+                "nameEn": "Minced Pork",
+                "category": "meat",
+                "quantity": 220,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 263,
+                      "protein": 17,
+                      "carbs": 0,
+                      "fat": 21,
+                      "fiber": 0,
+                      "sodium": 65
+                }
+          },
+          {
+                "ingredientId": "ing_shallot",
+                "nameTh": "หอมแดงซอย",
+                "nameEn": "Sliced Shallots",
+                "category": "herb_spice",
+                "quantity": 25,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 72,
+                      "protein": 2.5,
+                      "carbs": 16.8,
+                      "fat": 0.1,
+                      "fiber": 3.2,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_garlic_thai",
+                "nameTh": "กระเทียมไทยแกะกลีบ",
+                "nameEn": "Thai Garlic Cloves",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 149,
+                      "protein": 6.4,
+                      "carbs": 33.1,
+                      "fat": 0.5,
+                      "fiber": 2.1,
+                      "sodium": 17
+                }
+          },
+          {
+                "ingredientId": "ing_culantro",
+                "nameTh": "ผักชีฝรั่ง",
+                "nameEn": "Sawtooth Coriander / Culantro",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 25,
+                      "protein": 2,
+                      "carbs": 4,
+                      "fat": 0.5,
+                      "fiber": 2.5,
+                      "sodium": 15
+                }
+          },
+          {
+                "ingredientId": "ing_mint",
+                "nameTh": "ใบสะระแหน่",
+                "nameEn": "Fresh Mint Leaves",
+                "category": "herb_spice",
+                "quantity": 10,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 44,
+                      "protein": 3.3,
+                      "carbs": 8.4,
+                      "fat": 0.7,
+                      "fiber": 6.8,
+                      "sodium": 31
+                }
+          },
+          {
+                "ingredientId": "ing_fish_sauce",
+                "nameTh": "น้ำปลาแท้เกรดพรีเมียม",
+                "nameEn": "Premium Fish Sauce",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 35,
+                      "protein": 6,
+                      "carbs": 2.5,
+                      "fat": 0,
+                      "fiber": 0,
+                      "sodium": 7200
+                }
+          },
+          {
+                "ingredientId": "ing_roasted_rice_powder",
+                "nameTh": "ข้าวคั่วหอมกลิ่นใบมะกรูด",
+                "nameEn": "Toasted Rice Powder",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 360,
+                      "protein": 7.5,
+                      "carbs": 78,
+                      "fat": 1.5,
+                      "fiber": 3.2,
+                      "sodium": 5
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 686,
+                "protein": 41.6,
+                "carbs": 22.7,
+                "fat": 46.7,
+                "fiber": 2.7,
+                "sodium": 1235
+          },
+          "perServing": {
+                "calories": 343,
+                "protein": 20.8,
+                "carbs": 11.3,
+                "fat": 23.3,
+                "fiber": 1.3,
+                "sodium": 617
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -103,9 +520,131 @@ const dishes = {
       "https://images.unsplash.com/photo-1603099541178-958866380649?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_pork_belly",
+                "nameTh": "หมูสามชั้น",
+                "nameEn": "Pork Belly",
+                "category": "meat",
+                "quantity": 250,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 518,
+                      "protein": 9.3,
+                      "carbs": 0,
+                      "fat": 53,
+                      "fiber": 0,
+                      "sodium": 32
+                }
+          },
+          {
+                "ingredientId": "ing_curry_paste_hung_lay",
+                "nameTh": "พริกแกงฮังเลและผงฮังเล",
+                "nameEn": "Hung Lay Curry Paste & Masala Spice",
+                "category": "seasoning",
+                "quantity": 50,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 135,
+                      "protein": 4.1,
+                      "carbs": 18,
+                      "fat": 5.2,
+                      "fiber": 6,
+                      "sodium": 1720
+                }
+          },
+          {
+                "ingredientId": "ing_shallot",
+                "nameTh": "หอมแดงซอย",
+                "nameEn": "Sliced Shallots",
+                "category": "herb_spice",
+                "quantity": 30,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 72,
+                      "protein": 2.5,
+                      "carbs": 16.8,
+                      "fat": 0.1,
+                      "fiber": 3.2,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_garlic_thai",
+                "nameTh": "กระเทียมไทยแกะกลีบ",
+                "nameEn": "Thai Garlic Cloves",
+                "category": "herb_spice",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 149,
+                      "protein": 6.4,
+                      "carbs": 33.1,
+                      "fat": 0.5,
+                      "fiber": 2.1,
+                      "sodium": 17
+                }
+          },
+          {
+                "ingredientId": "ing_tamarind_paste",
+                "nameTh": "น้ำมะขามเปียกคั้นเข้มข้น",
+                "nameEn": "Concentrated Tamarind Paste",
+                "category": "seasoning",
+                "quantity": 30,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 239,
+                      "protein": 2.8,
+                      "carbs": 62.5,
+                      "fat": 0.6,
+                      "fiber": 5.1,
+                      "sodium": 28
+                }
+          },
+          {
+                "ingredientId": "ing_palm_sugar",
+                "nameTh": "น้ำตาลมะพร้าวอัมพวา",
+                "nameEn": "Pure Coconut Palm Sugar",
+                "category": "seasoning",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 380,
+                      "protein": 0.2,
+                      "carbs": 95,
+                      "fat": 0.1,
+                      "fiber": 0,
+                      "sodium": 40
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 1562,
+                "protein": 28.2,
+                "carbs": 58.4,
+                "fat": 135.4,
+                "fiber": 5.9,
+                "sodium": 963
+          },
+          "perServing": {
+                "calories": 781,
+                "protein": 14.1,
+                "carbs": 29.2,
+                "fat": 67.7,
+                "fiber": 3,
+                "sodium": 482
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -131,9 +670,131 @@ const dishes = {
       "https://images.unsplash.com/photo-1548943487-a2e4f43b4850?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_pork_mince",
+                "nameTh": "หมูสับอนามัย",
+                "nameEn": "Minced Pork",
+                "category": "meat",
+                "quantity": 150,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 263,
+                      "protein": 17,
+                      "carbs": 0,
+                      "fat": 21,
+                      "fiber": 0,
+                      "sodium": 65
+                }
+          },
+          {
+                "ingredientId": "ing_tomato_cherry",
+                "nameTh": "มะเขือเทศสีดา",
+                "nameEn": "Cherry Tomatoes",
+                "category": "vegetable",
+                "quantity": 100,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 18,
+                      "protein": 0.9,
+                      "carbs": 3.9,
+                      "fat": 0.2,
+                      "fiber": 1.2,
+                      "sodium": 5
+                }
+          },
+          {
+                "ingredientId": "ing_shallot",
+                "nameTh": "หอมแดงซอย",
+                "nameEn": "Sliced Shallots",
+                "category": "herb_spice",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 72,
+                      "protein": 2.5,
+                      "carbs": 16.8,
+                      "fat": 0.1,
+                      "fiber": 3.2,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_garlic_thai",
+                "nameTh": "กระเทียมไทยแกะกลีบ",
+                "nameEn": "Thai Garlic Cloves",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 149,
+                      "protein": 6.4,
+                      "carbs": 33.1,
+                      "fat": 0.5,
+                      "fiber": 2.1,
+                      "sodium": 17
+                }
+          },
+          {
+                "ingredientId": "ing_fish_sauce",
+                "nameTh": "น้ำปลาแท้เกรดพรีเมียม",
+                "nameEn": "Premium Fish Sauce",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 35,
+                      "protein": 6,
+                      "carbs": 2.5,
+                      "fat": 0,
+                      "fiber": 0,
+                      "sodium": 7200
+                }
+          },
+          {
+                "ingredientId": "ing_chili_jinda",
+                "nameTh": "พริกขี้หนูจินดา",
+                "nameEn": "Bird's Eye Red Chili",
+                "category": "herb_spice",
+                "quantity": 10,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 40,
+                      "protein": 1.9,
+                      "carbs": 8.8,
+                      "fat": 0.4,
+                      "fiber": 1.5,
+                      "sodium": 9
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 459,
+                "protein": 29,
+                "carbs": 13.5,
+                "fat": 31.8,
+                "fiber": 2.3,
+                "sodium": 1188
+          },
+          "perServing": {
+                "calories": 229,
+                "protein": 14.5,
+                "carbs": 6.7,
+                "fat": 15.9,
+                "fiber": 1.2,
+                "sodium": 594
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -159,9 +820,80 @@ const dishes = {
       "https://images.unsplash.com/photo-1562607635-4608ff48a859?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 129,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_rice_noodle",
+                "nameTh": "เส้นก๋วยเตี๋ยว / ขนมจีน",
+                "nameEn": "Rice Noodles",
+                "category": "carb",
+                "quantity": 150,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 109,
+                      "protein": 1.9,
+                      "carbs": 24.9,
+                      "fat": 0.2,
+                      "fiber": 0.8,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_palm_sugar",
+                "nameTh": "น้ำตาลมะพร้าวอัมพวา",
+                "nameEn": "Pure Coconut Palm Sugar",
+                "category": "seasoning",
+                "quantity": 40,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 380,
+                      "protein": 0.2,
+                      "carbs": 95,
+                      "fat": 0.1,
+                      "fiber": 0,
+                      "sodium": 40
+                }
+          },
+          {
+                "ingredientId": "ing_coconut_milk",
+                "nameTh": "หัวกะทิคั้นสด 100%",
+                "nameEn": "Fresh Coconut Milk",
+                "category": "coconut",
+                "quantity": 50,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 230,
+                      "protein": 2.3,
+                      "carbs": 5.5,
+                      "fat": 23.8,
+                      "fiber": 2.2,
+                      "sodium": 15
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 431,
+                "protein": 4.1,
+                "carbs": 78.1,
+                "fat": 12.2,
+                "fiber": 2.3,
+                "sodium": 42
+          },
+          "perServing": {
+                "calories": 215,
+                "protein": 2,
+                "carbs": 39.1,
+                "fat": 6.1,
+                "fiber": 1.2,
+                "sodium": 21
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -187,9 +919,114 @@ const dishes = {
       "https://images.unsplash.com/photo-1633504581786-316c8002b1b9?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_rice_noodle",
+                "nameTh": "เส้นก๋วยเตี๋ยว / ขนมจีน",
+                "nameEn": "Rice Noodles",
+                "category": "carb",
+                "quantity": 200,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 109,
+                      "protein": 1.9,
+                      "carbs": 24.9,
+                      "fat": 0.2,
+                      "fiber": 0.8,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_pla_ra",
+                "nameTh": "น้ำปลาร้าต้มสุกปรุงรส",
+                "nameEn": "Cooked Fermented Fish Sauce",
+                "category": "seasoning",
+                "quantity": 40,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 45,
+                      "protein": 7.5,
+                      "carbs": 3,
+                      "fat": 0.3,
+                      "fiber": 0,
+                      "sodium": 5800
+                }
+          },
+          {
+                "ingredientId": "ing_chili_jinda",
+                "nameTh": "พริกขี้หนูจินดา",
+                "nameEn": "Bird's Eye Red Chili",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 40,
+                      "protein": 1.9,
+                      "carbs": 8.8,
+                      "fat": 0.4,
+                      "fiber": 1.5,
+                      "sodium": 9
+                }
+          },
+          {
+                "ingredientId": "ing_string_bean",
+                "nameTh": "ถั่วฝักยาว",
+                "nameEn": "Yardlong Beans",
+                "category": "vegetable",
+                "quantity": 50,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 47,
+                      "protein": 2.8,
+                      "carbs": 8.4,
+                      "fat": 0.4,
+                      "fiber": 3.6,
+                      "sodium": 4
+                }
+          },
+          {
+                "ingredientId": "ing_lime_juice",
+                "nameTh": "น้ำมะนาวแท้คั้นสด",
+                "nameEn": "Fresh Squeezed Lime Juice",
+                "category": "seasoning",
+                "quantity": 20,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 25,
+                      "protein": 0.4,
+                      "carbs": 8.4,
+                      "fat": 0.1,
+                      "fiber": 0.4,
+                      "sodium": 2
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 271,
+                "protein": 8.6,
+                "carbs": 58.2,
+                "fat": 0.8,
+                "fiber": 3.7,
+                "sodium": 2348
+          },
+          "perServing": {
+                "calories": 135,
+                "protein": 4.3,
+                "carbs": 29.1,
+                "fat": 0.4,
+                "fiber": 1.9,
+                "sodium": 1174
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -215,9 +1052,131 @@ const dishes = {
       "https://images.unsplash.com/photo-1603099541178-958866380649?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_beef_shank",
+                "nameTh": "เนื้อวัวน่องลาย",
+                "nameEn": "Beef Shank",
+                "category": "meat",
+                "quantity": 200,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 201,
+                      "protein": 34,
+                      "carbs": 0,
+                      "fat": 6.2,
+                      "fiber": 0,
+                      "sodium": 55
+                }
+          },
+          {
+                "ingredientId": "ing_culantro",
+                "nameTh": "ผักชีฝรั่ง",
+                "nameEn": "Sawtooth Coriander / Culantro",
+                "category": "herb_spice",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 25,
+                      "protein": 2,
+                      "carbs": 4,
+                      "fat": 0.5,
+                      "fiber": 2.5,
+                      "sodium": 15
+                }
+          },
+          {
+                "ingredientId": "ing_string_bean",
+                "nameTh": "ถั่วฝักยาว",
+                "nameEn": "Yardlong Beans",
+                "category": "vegetable",
+                "quantity": 40,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 47,
+                      "protein": 2.8,
+                      "carbs": 8.4,
+                      "fat": 0.4,
+                      "fiber": 3.6,
+                      "sodium": 4
+                }
+          },
+          {
+                "ingredientId": "ing_shallot",
+                "nameTh": "หอมแดงซอย",
+                "nameEn": "Sliced Shallots",
+                "category": "herb_spice",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 72,
+                      "protein": 2.5,
+                      "carbs": 16.8,
+                      "fat": 0.1,
+                      "fiber": 3.2,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_pla_ra",
+                "nameTh": "น้ำปลาร้าต้มสุกปรุงรส",
+                "nameEn": "Cooked Fermented Fish Sauce",
+                "category": "seasoning",
+                "quantity": 25,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 45,
+                      "protein": 7.5,
+                      "carbs": 3,
+                      "fat": 0.3,
+                      "fiber": 0,
+                      "sodium": 5800
+                }
+          },
+          {
+                "ingredientId": "ing_roasted_rice_powder",
+                "nameTh": "ข้าวคั่วหอมกลิ่นใบมะกรูด",
+                "nameEn": "Toasted Rice Powder",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 360,
+                      "protein": 7.5,
+                      "carbs": 78,
+                      "fat": 1.5,
+                      "fiber": 3.2,
+                      "sodium": 5
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 505,
+                "protein": 73,
+                "carbs": 20,
+                "fat": 13,
+                "fiber": 3.1,
+                "sodium": 1568
+          },
+          "perServing": {
+                "calories": 253,
+                "protein": 36.5,
+                "carbs": 10,
+                "fat": 6.5,
+                "fiber": 1.5,
+                "sodium": 784
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -243,9 +1202,114 @@ const dishes = {
       "https://images.unsplash.com/photo-1548943487-a2e4f43b4850?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_bamboo_shoot",
+                "nameTh": "หน่อไม้ต้ม",
+                "nameEn": "Boiled Bamboo Shoot",
+                "category": "vegetable",
+                "quantity": 180,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 27,
+                      "protein": 2.6,
+                      "carbs": 5.2,
+                      "fat": 0.3,
+                      "fiber": 2.2,
+                      "sodium": 4
+                }
+          },
+          {
+                "ingredientId": "ing_pla_ra",
+                "nameTh": "น้ำปลาร้าต้มสุกปรุงรส",
+                "nameEn": "Cooked Fermented Fish Sauce",
+                "category": "seasoning",
+                "quantity": 30,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 45,
+                      "protein": 7.5,
+                      "carbs": 3,
+                      "fat": 0.3,
+                      "fiber": 0,
+                      "sodium": 5800
+                }
+          },
+          {
+                "ingredientId": "ing_chili_jinda",
+                "nameTh": "พริกขี้หนูจินดา",
+                "nameEn": "Bird's Eye Red Chili",
+                "category": "herb_spice",
+                "quantity": 10,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 40,
+                      "protein": 1.9,
+                      "carbs": 8.8,
+                      "fat": 0.4,
+                      "fiber": 1.5,
+                      "sodium": 9
+                }
+          },
+          {
+                "ingredientId": "ing_shallot",
+                "nameTh": "หอมแดงซอย",
+                "nameEn": "Sliced Shallots",
+                "category": "herb_spice",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 72,
+                      "protein": 2.5,
+                      "carbs": 16.8,
+                      "fat": 0.1,
+                      "fiber": 3.2,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_roasted_rice_powder",
+                "nameTh": "ข้าวคั่วหอมกลิ่นใบมะกรูด",
+                "nameEn": "Toasted Rice Powder",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 360,
+                      "protein": 7.5,
+                      "carbs": 78,
+                      "fat": 1.5,
+                      "fiber": 3.2,
+                      "sodium": 5
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 135,
+                "protein": 8.7,
+                "carbs": 26.2,
+                "fat": 0.9,
+                "fiber": 5.2,
+                "sodium": 1751
+          },
+          "perServing": {
+                "calories": 67,
+                "protein": 4.4,
+                "carbs": 13.1,
+                "fat": 0.5,
+                "fiber": 2.6,
+                "sodium": 876
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -271,9 +1335,165 @@ const dishes = {
       "https://images.unsplash.com/photo-1562607635-4608ff48a859?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_green_papaya",
+                "nameTh": "มะละกอดิบสับเส้น",
+                "nameEn": "Shredded Green Papaya",
+                "category": "vegetable",
+                "quantity": 180,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 39,
+                      "protein": 0.6,
+                      "carbs": 9.8,
+                      "fat": 0.1,
+                      "fiber": 1.8,
+                      "sodium": 3
+                }
+          },
+          {
+                "ingredientId": "ing_string_bean",
+                "nameTh": "ถั่วฝักยาว",
+                "nameEn": "Yardlong Beans",
+                "category": "vegetable",
+                "quantity": 30,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 47,
+                      "protein": 2.8,
+                      "carbs": 8.4,
+                      "fat": 0.4,
+                      "fiber": 3.6,
+                      "sodium": 4
+                }
+          },
+          {
+                "ingredientId": "ing_tomato_cherry",
+                "nameTh": "มะเขือเทศสีดา",
+                "nameEn": "Cherry Tomatoes",
+                "category": "vegetable",
+                "quantity": 40,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 18,
+                      "protein": 0.9,
+                      "carbs": 3.9,
+                      "fat": 0.2,
+                      "fiber": 1.2,
+                      "sodium": 5
+                }
+          },
+          {
+                "ingredientId": "ing_garlic_thai",
+                "nameTh": "กระเทียมไทยแกะกลีบ",
+                "nameEn": "Thai Garlic Cloves",
+                "category": "herb_spice",
+                "quantity": 10,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 149,
+                      "protein": 6.4,
+                      "carbs": 33.1,
+                      "fat": 0.5,
+                      "fiber": 2.1,
+                      "sodium": 17
+                }
+          },
+          {
+                "ingredientId": "ing_chili_jinda",
+                "nameTh": "พริกขี้หนูจินดา",
+                "nameEn": "Bird's Eye Red Chili",
+                "category": "herb_spice",
+                "quantity": 10,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 40,
+                      "protein": 1.9,
+                      "carbs": 8.8,
+                      "fat": 0.4,
+                      "fiber": 1.5,
+                      "sodium": 9
+                }
+          },
+          {
+                "ingredientId": "ing_palm_sugar",
+                "nameTh": "น้ำตาลมะพร้าวอัมพวา",
+                "nameEn": "Pure Coconut Palm Sugar",
+                "category": "seasoning",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 380,
+                      "protein": 0.2,
+                      "carbs": 95,
+                      "fat": 0.1,
+                      "fiber": 0,
+                      "sodium": 40
+                }
+          },
+          {
+                "ingredientId": "ing_fish_sauce",
+                "nameTh": "น้ำปลาแท้เกรดพรีเมียม",
+                "nameEn": "Premium Fish Sauce",
+                "category": "seasoning",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 35,
+                      "protein": 6,
+                      "carbs": 2.5,
+                      "fat": 0,
+                      "fiber": 0,
+                      "sodium": 7200
+                }
+          },
+          {
+                "ingredientId": "ing_lime_juice",
+                "nameTh": "น้ำมะนาวแท้คั้นสด",
+                "nameEn": "Fresh Squeezed Lime Juice",
+                "category": "seasoning",
+                "quantity": 25,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 25,
+                      "protein": 0.4,
+                      "carbs": 8.4,
+                      "fat": 0.1,
+                      "fiber": 0.4,
+                      "sodium": 2
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 200,
+                "protein": 4.4,
+                "carbs": 47.5,
+                "fat": 0.5,
+                "fiber": 5.3,
+                "sodium": 1460
+          },
+          "perServing": {
+                "calories": 100,
+                "protein": 2.2,
+                "carbs": 23.8,
+                "fat": 0.3,
+                "fiber": 2.6,
+                "sodium": 730
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -299,9 +1519,165 @@ const dishes = {
       "https://images.unsplash.com/photo-1633504581786-316c8002b1b9?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_pork_mince",
+                "nameTh": "หมูสับอนามัย",
+                "nameEn": "Minced Pork",
+                "category": "meat",
+                "quantity": 200,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 263,
+                      "protein": 17,
+                      "carbs": 0,
+                      "fat": 21,
+                      "fiber": 0,
+                      "sodium": 65
+                }
+          },
+          {
+                "ingredientId": "ing_lemongrass",
+                "nameTh": "ตะไคร้ซอย",
+                "nameEn": "Lemongrass Stalks",
+                "category": "herb_spice",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 99,
+                      "protein": 1.8,
+                      "carbs": 25.3,
+                      "fat": 0.5,
+                      "fiber": 4.2,
+                      "sodium": 6
+                }
+          },
+          {
+                "ingredientId": "ing_galangal",
+                "nameTh": "ข่าแก่หั่นแว่น",
+                "nameEn": "Sliced Galangal",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 71,
+                      "protein": 1,
+                      "carbs": 15,
+                      "fat": 1,
+                      "fiber": 2,
+                      "sodium": 5
+                }
+          },
+          {
+                "ingredientId": "ing_kaffir_leaf",
+                "nameTh": "ใบมะกรูดฉีก",
+                "nameEn": "Kaffir Lime Leaves",
+                "category": "herb_spice",
+                "quantity": 5,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 45,
+                      "protein": 2.8,
+                      "carbs": 7.5,
+                      "fat": 0.5,
+                      "fiber": 3,
+                      "sodium": 10
+                }
+          },
+          {
+                "ingredientId": "ing_culantro",
+                "nameTh": "ผักชีฝรั่ง",
+                "nameEn": "Sawtooth Coriander / Culantro",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 25,
+                      "protein": 2,
+                      "carbs": 4,
+                      "fat": 0.5,
+                      "fiber": 2.5,
+                      "sodium": 15
+                }
+          },
+          {
+                "ingredientId": "ing_chili_jinda",
+                "nameTh": "พริกขี้หนูจินดา",
+                "nameEn": "Bird's Eye Red Chili",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 40,
+                      "protein": 1.9,
+                      "carbs": 8.8,
+                      "fat": 0.4,
+                      "fiber": 1.5,
+                      "sodium": 9
+                }
+          },
+          {
+                "ingredientId": "ing_fish_sauce",
+                "nameTh": "น้ำปลาแท้เกรดพรีเมียม",
+                "nameEn": "Premium Fish Sauce",
+                "category": "seasoning",
+                "quantity": 25,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 35,
+                      "protein": 6,
+                      "carbs": 2.5,
+                      "fat": 0,
+                      "fiber": 0,
+                      "sodium": 7200
+                }
+          },
+          {
+                "ingredientId": "ing_lime_juice",
+                "nameTh": "น้ำมะนาวแท้คั้นสด",
+                "nameEn": "Fresh Squeezed Lime Juice",
+                "category": "seasoning",
+                "quantity": 25,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 25,
+                      "protein": 0.4,
+                      "carbs": 8.4,
+                      "fat": 0.1,
+                      "fiber": 0.4,
+                      "sodium": 2
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 583,
+                "protein": 36.8,
+                "carbs": 12.3,
+                "fat": 42.4,
+                "fiber": 2,
+                "sodium": 1937
+          },
+          "perServing": {
+                "calories": 292,
+                "protein": 18.4,
+                "carbs": 6.2,
+                "fat": 21.2,
+                "fiber": 1,
+                "sodium": 968
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -327,9 +1703,63 @@ const dishes = {
       "https://images.unsplash.com/photo-1603099541178-958866380649?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 129,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_coconut_milk",
+                "nameTh": "หัวกะทิคั้นสด 100%",
+                "nameEn": "Fresh Coconut Milk",
+                "category": "coconut",
+                "quantity": 200,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 230,
+                      "protein": 2.3,
+                      "carbs": 5.5,
+                      "fat": 23.8,
+                      "fiber": 2.2,
+                      "sodium": 15
+                }
+          },
+          {
+                "ingredientId": "ing_palm_sugar",
+                "nameTh": "น้ำตาลมะพร้าวอัมพวา",
+                "nameEn": "Pure Coconut Palm Sugar",
+                "category": "seasoning",
+                "quantity": 50,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 380,
+                      "protein": 0.2,
+                      "carbs": 95,
+                      "fat": 0.1,
+                      "fiber": 0,
+                      "sodium": 40
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 650,
+                "protein": 4.7,
+                "carbs": 58.5,
+                "fat": 47.7,
+                "fiber": 4.4,
+                "sodium": 50
+          },
+          "perServing": {
+                "calories": 325,
+                "protein": 2.3,
+                "carbs": 29.3,
+                "fat": 23.8,
+                "fiber": 2.2,
+                "sodium": 25
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -355,9 +1785,148 @@ const dishes = {
       "https://images.unsplash.com/photo-1548943487-a2e4f43b4850?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_beef_shank",
+                "nameTh": "เนื้อวัวน่องลาย",
+                "nameEn": "Beef Shank",
+                "category": "meat",
+                "quantity": 200,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 201,
+                      "protein": 34,
+                      "carbs": 0,
+                      "fat": 6.2,
+                      "fiber": 0,
+                      "sodium": 55
+                }
+          },
+          {
+                "ingredientId": "ing_lemongrass",
+                "nameTh": "ตะไคร้ซอย",
+                "nameEn": "Lemongrass Stalks",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 99,
+                      "protein": 1.8,
+                      "carbs": 25.3,
+                      "fat": 0.5,
+                      "fiber": 4.2,
+                      "sodium": 6
+                }
+          },
+          {
+                "ingredientId": "ing_shallot",
+                "nameTh": "หอมแดงซอย",
+                "nameEn": "Sliced Shallots",
+                "category": "herb_spice",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 72,
+                      "protein": 2.5,
+                      "carbs": 16.8,
+                      "fat": 0.1,
+                      "fiber": 3.2,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_garlic_thai",
+                "nameTh": "กระเทียมไทยแกะกลีบ",
+                "nameEn": "Thai Garlic Cloves",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 149,
+                      "protein": 6.4,
+                      "carbs": 33.1,
+                      "fat": 0.5,
+                      "fiber": 2.1,
+                      "sodium": 17
+                }
+          },
+          {
+                "ingredientId": "ing_sweet_basil",
+                "nameTh": "ใบโหระพา",
+                "nameEn": "Sweet Basil",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 23,
+                      "protein": 3.2,
+                      "carbs": 2.7,
+                      "fat": 0.6,
+                      "fiber": 1.6,
+                      "sodium": 4
+                }
+          },
+          {
+                "ingredientId": "ing_chili_jinda",
+                "nameTh": "พริกขี้หนูจินดา",
+                "nameEn": "Bird's Eye Red Chili",
+                "category": "herb_spice",
+                "quantity": 10,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 40,
+                      "protein": 1.9,
+                      "carbs": 8.8,
+                      "fat": 0.4,
+                      "fiber": 1.5,
+                      "sodium": 9
+                }
+          },
+          {
+                "ingredientId": "ing_lime_juice",
+                "nameTh": "น้ำมะนาวแท้คั้นสด",
+                "nameEn": "Fresh Squeezed Lime Juice",
+                "category": "seasoning",
+                "quantity": 20,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 25,
+                      "protein": 0.4,
+                      "carbs": 8.4,
+                      "fat": 0.1,
+                      "fiber": 0.4,
+                      "sodium": 2
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 466,
+                "protein": 70.5,
+                "carbs": 15.1,
+                "fat": 12.7,
+                "fiber": 2.1,
+                "sodium": 118
+          },
+          "perServing": {
+                "calories": 233,
+                "protein": 35.2,
+                "carbs": 7.5,
+                "fat": 6.4,
+                "fiber": 1,
+                "sodium": 59
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -383,9 +1952,165 @@ const dishes = {
       "https://images.unsplash.com/photo-1562607635-4608ff48a859?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_pork_belly",
+                "nameTh": "หมูสามชั้น",
+                "nameEn": "Pork Belly",
+                "category": "meat",
+                "quantity": 200,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 518,
+                      "protein": 9.3,
+                      "carbs": 0,
+                      "fat": 53,
+                      "fiber": 0,
+                      "sodium": 32
+                }
+          },
+          {
+                "ingredientId": "ing_morning_glory",
+                "nameTh": "ผักบุ้งจีน",
+                "nameEn": "Morning Glory / Water Spinach",
+                "category": "vegetable",
+                "quantity": 120,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 19,
+                      "protein": 2.6,
+                      "carbs": 3.1,
+                      "fat": 0.2,
+                      "fiber": 2.1,
+                      "sodium": 113
+                }
+          },
+          {
+                "ingredientId": "ing_coconut_milk",
+                "nameTh": "หัวกะทิคั้นสด 100%",
+                "nameEn": "Fresh Coconut Milk",
+                "category": "coconut",
+                "quantity": 250,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 230,
+                      "protein": 2.3,
+                      "carbs": 5.5,
+                      "fat": 23.8,
+                      "fiber": 2.2,
+                      "sodium": 15
+                }
+          },
+          {
+                "ingredientId": "ing_curry_paste_green",
+                "nameTh": "พริกแกงเขียวหวานตำสด",
+                "nameEn": "Fresh Green Curry Paste",
+                "category": "seasoning",
+                "quantity": 45,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 112,
+                      "protein": 3.2,
+                      "carbs": 14.8,
+                      "fat": 4.1,
+                      "fiber": 5.5,
+                      "sodium": 1850
+                }
+          },
+          {
+                "ingredientId": "ing_kaffir_leaf",
+                "nameTh": "ใบมะกรูดฉีก",
+                "nameEn": "Kaffir Lime Leaves",
+                "category": "herb_spice",
+                "quantity": 5,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 45,
+                      "protein": 2.8,
+                      "carbs": 7.5,
+                      "fat": 0.5,
+                      "fiber": 3,
+                      "sodium": 10
+                }
+          },
+          {
+                "ingredientId": "ing_tamarind_paste",
+                "nameTh": "น้ำมะขามเปียกคั้นเข้มข้น",
+                "nameEn": "Concentrated Tamarind Paste",
+                "category": "seasoning",
+                "quantity": 25,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 239,
+                      "protein": 2.8,
+                      "carbs": 62.5,
+                      "fat": 0.6,
+                      "fiber": 5.1,
+                      "sodium": 28
+                }
+          },
+          {
+                "ingredientId": "ing_palm_sugar",
+                "nameTh": "น้ำตาลมะพร้าวอัมพวา",
+                "nameEn": "Pure Coconut Palm Sugar",
+                "category": "seasoning",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 380,
+                      "protein": 0.2,
+                      "carbs": 95,
+                      "fat": 0.1,
+                      "fiber": 0,
+                      "sodium": 40
+                }
+          },
+          {
+                "ingredientId": "ing_fish_sauce",
+                "nameTh": "น้ำปลาแท้เกรดพรีเมียม",
+                "nameEn": "Premium Fish Sauce",
+                "category": "seasoning",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 35,
+                      "protein": 6,
+                      "carbs": 2.5,
+                      "fat": 0,
+                      "fiber": 0,
+                      "sodium": 7200
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 1829,
+                "protein": 31,
+                "carbs": 59.6,
+                "fat": 167.8,
+                "fiber": 11.9,
+                "sodium": 2525
+          },
+          "perServing": {
+                "calories": 915,
+                "protein": 15.5,
+                "carbs": 29.8,
+                "fat": 83.9,
+                "fiber": 6,
+                "sodium": 1263
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -411,9 +2136,148 @@ const dishes = {
       "https://images.unsplash.com/photo-1633504581786-316c8002b1b9?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_chicken_drumstick",
+                "nameTh": "น่องไก่สด",
+                "nameEn": "Chicken Drumstick",
+                "category": "poultry",
+                "quantity": 260,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 172,
+                      "protein": 28.3,
+                      "carbs": 0,
+                      "fat": 5.7,
+                      "fiber": 0,
+                      "sodium": 86
+                }
+          },
+          {
+                "ingredientId": "ing_coconut_milk",
+                "nameTh": "หัวกะทิคั้นสด 100%",
+                "nameEn": "Fresh Coconut Milk",
+                "category": "coconut",
+                "quantity": 250,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 230,
+                      "protein": 2.3,
+                      "carbs": 5.5,
+                      "fat": 23.8,
+                      "fiber": 2.2,
+                      "sodium": 15
+                }
+          },
+          {
+                "ingredientId": "ing_curry_paste_massaman",
+                "nameTh": "พริกแกงมัสมั่นเครื่องเทศเทศ",
+                "nameEn": "Massaman Curry Paste",
+                "category": "seasoning",
+                "quantity": 50,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 142,
+                      "protein": 3.8,
+                      "carbs": 17.5,
+                      "fat": 6.3,
+                      "fiber": 5.8,
+                      "sodium": 1680
+                }
+          },
+          {
+                "ingredientId": "ing_shallot",
+                "nameTh": "หอมแดงซอย",
+                "nameEn": "Sliced Shallots",
+                "category": "herb_spice",
+                "quantity": 30,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 72,
+                      "protein": 2.5,
+                      "carbs": 16.8,
+                      "fat": 0.1,
+                      "fiber": 3.2,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_palm_sugar",
+                "nameTh": "น้ำตาลมะพร้าวอัมพวา",
+                "nameEn": "Pure Coconut Palm Sugar",
+                "category": "seasoning",
+                "quantity": 25,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 380,
+                      "protein": 0.2,
+                      "carbs": 95,
+                      "fat": 0.1,
+                      "fiber": 0,
+                      "sodium": 40
+                }
+          },
+          {
+                "ingredientId": "ing_tamarind_paste",
+                "nameTh": "น้ำมะขามเปียกคั้นเข้มข้น",
+                "nameEn": "Concentrated Tamarind Paste",
+                "category": "seasoning",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 239,
+                      "protein": 2.8,
+                      "carbs": 62.5,
+                      "fat": 0.6,
+                      "fiber": 5.1,
+                      "sodium": 28
+                }
+          },
+          {
+                "ingredientId": "ing_fish_sauce",
+                "nameTh": "น้ำปลาแท้เกรดพรีเมียม",
+                "nameEn": "Premium Fish Sauce",
+                "category": "seasoning",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 35,
+                      "protein": 6,
+                      "carbs": 2.5,
+                      "fat": 0,
+                      "fiber": 0,
+                      "sodium": 7200
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 1265,
+                "protein": 83.8,
+                "carbs": 64.3,
+                "fat": 77.6,
+                "fiber": 10.4,
+                "sodium": 2560
+          },
+          "perServing": {
+                "calories": 632,
+                "protein": 41.9,
+                "carbs": 32.1,
+                "fat": 38.8,
+                "fiber": 5.2,
+                "sodium": 1280
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -439,9 +2303,131 @@ const dishes = {
       "https://images.unsplash.com/photo-1603099541178-958866380649?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_chicken_breast",
+                "nameTh": "เนื้ออกไก่ลอกหนัง",
+                "nameEn": "Chicken Breast Fillet",
+                "category": "poultry",
+                "quantity": 200,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 165,
+                      "protein": 31,
+                      "carbs": 0,
+                      "fat": 3.6,
+                      "fiber": 0,
+                      "sodium": 74
+                }
+          },
+          {
+                "ingredientId": "ing_coconut_milk",
+                "nameTh": "หัวกะทิคั้นสด 100%",
+                "nameEn": "Fresh Coconut Milk",
+                "category": "coconut",
+                "quantity": 200,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 230,
+                      "protein": 2.3,
+                      "carbs": 5.5,
+                      "fat": 23.8,
+                      "fiber": 2.2,
+                      "sodium": 15
+                }
+          },
+          {
+                "ingredientId": "ing_thai_eggplant",
+                "nameTh": "มะเขือเปราะ",
+                "nameEn": "Thai Round Eggplant",
+                "category": "vegetable",
+                "quantity": 80,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 25,
+                      "protein": 1,
+                      "carbs": 5.8,
+                      "fat": 0.2,
+                      "fiber": 3,
+                      "sodium": 2
+                }
+          },
+          {
+                "ingredientId": "ing_curry_paste_green",
+                "nameTh": "พริกแกงเขียวหวานตำสด",
+                "nameEn": "Fresh Green Curry Paste",
+                "category": "seasoning",
+                "quantity": 40,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 112,
+                      "protein": 3.2,
+                      "carbs": 14.8,
+                      "fat": 4.1,
+                      "fiber": 5.5,
+                      "sodium": 1850
+                }
+          },
+          {
+                "ingredientId": "ing_sweet_basil",
+                "nameTh": "ใบโหระพา",
+                "nameEn": "Sweet Basil",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 23,
+                      "protein": 3.2,
+                      "carbs": 2.7,
+                      "fat": 0.6,
+                      "fiber": 1.6,
+                      "sodium": 4
+                }
+          },
+          {
+                "ingredientId": "ing_fish_sauce",
+                "nameTh": "น้ำปลาแท้เกรดพรีเมียม",
+                "nameEn": "Premium Fish Sauce",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 35,
+                      "protein": 6,
+                      "carbs": 2.5,
+                      "fat": 0,
+                      "fiber": 0,
+                      "sodium": 7200
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 864,
+                "protein": 70.1,
+                "carbs": 22.3,
+                "fat": 56.7,
+                "fiber": 9.2,
+                "sodium": 2000
+          },
+          "perServing": {
+                "calories": 432,
+                "protein": 35,
+                "carbs": 11.2,
+                "fat": 28.3,
+                "fiber": 4.6,
+                "sodium": 1000
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -467,9 +2453,114 @@ const dishes = {
       "https://images.unsplash.com/photo-1548943487-a2e4f43b4850?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_pork_belly",
+                "nameTh": "หมูสามชั้น",
+                "nameEn": "Pork Belly",
+                "category": "meat",
+                "quantity": 220,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 518,
+                      "protein": 9.3,
+                      "carbs": 0,
+                      "fat": 53,
+                      "fiber": 0,
+                      "sodium": 32
+                }
+          },
+          {
+                "ingredientId": "ing_shallot",
+                "nameTh": "หอมแดงซอย",
+                "nameEn": "Sliced Shallots",
+                "category": "herb_spice",
+                "quantity": 25,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 72,
+                      "protein": 2.5,
+                      "carbs": 16.8,
+                      "fat": 0.1,
+                      "fiber": 3.2,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_garlic_thai",
+                "nameTh": "กระเทียมไทยแกะกลีบ",
+                "nameEn": "Thai Garlic Cloves",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 149,
+                      "protein": 6.4,
+                      "carbs": 33.1,
+                      "fat": 0.5,
+                      "fiber": 2.1,
+                      "sodium": 17
+                }
+          },
+          {
+                "ingredientId": "ing_palm_sugar",
+                "nameTh": "น้ำตาลมะพร้าวอัมพวา",
+                "nameEn": "Pure Coconut Palm Sugar",
+                "category": "seasoning",
+                "quantity": 25,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 380,
+                      "protein": 0.2,
+                      "carbs": 95,
+                      "fat": 0.1,
+                      "fiber": 0,
+                      "sodium": 40
+                }
+          },
+          {
+                "ingredientId": "ing_fish_sauce",
+                "nameTh": "น้ำปลาแท้เกรดพรีเมียม",
+                "nameEn": "Premium Fish Sauce",
+                "category": "seasoning",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 35,
+                      "protein": 6,
+                      "carbs": 2.5,
+                      "fat": 0,
+                      "fiber": 0,
+                      "sodium": 7200
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 1282,
+                "protein": 23.3,
+                "carbs": 33.4,
+                "fat": 116.7,
+                "fiber": 1.1,
+                "sodium": 1526
+          },
+          "perServing": {
+                "calories": 641,
+                "protein": 11.6,
+                "carbs": 16.7,
+                "fat": 58.4,
+                "fiber": 0.6,
+                "sodium": 763
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -495,9 +2586,63 @@ const dishes = {
       "https://images.unsplash.com/photo-1562607635-4608ff48a859?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 129,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_coconut_milk",
+                "nameTh": "หัวกะทิคั้นสด 100%",
+                "nameEn": "Fresh Coconut Milk",
+                "category": "coconut",
+                "quantity": 200,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 230,
+                      "protein": 2.3,
+                      "carbs": 5.5,
+                      "fat": 23.8,
+                      "fiber": 2.2,
+                      "sodium": 15
+                }
+          },
+          {
+                "ingredientId": "ing_palm_sugar",
+                "nameTh": "น้ำตาลมะพร้าวอัมพวา",
+                "nameEn": "Pure Coconut Palm Sugar",
+                "category": "seasoning",
+                "quantity": 50,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 380,
+                      "protein": 0.2,
+                      "carbs": 95,
+                      "fat": 0.1,
+                      "fiber": 0,
+                      "sodium": 40
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 650,
+                "protein": 4.7,
+                "carbs": 58.5,
+                "fat": 47.7,
+                "fiber": 4.4,
+                "sodium": 50
+          },
+          "perServing": {
+                "calories": 325,
+                "protein": 2.3,
+                "carbs": 29.3,
+                "fat": 23.8,
+                "fiber": 2.2,
+                "sodium": 25
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -523,9 +2668,114 @@ const dishes = {
       "https://images.unsplash.com/photo-1633504581786-316c8002b1b9?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_bamboo_shoot",
+                "nameTh": "หน่อไม้ต้ม",
+                "nameEn": "Boiled Bamboo Shoot",
+                "category": "vegetable",
+                "quantity": 180,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 27,
+                      "protein": 2.6,
+                      "carbs": 5.2,
+                      "fat": 0.3,
+                      "fiber": 2.2,
+                      "sodium": 4
+                }
+          },
+          {
+                "ingredientId": "ing_shrimp",
+                "nameTh": "กุ้งสดแกะเปลือก",
+                "nameEn": "Fresh Shrimp",
+                "category": "seafood",
+                "quantity": 120,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 99,
+                      "protein": 24,
+                      "carbs": 0.2,
+                      "fat": 0.3,
+                      "fiber": 0,
+                      "sodium": 111
+                }
+          },
+          {
+                "ingredientId": "ing_coconut_milk",
+                "nameTh": "หัวกะทิคั้นสด 100%",
+                "nameEn": "Fresh Coconut Milk",
+                "category": "coconut",
+                "quantity": 250,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 230,
+                      "protein": 2.3,
+                      "carbs": 5.5,
+                      "fat": 23.8,
+                      "fiber": 2.2,
+                      "sodium": 15
+                }
+          },
+          {
+                "ingredientId": "ing_shallot",
+                "nameTh": "หอมแดงซอย",
+                "nameEn": "Sliced Shallots",
+                "category": "herb_spice",
+                "quantity": 25,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 72,
+                      "protein": 2.5,
+                      "carbs": 16.8,
+                      "fat": 0.1,
+                      "fiber": 3.2,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_fish_sauce",
+                "nameTh": "น้ำปลาแท้เกรดพรีเมียม",
+                "nameEn": "Premium Fish Sauce",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 35,
+                      "protein": 6,
+                      "carbs": 2.5,
+                      "fat": 0,
+                      "fiber": 0,
+                      "sodium": 7200
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 766,
+                "protein": 40.8,
+                "carbs": 27.9,
+                "fat": 60.4,
+                "fiber": 10.3,
+                "sodium": 1261
+          },
+          "perServing": {
+                "calories": 383,
+                "protein": 20.4,
+                "carbs": 14,
+                "fat": 30.2,
+                "fiber": 5.1,
+                "sodium": 630
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -551,9 +2801,131 @@ const dishes = {
       "https://images.unsplash.com/photo-1603099541178-958866380649?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_beef_shank",
+                "nameTh": "เนื้อวัวน่องลาย",
+                "nameEn": "Beef Shank",
+                "category": "meat",
+                "quantity": 220,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 201,
+                      "protein": 34,
+                      "carbs": 0,
+                      "fat": 6.2,
+                      "fiber": 0,
+                      "sodium": 55
+                }
+          },
+          {
+                "ingredientId": "ing_coconut_milk",
+                "nameTh": "หัวกะทิคั้นสด 100%",
+                "nameEn": "Fresh Coconut Milk",
+                "category": "coconut",
+                "quantity": 220,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 230,
+                      "protein": 2.3,
+                      "carbs": 5.5,
+                      "fat": 23.8,
+                      "fiber": 2.2,
+                      "sodium": 15
+                }
+          },
+          {
+                "ingredientId": "ing_curry_paste_southern_sour",
+                "nameTh": "พริกแกงส้มใต้ขมิ้นสด",
+                "nameEn": "Southern Sour Turmeric Curry Paste",
+                "category": "seasoning",
+                "quantity": 45,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 95,
+                      "protein": 2.8,
+                      "carbs": 15.5,
+                      "fat": 2.1,
+                      "fiber": 4.8,
+                      "sodium": 1950
+                }
+          },
+          {
+                "ingredientId": "ing_lemongrass",
+                "nameTh": "ตะไคร้ซอย",
+                "nameEn": "Lemongrass Stalks",
+                "category": "herb_spice",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 99,
+                      "protein": 1.8,
+                      "carbs": 25.3,
+                      "fat": 0.5,
+                      "fiber": 4.2,
+                      "sodium": 6
+                }
+          },
+          {
+                "ingredientId": "ing_kaffir_leaf",
+                "nameTh": "ใบมะกรูดฉีก",
+                "nameEn": "Kaffir Lime Leaves",
+                "category": "herb_spice",
+                "quantity": 5,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 45,
+                      "protein": 2.8,
+                      "carbs": 7.5,
+                      "fat": 0.5,
+                      "fiber": 3,
+                      "sodium": 10
+                }
+          },
+          {
+                "ingredientId": "ing_fish_sauce",
+                "nameTh": "น้ำปลาแท้เกรดพรีเมียม",
+                "nameEn": "Premium Fish Sauce",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 35,
+                      "protein": 6,
+                      "carbs": 2.5,
+                      "fat": 0,
+                      "fiber": 0,
+                      "sodium": 7200
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 1018,
+                "protein": 82.5,
+                "carbs": 24.9,
+                "fat": 67.1,
+                "fiber": 8,
+                "sodium": 2113
+          },
+          "perServing": {
+                "calories": 509,
+                "protein": 41.3,
+                "carbs": 12.4,
+                "fat": 33.5,
+                "fiber": 4,
+                "sodium": 1057
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -579,9 +2951,148 @@ const dishes = {
       "https://images.unsplash.com/photo-1548943487-a2e4f43b4850?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_shrimp",
+                "nameTh": "กุ้งสดแกะเปลือก",
+                "nameEn": "Fresh Shrimp",
+                "category": "seafood",
+                "quantity": 180,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 99,
+                      "protein": 24,
+                      "carbs": 0.2,
+                      "fat": 0.3,
+                      "fiber": 0,
+                      "sodium": 111
+                }
+          },
+          {
+                "ingredientId": "ing_pork_mince",
+                "nameTh": "หมูสับอนามัย",
+                "nameEn": "Minced Pork",
+                "category": "meat",
+                "quantity": 80,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 263,
+                      "protein": 17,
+                      "carbs": 0,
+                      "fat": 21,
+                      "fiber": 0,
+                      "sodium": 65
+                }
+          },
+          {
+                "ingredientId": "ing_garlic_thai",
+                "nameTh": "กระเทียมไทยแกะกลีบ",
+                "nameEn": "Thai Garlic Cloves",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 149,
+                      "protein": 6.4,
+                      "carbs": 33.1,
+                      "fat": 0.5,
+                      "fiber": 2.1,
+                      "sodium": 17
+                }
+          },
+          {
+                "ingredientId": "ing_shallot",
+                "nameTh": "หอมแดงซอย",
+                "nameEn": "Sliced Shallots",
+                "category": "herb_spice",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 72,
+                      "protein": 2.5,
+                      "carbs": 16.8,
+                      "fat": 0.1,
+                      "fiber": 3.2,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_chili_jinda",
+                "nameTh": "พริกขี้หนูจินดา",
+                "nameEn": "Bird's Eye Red Chili",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 40,
+                      "protein": 1.9,
+                      "carbs": 8.8,
+                      "fat": 0.4,
+                      "fiber": 1.5,
+                      "sodium": 9
+                }
+          },
+          {
+                "ingredientId": "ing_palm_sugar",
+                "nameTh": "น้ำตาลมะพร้าวอัมพวา",
+                "nameEn": "Pure Coconut Palm Sugar",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 380,
+                      "protein": 0.2,
+                      "carbs": 95,
+                      "fat": 0.1,
+                      "fiber": 0,
+                      "sodium": 40
+                }
+          },
+          {
+                "ingredientId": "ing_fish_sauce",
+                "nameTh": "น้ำปลาแท้เกรดพรีเมียม",
+                "nameEn": "Premium Fish Sauce",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 35,
+                      "protein": 6,
+                      "carbs": 2.5,
+                      "fat": 0,
+                      "fiber": 0,
+                      "sodium": 7200
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 494,
+                "protein": 59.5,
+                "carbs": 24.6,
+                "fat": 17.5,
+                "fiber": 1.2,
+                "sodium": 1344
+          },
+          "perServing": {
+                "calories": 247,
+                "protein": 29.7,
+                "carbs": 12.3,
+                "fat": 8.8,
+                "fiber": 0.6,
+                "sodium": 672
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -607,9 +3118,131 @@ const dishes = {
       "https://images.unsplash.com/photo-1562607635-4608ff48a859?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_sea_bass",
+                "nameTh": "เนื้อปลากะพงขาว",
+                "nameEn": "Sea Bass Fillet",
+                "category": "seafood",
+                "quantity": 180,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 97,
+                      "protein": 18.4,
+                      "carbs": 0,
+                      "fat": 2,
+                      "fiber": 0,
+                      "sodium": 68
+                }
+          },
+          {
+                "ingredientId": "ing_lemongrass",
+                "nameTh": "ตะไคร้ซอย",
+                "nameEn": "Lemongrass Stalks",
+                "category": "herb_spice",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 99,
+                      "protein": 1.8,
+                      "carbs": 25.3,
+                      "fat": 0.5,
+                      "fiber": 4.2,
+                      "sodium": 6
+                }
+          },
+          {
+                "ingredientId": "ing_shallot",
+                "nameTh": "หอมแดงซอย",
+                "nameEn": "Sliced Shallots",
+                "category": "herb_spice",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 72,
+                      "protein": 2.5,
+                      "carbs": 16.8,
+                      "fat": 0.1,
+                      "fiber": 3.2,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_chili_jinda",
+                "nameTh": "พริกขี้หนูจินดา",
+                "nameEn": "Bird's Eye Red Chili",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 40,
+                      "protein": 1.9,
+                      "carbs": 8.8,
+                      "fat": 0.4,
+                      "fiber": 1.5,
+                      "sodium": 9
+                }
+          },
+          {
+                "ingredientId": "ing_kaffir_leaf",
+                "nameTh": "ใบมะกรูดฉีก",
+                "nameEn": "Kaffir Lime Leaves",
+                "category": "herb_spice",
+                "quantity": 5,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 45,
+                      "protein": 2.8,
+                      "carbs": 7.5,
+                      "fat": 0.5,
+                      "fiber": 3,
+                      "sodium": 10
+                }
+          },
+          {
+                "ingredientId": "ing_lime_juice",
+                "nameTh": "น้ำมะนาวแท้คั้นสด",
+                "nameEn": "Fresh Squeezed Lime Juice",
+                "category": "seasoning",
+                "quantity": 25,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 25,
+                      "protein": 0.4,
+                      "carbs": 8.4,
+                      "fat": 0.1,
+                      "fiber": 0.4,
+                      "sodium": 2
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 223,
+                "protein": 34.5,
+                "carbs": 12.2,
+                "fat": 3.8,
+                "fiber": 2,
+                "sodium": 128
+          },
+          "perServing": {
+                "calories": 112,
+                "protein": 17.3,
+                "carbs": 6.1,
+                "fat": 1.9,
+                "fiber": 1,
+                "sodium": 64
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -635,9 +3268,131 @@ const dishes = {
       "https://images.unsplash.com/photo-1633504581786-316c8002b1b9?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_chicken_drumstick",
+                "nameTh": "น่องไก่สด",
+                "nameEn": "Chicken Drumstick",
+                "category": "poultry",
+                "quantity": 280,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 172,
+                      "protein": 28.3,
+                      "carbs": 0,
+                      "fat": 5.7,
+                      "fiber": 0,
+                      "sodium": 86
+                }
+          },
+          {
+                "ingredientId": "ing_coconut_milk",
+                "nameTh": "หัวกะทิคั้นสด 100%",
+                "nameEn": "Fresh Coconut Milk",
+                "category": "coconut",
+                "quantity": 150,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 230,
+                      "protein": 2.3,
+                      "carbs": 5.5,
+                      "fat": 23.8,
+                      "fiber": 2.2,
+                      "sodium": 15
+                }
+          },
+          {
+                "ingredientId": "ing_shallot",
+                "nameTh": "หอมแดงซอย",
+                "nameEn": "Sliced Shallots",
+                "category": "herb_spice",
+                "quantity": 25,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 72,
+                      "protein": 2.5,
+                      "carbs": 16.8,
+                      "fat": 0.1,
+                      "fiber": 3.2,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_garlic_thai",
+                "nameTh": "กระเทียมไทยแกะกลีบ",
+                "nameEn": "Thai Garlic Cloves",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 149,
+                      "protein": 6.4,
+                      "carbs": 33.1,
+                      "fat": 0.5,
+                      "fiber": 2.1,
+                      "sodium": 17
+                }
+          },
+          {
+                "ingredientId": "ing_tamarind_paste",
+                "nameTh": "น้ำมะขามเปียกคั้นเข้มข้น",
+                "nameEn": "Concentrated Tamarind Paste",
+                "category": "seasoning",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 239,
+                      "protein": 2.8,
+                      "carbs": 62.5,
+                      "fat": 0.6,
+                      "fiber": 5.1,
+                      "sodium": 28
+                }
+          },
+          {
+                "ingredientId": "ing_palm_sugar",
+                "nameTh": "น้ำตาลมะพร้าวอัมพวา",
+                "nameEn": "Pure Coconut Palm Sugar",
+                "category": "seasoning",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 380,
+                      "protein": 0.2,
+                      "carbs": 95,
+                      "fat": 0.1,
+                      "fiber": 0,
+                      "sodium": 40
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 991,
+                "protein": 84.9,
+                "carbs": 48.9,
+                "fat": 51.9,
+                "fiber": 5.4,
+                "sodium": 282
+          },
+          "perServing": {
+                "calories": 495,
+                "protein": 42.4,
+                "carbs": 24.5,
+                "fat": 26,
+                "fiber": 2.7,
+                "sodium": 141
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -663,9 +3418,63 @@ const dishes = {
       "https://images.unsplash.com/photo-1603099541178-958866380649?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 129,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_coconut_milk",
+                "nameTh": "หัวกะทิคั้นสด 100%",
+                "nameEn": "Fresh Coconut Milk",
+                "category": "coconut",
+                "quantity": 200,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 230,
+                      "protein": 2.3,
+                      "carbs": 5.5,
+                      "fat": 23.8,
+                      "fiber": 2.2,
+                      "sodium": 15
+                }
+          },
+          {
+                "ingredientId": "ing_palm_sugar",
+                "nameTh": "น้ำตาลมะพร้าวอัมพวา",
+                "nameEn": "Pure Coconut Palm Sugar",
+                "category": "seasoning",
+                "quantity": 45,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 380,
+                      "protein": 0.2,
+                      "carbs": 95,
+                      "fat": 0.1,
+                      "fiber": 0,
+                      "sodium": 40
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 631,
+                "protein": 4.7,
+                "carbs": 53.8,
+                "fat": 47.6,
+                "fiber": 4.4,
+                "sodium": 48
+          },
+          "perServing": {
+                "calories": 316,
+                "protein": 2.3,
+                "carbs": 26.9,
+                "fat": 23.8,
+                "fiber": 2.2,
+                "sodium": 24
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -691,9 +3500,131 @@ const dishes = {
       "https://images.unsplash.com/photo-1548943487-a2e4f43b4850?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_egg_noodle",
+                "nameTh": "บะหมี่ไข่เส้นแบน",
+                "nameEn": "Flat Egg Noodles",
+                "category": "carb",
+                "quantity": 180,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 280,
+                      "protein": 10.2,
+                      "carbs": 54.8,
+                      "fat": 2.5,
+                      "fiber": 2,
+                      "sodium": 180
+                }
+          },
+          {
+                "ingredientId": "ing_squid",
+                "nameTh": "ปลาหมึกกล้วย",
+                "nameEn": "Squid Rings",
+                "category": "seafood",
+                "quantity": 100,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 92,
+                      "protein": 15.6,
+                      "carbs": 3.1,
+                      "fat": 1.4,
+                      "fiber": 0,
+                      "sodium": 44
+                }
+          },
+          {
+                "ingredientId": "ing_sweet_basil",
+                "nameTh": "ใบโหระพา",
+                "nameEn": "Sweet Basil",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 23,
+                      "protein": 3.2,
+                      "carbs": 2.7,
+                      "fat": 0.6,
+                      "fiber": 1.6,
+                      "sodium": 4
+                }
+          },
+          {
+                "ingredientId": "ing_chili_jinda",
+                "nameTh": "พริกขี้หนูจินดา",
+                "nameEn": "Bird's Eye Red Chili",
+                "category": "herb_spice",
+                "quantity": 10,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 40,
+                      "protein": 1.9,
+                      "carbs": 8.8,
+                      "fat": 0.4,
+                      "fiber": 1.5,
+                      "sodium": 9
+                }
+          },
+          {
+                "ingredientId": "ing_garlic_thai",
+                "nameTh": "กระเทียมไทยแกะกลีบ",
+                "nameEn": "Thai Garlic Cloves",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 149,
+                      "protein": 6.4,
+                      "carbs": 33.1,
+                      "fat": 0.5,
+                      "fiber": 2.1,
+                      "sodium": 17
+                }
+          },
+          {
+                "ingredientId": "ing_fish_sauce",
+                "nameTh": "น้ำปลาแท้เกรดพรีเมียม",
+                "nameEn": "Premium Fish Sauce",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 35,
+                      "protein": 6,
+                      "carbs": 2.5,
+                      "fat": 0,
+                      "fiber": 0,
+                      "sodium": 7200
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 631,
+                "protein": 36.5,
+                "carbs": 108.4,
+                "fat": 6.1,
+                "fiber": 4.3,
+                "sodium": 1452
+          },
+          "perServing": {
+                "calories": 316,
+                "protein": 18.2,
+                "carbs": 54.2,
+                "fat": 3.1,
+                "fiber": 2.2,
+                "sodium": 726
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -719,9 +3650,131 @@ const dishes = {
       "https://images.unsplash.com/photo-1562607635-4608ff48a859?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_tofu_firm",
+                "nameTh": "เต้าหู้ขาวแข็ง",
+                "nameEn": "Firm Tofu",
+                "category": "protein",
+                "quantity": 100,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 83,
+                      "protein": 10,
+                      "carbs": 1.9,
+                      "fat": 5.3,
+                      "fiber": 1,
+                      "sodium": 12
+                }
+          },
+          {
+                "ingredientId": "ing_shrimp",
+                "nameTh": "กุ้งสดแกะเปลือก",
+                "nameEn": "Fresh Shrimp",
+                "category": "seafood",
+                "quantity": 100,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 99,
+                      "protein": 24,
+                      "carbs": 0.2,
+                      "fat": 0.3,
+                      "fiber": 0,
+                      "sodium": 111
+                }
+          },
+          {
+                "ingredientId": "ing_egg",
+                "nameTh": "ไข่ไก่สด",
+                "nameEn": "Fresh Chicken Egg",
+                "category": "dairy_egg",
+                "quantity": 60,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 143,
+                      "protein": 12.6,
+                      "carbs": 0.7,
+                      "fat": 9.5,
+                      "fiber": 0,
+                      "sodium": 142
+                }
+          },
+          {
+                "ingredientId": "ing_tamarind_paste",
+                "nameTh": "น้ำมะขามเปียกคั้นเข้มข้น",
+                "nameEn": "Concentrated Tamarind Paste",
+                "category": "seasoning",
+                "quantity": 25,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 239,
+                      "protein": 2.8,
+                      "carbs": 62.5,
+                      "fat": 0.6,
+                      "fiber": 5.1,
+                      "sodium": 28
+                }
+          },
+          {
+                "ingredientId": "ing_palm_sugar",
+                "nameTh": "น้ำตาลมะพร้าวอัมพวา",
+                "nameEn": "Pure Coconut Palm Sugar",
+                "category": "seasoning",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 380,
+                      "protein": 0.2,
+                      "carbs": 95,
+                      "fat": 0.1,
+                      "fiber": 0,
+                      "sodium": 40
+                }
+          },
+          {
+                "ingredientId": "ing_fish_sauce",
+                "nameTh": "น้ำปลาแท้เกรดพรีเมียม",
+                "nameEn": "Premium Fish Sauce",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 35,
+                      "protein": 6,
+                      "carbs": 2.5,
+                      "fat": 0,
+                      "fiber": 0,
+                      "sodium": 7200
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 409,
+                "protein": 43.2,
+                "carbs": 37.5,
+                "fat": 11.5,
+                "fiber": 2.3,
+                "sodium": 1303
+          },
+          "perServing": {
+                "calories": 204,
+                "protein": 21.6,
+                "carbs": 18.8,
+                "fat": 5.7,
+                "fiber": 1.1,
+                "sodium": 652
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -747,9 +3800,165 @@ const dishes = {
       "https://images.unsplash.com/photo-1633504581786-316c8002b1b9?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_shrimp",
+                "nameTh": "กุ้งสดแกะเปลือก",
+                "nameEn": "Fresh Shrimp",
+                "category": "seafood",
+                "quantity": 120,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 99,
+                      "protein": 24,
+                      "carbs": 0.2,
+                      "fat": 0.3,
+                      "fiber": 0,
+                      "sodium": 111
+                }
+          },
+          {
+                "ingredientId": "ing_squid",
+                "nameTh": "ปลาหมึกกล้วย",
+                "nameEn": "Squid Rings",
+                "category": "seafood",
+                "quantity": 80,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 92,
+                      "protein": 15.6,
+                      "carbs": 3.1,
+                      "fat": 1.4,
+                      "fiber": 0,
+                      "sodium": 44
+                }
+          },
+          {
+                "ingredientId": "ing_lemongrass",
+                "nameTh": "ตะไคร้ซอย",
+                "nameEn": "Lemongrass Stalks",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 99,
+                      "protein": 1.8,
+                      "carbs": 25.3,
+                      "fat": 0.5,
+                      "fiber": 4.2,
+                      "sodium": 6
+                }
+          },
+          {
+                "ingredientId": "ing_galangal",
+                "nameTh": "ข่าแก่หั่นแว่น",
+                "nameEn": "Sliced Galangal",
+                "category": "herb_spice",
+                "quantity": 10,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 71,
+                      "protein": 1,
+                      "carbs": 15,
+                      "fat": 1,
+                      "fiber": 2,
+                      "sodium": 5
+                }
+          },
+          {
+                "ingredientId": "ing_kaffir_leaf",
+                "nameTh": "ใบมะกรูดฉีก",
+                "nameEn": "Kaffir Lime Leaves",
+                "category": "herb_spice",
+                "quantity": 5,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 45,
+                      "protein": 2.8,
+                      "carbs": 7.5,
+                      "fat": 0.5,
+                      "fiber": 3,
+                      "sodium": 10
+                }
+          },
+          {
+                "ingredientId": "ing_chili_jinda",
+                "nameTh": "พริกขี้หนูจินดา",
+                "nameEn": "Bird's Eye Red Chili",
+                "category": "herb_spice",
+                "quantity": 10,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 40,
+                      "protein": 1.9,
+                      "carbs": 8.8,
+                      "fat": 0.4,
+                      "fiber": 1.5,
+                      "sodium": 9
+                }
+          },
+          {
+                "ingredientId": "ing_lime_juice",
+                "nameTh": "น้ำมะนาวแท้คั้นสด",
+                "nameEn": "Fresh Squeezed Lime Juice",
+                "category": "seasoning",
+                "quantity": 20,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 25,
+                      "protein": 0.4,
+                      "carbs": 8.4,
+                      "fat": 0.1,
+                      "fiber": 0.4,
+                      "sodium": 2
+                }
+          },
+          {
+                "ingredientId": "ing_egg",
+                "nameTh": "ไข่ไก่สด",
+                "nameEn": "Fresh Chicken Egg",
+                "category": "dairy_egg",
+                "quantity": 60,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 143,
+                      "protein": 12.6,
+                      "carbs": 0.7,
+                      "fat": 9.5,
+                      "fiber": 0,
+                      "sodium": 142
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 311,
+                "protein": 49.6,
+                "carbs": 11.4,
+                "fat": 7.4,
+                "fiber": 1.2,
+                "sodium": 257
+          },
+          "perServing": {
+                "calories": 156,
+                "protein": 24.8,
+                "carbs": 5.7,
+                "fat": 3.7,
+                "fiber": 0.6,
+                "sodium": 128
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -775,9 +3984,114 @@ const dishes = {
       "https://images.unsplash.com/photo-1603099541178-958866380649?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_pork_mince",
+                "nameTh": "หมูสับอนามัย",
+                "nameEn": "Minced Pork",
+                "category": "meat",
+                "quantity": 160,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 263,
+                      "protein": 17,
+                      "carbs": 0,
+                      "fat": 21,
+                      "fiber": 0,
+                      "sodium": 65
+                }
+          },
+          {
+                "ingredientId": "ing_morning_glory",
+                "nameTh": "ผักบุ้งจีน",
+                "nameEn": "Morning Glory / Water Spinach",
+                "category": "vegetable",
+                "quantity": 80,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 19,
+                      "protein": 2.6,
+                      "carbs": 3.1,
+                      "fat": 0.2,
+                      "fiber": 2.1,
+                      "sodium": 113
+                }
+          },
+          {
+                "ingredientId": "ing_garlic_thai",
+                "nameTh": "กระเทียมไทยแกะกลีบ",
+                "nameEn": "Thai Garlic Cloves",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 149,
+                      "protein": 6.4,
+                      "carbs": 33.1,
+                      "fat": 0.5,
+                      "fiber": 2.1,
+                      "sodium": 17
+                }
+          },
+          {
+                "ingredientId": "ing_fish_sauce",
+                "nameTh": "น้ำปลาแท้เกรดพรีเมียม",
+                "nameEn": "Premium Fish Sauce",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 35,
+                      "protein": 6,
+                      "carbs": 2.5,
+                      "fat": 0,
+                      "fiber": 0,
+                      "sodium": 7200
+                }
+          },
+          {
+                "ingredientId": "ing_palm_sugar",
+                "nameTh": "น้ำตาลมะพร้าวอัมพวา",
+                "nameEn": "Pure Coconut Palm Sugar",
+                "category": "seasoning",
+                "quantity": 10,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 380,
+                      "protein": 0.2,
+                      "carbs": 95,
+                      "fat": 0.1,
+                      "fiber": 0,
+                      "sodium": 40
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 502,
+                "protein": 31.2,
+                "carbs": 17.3,
+                "fat": 33.8,
+                "fiber": 2,
+                "sodium": 1281
+          },
+          "perServing": {
+                "calories": 251,
+                "protein": 15.6,
+                "carbs": 8.7,
+                "fat": 16.9,
+                "fiber": 1,
+                "sodium": 640
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -803,9 +4117,114 @@ const dishes = {
       "https://images.unsplash.com/photo-1548943487-a2e4f43b4850?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 189,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_chicken_breast",
+                "nameTh": "เนื้ออกไก่ลอกหนัง",
+                "nameEn": "Chicken Breast Fillet",
+                "category": "poultry",
+                "quantity": 220,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 165,
+                      "protein": 31,
+                      "carbs": 0,
+                      "fat": 3.6,
+                      "fiber": 0,
+                      "sodium": 74
+                }
+          },
+          {
+                "ingredientId": "ing_garlic_thai",
+                "nameTh": "กระเทียมไทยแกะกลีบ",
+                "nameEn": "Thai Garlic Cloves",
+                "category": "herb_spice",
+                "quantity": 20,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 149,
+                      "protein": 6.4,
+                      "carbs": 33.1,
+                      "fat": 0.5,
+                      "fiber": 2.1,
+                      "sodium": 17
+                }
+          },
+          {
+                "ingredientId": "ing_galangal",
+                "nameTh": "ข่าแก่หั่นแว่น",
+                "nameEn": "Sliced Galangal",
+                "category": "herb_spice",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 71,
+                      "protein": 1,
+                      "carbs": 15,
+                      "fat": 1,
+                      "fiber": 2,
+                      "sodium": 5
+                }
+          },
+          {
+                "ingredientId": "ing_chili_jinda",
+                "nameTh": "พริกขี้หนูจินดา",
+                "nameEn": "Bird's Eye Red Chili",
+                "category": "herb_spice",
+                "quantity": 10,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 40,
+                      "protein": 1.9,
+                      "carbs": 8.8,
+                      "fat": 0.4,
+                      "fiber": 1.5,
+                      "sodium": 9
+                }
+          },
+          {
+                "ingredientId": "ing_fish_sauce",
+                "nameTh": "น้ำปลาแท้เกรดพรีเมียม",
+                "nameEn": "Premium Fish Sauce",
+                "category": "seasoning",
+                "quantity": 15,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 35,
+                      "protein": 6,
+                      "carbs": 2.5,
+                      "fat": 0,
+                      "fiber": 0,
+                      "sodium": 7200
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 413,
+                "protein": 70.7,
+                "carbs": 10.1,
+                "fat": 8.2,
+                "fiber": 0.9,
+                "sodium": 1248
+          },
+          "perServing": {
+                "calories": 206,
+                "protein": 35.4,
+                "carbs": 5.1,
+                "fat": 4.1,
+                "fiber": 0.4,
+                "sodium": 624
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,
@@ -831,9 +4250,80 @@ const dishes = {
       "https://images.unsplash.com/photo-1562607635-4608ff48a859?auto=format&fit=crop&w=1200&q=80",
     ],
     price: 129,
-    recipe: [],
+    recipe: [
+          {
+                "ingredientId": "ing_coconut_milk",
+                "nameTh": "หัวกะทิคั้นสด 100%",
+                "nameEn": "Fresh Coconut Milk",
+                "category": "coconut",
+                "quantity": 220,
+                "unit": "ml",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 230,
+                      "protein": 2.3,
+                      "carbs": 5.5,
+                      "fat": 23.8,
+                      "fiber": 2.2,
+                      "sodium": 15
+                }
+          },
+          {
+                "ingredientId": "ing_palm_sugar",
+                "nameTh": "น้ำตาลมะพร้าวอัมพวา",
+                "nameEn": "Pure Coconut Palm Sugar",
+                "category": "seasoning",
+                "quantity": 45,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 380,
+                      "protein": 0.2,
+                      "carbs": 95,
+                      "fat": 0.1,
+                      "fiber": 0,
+                      "sodium": 40
+                }
+          },
+          {
+                "ingredientId": "ing_egg",
+                "nameTh": "ไข่ไก่สด",
+                "nameEn": "Fresh Chicken Egg",
+                "category": "dairy_egg",
+                "quantity": 60,
+                "unit": "g",
+                "basisWeightG": 100,
+                "nutrientsPer100g": {
+                      "calories": 143,
+                      "protein": 12.6,
+                      "carbs": 0.7,
+                      "fat": 9.5,
+                      "fiber": 0,
+                      "sodium": 142
+                }
+          }
+    ],
     cookingSteps: [],
-    nutritionCache: [],
+    nutritionCache: {
+          "basisWeightUnit": "100g_ingredients",
+          "servings": 2,
+          "totals": {
+                "calories": 763,
+                "protein": 12.7,
+                "carbs": 55.3,
+                "fat": 58.1,
+                "fiber": 4.8,
+                "sodium": 136
+          },
+          "perServing": {
+                "calories": 381,
+                "protein": 6.4,
+                "carbs": 27.6,
+                "fat": 29.1,
+                "fiber": 2.4,
+                "sodium": 68
+          }
+    },
     servings: 2,
     version: 1,
     isActive: true,

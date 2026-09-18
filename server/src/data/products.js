@@ -16,6 +16,15 @@ function getTodayInputValue() {
 }
 
 function mapDishToProduct(dish) {
+  const calories =
+    dish.nutritionCache?.perServing?.calories ||
+    dish.nutritionCache?.totals?.calories ||
+    DEFAULT_CALORIES;
+
+  const ingredientsSummary = Array.isArray(dish.recipe)
+    ? dish.recipe.map((r) => `${r.nameTh} (${r.quantity}${r.unit || "g"})`).join(", ")
+    : "";
+
   return {
     _id: dish._id,
     name: dish.nameTh || "",
@@ -25,12 +34,18 @@ function mapDishToProduct(dish) {
     history: dish.history || "",
     price: dish.price ?? 0,
     quantity: dish.servings ? dish.servings * 10 : DEFAULT_QUANTITY,
-    calories: DEFAULT_CALORIES,
+    calories,
+    servings: dish.servings || 2,
     date: getTodayInputValue(),
     tags: [dish.regionNameTh].filter(Boolean),
-    ingredients: "",
-    cookingSteps: "",
+    ingredients: ingredientsSummary,
+    recipe: dish.recipe || [],
+    nutritionCache: dish.nutritionCache || null,
+    cookingSteps: dish.cookingSteps || [],
+    storageInstruction: dish.storageInstruction || "",
+    reheatingInstruction: dish.reheatingInstruction || "",
     imageUrl: Array.isArray(dish.imageUrl) ? dish.imageUrl[0] : dish.imageUrl || "",
+    images: Array.isArray(dish.imageUrl) ? dish.imageUrl : [dish.imageUrl].filter(Boolean),
   };
 }
 
