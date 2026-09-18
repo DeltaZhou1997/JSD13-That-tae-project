@@ -3,10 +3,12 @@ import { useSearchParams } from 'react-router-dom'
 import MenuCard from '../components/Menu/MenuCard'
 import MenuFilters from '../components/Menu/MenuFilters'
 import { useApp } from '../context/AppContext'
+import { useProducts } from '../context/ProductsContext.js'
 import { dishes } from '../mock-data/index.js' 
 
 export default function MenuOverview() {
   const { language } = useApp() || { language: 'th' };
+  const { products } = useProducts();
   const [searchParams] = useSearchParams();
   const [menus, setMenus] = useState([])
   const [status, setStatus] = useState('loading')
@@ -21,26 +23,33 @@ export default function MenuOverview() {
 
   useEffect(() => {
     setStatus('loading');
-    setTimeout(() => {
-      const menuArray = Object.values(dishes);
-      setMenus(menuArray);
+    const timer = setTimeout(() => {
+      if (products && products.length > 0) {
+        setMenus(products);
+      } else {
+        setMenus(Object.values(dishes));
+      }
       setStatus('ready');
-    }, 400); // Simulate network request
-  }, []);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [products]);
 
   const filteredMenus = useMemo(() => {
     return menus.filter((menu) => {
       if (filters.search) {
         const searchTerm = filters.search.toLowerCase();
-        const nameTh = menu.nameTh?.toLowerCase() || '';
-        const nameEn = menu.nameEn?.toLowerCase() || '';
-        if (!nameTh.includes(searchTerm) && !nameEn.includes(searchTerm)) {
+        const nameTh = (menu.nameTh || menu.name || '').toLowerCase();
+        const nameEn = (menu.nameEn || '').toLowerCase();
+        const desc = (menu.description || '').toLowerCase();
+        if (!nameTh.includes(searchTerm) && !nameEn.includes(searchTerm) && !desc.includes(searchTerm)) {
           return false;
         }
       }
       
       if (filters.region.length > 0) {
-        if (!filters.region.includes(menu.region)) return false;
+        if (!filters.region.includes(menu.region) && !filters.region.includes(menu.regionNameTh)) {
+          return false;
+        }
       }
       return true;
     });

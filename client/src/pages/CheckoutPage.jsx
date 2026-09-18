@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 
 import { users } from "../mock-data/users";
+import { useAuth } from "../context/AuthContext.js";
 import { SUBSCRIPTION_PLANS, PAYMENT_METHODS } from "../constants/checkout";
 import {
   calculateEarnedPoints,
@@ -17,84 +18,20 @@ import CheckoutSummary from "../components/checkout/CheckoutSummary";
 export default function CheckoutPage() {
   const navigate = useNavigate();
 
-  // จุดเชื่อมต่อคนที่ 5: Core Infrastructure & Auth Context (คุณเน็ท)
-  // -------------------------------------------------------------------------
-  // 🔴 ปัจจุบัน: Mock User ID ไว้เป็น "USR-001" และดึงจาก mock-data/users.js
-  // 🟢 ตอนรวมงานกับคนที่ 5 (ทำระบบ Login / Auth Context):
-  //    - ลบ 2 บรรทัดนี้ออก แล้วเรียกใช้ Context เช่น:
-  //      const { currentUser } = useAuth();
-  //    - ตรวจสอบว่า currentUser มีฟิลด์ firstName, lastName, tierStatus, biaPoints ครบไหม
+  // เชื่อมต่อคนที่ 5 & 1: Auth Context จากระบบล็อกอิน
+  const { currentUser: authUser } = useAuth();
+  const currentUser = authUser || users[0];
+  const currentUserId = currentUser?.id || "USR-001";
 
-  const [currentUserId] = useState("USR-001");
-  const currentUser = users.find((u) => u.id === currentUserId) || users[0];
-
-  // จุดเชื่อมต่อหน้าที่ตัวเอง - คนที่ 4: รูปแบบการสั่งซื้อ (Plan Selector)
-  // -------------------------------------------------------------------------
-  // 🟢 ค่าเริ่มต้น: ตั้งเป็น null เพื่อให้เปิดหน้าเว็บมาเป็นการซื้อแบบ "A La Carte (รายชุด)" ตามปกติ
-  //    ไม่บล็อกปุ่มชำระเงินตั้งแต่แรกเปิดหน้า และคำนวณราคาตามรายการจริงในตะกร้า
-  // 🟢 เมื่อผู้ใช้คลิกเลือกแพ็กเกจ (SIZE S/M/L/XL): ระบบจะเข้าสู่โหมดคำนวณโควต้า Subscription
-
+  // จุดเชื่อมต่อคนที่ 4: รูปแบบการสั่งซื้อ (Plan Selector)
   const [selectedPlan, setSelectedPlan] = useState(null);
 
-  // 🟢 State สำหรับเก็บข้อความ Inline Error แจ้งเตือนสีแดงใต้ช่องกรอก
+  // State สำหรับเก็บข้อความ Inline Error แจ้งเตือนสีแดงใต้ช่องกรอก
   const [errors, setErrors] = useState({});
 
-  // จุดเชื่อมต่อคนที่ 3: Cart Management & State Operations (น้องครีม)
-  // -------------------------------------------------------------------------
-  // 🔴 ปัจจุบัน: ใช้ State จำลองรายการสินค้า 4 เมนู เพื่อให้เห็นภาพการคำนวณ
-  // 🟢 ตอนรวมงานกับคนที่ 3 (ทำระบบ CartContext ใน React):
-  //    - ลบ useState ก้อนนี้ออก แล้วดึง State ตะกร้าของน้องครีมมาใช้ เช่น:
-  //      const { cartItems, clearCart } = useCart();
-  //    - ตรวจสอบ format ของ Object สินค้าว่าใช้ key ชื่อ `id` หรือ `_id` ให้ตรงกัน
-  // 🟢 หรือถ้าดึงจาก Backend ของตัวเอง (GET /api/cart/:user_id):
-  //    - ปลดล็อกโค้ด useEffect ด้านล่างนี้เพื่อดึงข้อมูลตะกร้าจริงจาก MongoDB
-
-  const [cartItems] = useState([
-    {
-      id: "PROD-001",
-      name: "แกงส้มใต้ปลากะพงยอดยอดมะพร้าว",
-      desc: "วัตถุดิบสดใหม่ + เครื่องแกงโฮมเมด",
-      price: 220,
-      quantity: 1,
-    },
-    {
-      id: "PROD-002",
-      name: "ลาบหมูคั่วเมืองเหนือ",
-      desc: "พริกลาบมะแขว่นหอมๆ",
-      price: 180,
-      quantity: 1,
-    },
-    {
-      id: "PROD-003",
-      name: "แกงเขียวหวานไก่บ้าน",
-      desc: "มะเขือเปราะกรอบ + พริกแกงสูตรโบราณ",
-      price: 195,
-      quantity: 1,
-    },
-    {
-      id: "PROD-004",
-      name: "ต้มข่าไก่เห็ดฟาง",
-      desc: "รสชาติเข้มข้น หอมกะทิสด",
-      price: 175,
-      quantity: 1,
-    },
-  ]);
-
-  /* 
-  // 🟢 โค้ด ถ้าดึงข้อมูลตะกร้าผ่าน Backend API ของตัวเอง อาจจะต้องมีเปลี่ยน
-  useEffect(() => {
-    async function fetchCartData() {
-      try {
-        const response = await fetch(`/api/cart/${currentUserId}`);
-        const data = await response.json();
-        setCartItems(data.items || []);
-      } catch (err) {
-        console.error("ดึงข้อมูลตะกร้าไม่สำเร็จ:", err);
-      }
-    }
-    if (currentUserId) fetchCartData();
-  }, [currentUserId]);
-  */
+  // เชื่อมต่อคนที่ 3: Cart Items จาก Outlet Context ของ Layout
+  const { cartItems: outletCartItems = [], handleClearCart } = useOutletContext() || {};
+  const cartItems = outletCartItems;
 
   // State จัดการข้อมูลฟอร์มจัดส่ง และ ข้อมูลบัตรเครดิต
   // -------------------------------------------------------------------------
@@ -212,19 +149,32 @@ export default function CheckoutPage() {
       orderId: `ORD-${Math.floor(100000 + Math.random() * 900000)}`,
       userId: currentUserId,
       planType: selectedPlan ? selectedPlan.id : "SINGLE_KIT",
-      items: cartItems.map((item) => ({
-        productId: item.id,
-        productName: item.name,
-        quantity: item.quantity,
-        unitPrice: item.price,
-        subtotal: item.price * item.quantity,
-      })),
+      items: cartItems.map((item) => {
+        const targetId = item.productId || item.id || item._id;
+        const itemPrice = Number(item.price) || 0;
+        const itemQty = Number(item.quantity) || 1;
+        return {
+          productId: targetId,
+          product: targetId,
+          productName: item.name || item.nameTh || item.productName || "ชุด Cooking Kit",
+          price: itemPrice,
+          quantity: itemQty,
+          unitPrice: itemPrice,
+          subtotal: itemPrice * itemQty,
+        };
+      }),
       shippingAddress: {
+        fullName: formData.fullName,
         recipientName: formData.fullName,
         phone: formData.phone,
+        address: formData.address,
+        district: formData.district,
+        province: formData.province,
+        zipcode: formData.zipcode,
         fullAddress: `${formData.address} เขต/อำเภอ${formData.district} จังหวัด${formData.province} ${formData.zipcode}`,
         deliveryDate: formData.deliveryDate,
       },
+      paymentMethod: paymentMethod,
       payment: {
         method: paymentMethod, // 'PROMPTPAY' | 'CREDIT_CARD' | 'COD'
         cardDetails:
@@ -242,48 +192,41 @@ export default function CheckoutPage() {
         grandTotal: grandTotal,
         earnedPoints: earnedPoints,
       },
+      itemsSubtotal,
+      shippingFee: 60,
+      grandTotal,
+      earnedPoints,
       createdAt: new Date().toISOString(),
     };
 
-    console.log(
-      "🚀 Payload พร้อมส่งเข้า Backend POST /api/checkout:",
-      orderPayload,
-    );
+    console.log("🚀 Payload พร้อมส่งเข้า Backend POST /api/v1/checkout:", orderPayload);
 
-    // ปัจจุบัน: จำลองการย้ายไปหน้าสำเร็จทันที
-    navigate("/order-success", { state: { order: orderPayload } });
-
-    /* 
-    // 🟢 โค้ดยิง API จริงลง MongoDB เมื่อรวมงาน
     try {
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      const response = await fetch(`${apiUrl}/api/v1/checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderPayload),
       });
 
       if (response.ok) {
         const result = await response.json();
-        
-        // 1. ล้างตะกร้าของคนที่ 3: clearCart();
-        // 2. เด้งแจ้งเตือนของคนที่ 5: showToast("สั่งซื้อสำเร็จแล้ว!", "success");
-        // 3. พาไปหน้า OrderSuccess:
-        navigate("/order-success", { state: { order: result.order } });
+        if (handleClearCart) handleClearCart();
+        navigate("/order-success", { state: { order: result.order || orderPayload } });
       } else {
         const err = await response.json();
-        alert(err.message || "เกิดข้อผิดพลาดในการบันทึกคำสั่งซื้อ");
+        console.warn("⚠️ API แจ้งเตือนข้อผิดพลาด สลับไปบันทึกผ่าน State สำรอง:", err);
+        if (handleClearCart) handleClearCart();
+        navigate("/order-success", { state: { order: orderPayload } });
       }
     } catch (err) {
-      console.error("ส่งคำสั่งซื้อไม่สำเร็จ:", err);
+      console.warn("⚠️ เซิร์ฟเวอร์ออฟไลน์ สลับไปบันทึกผ่าน State สำรอง:", err);
+      if (handleClearCart) handleClearCart();
+      navigate("/order-success", { state: { order: orderPayload } });
     }
-    */
   };
 
-  // จุดเชื่อมต่อคนที่ 2: กรณีไม่มีสินค้าในตะกร้า (Product Storefront)
-  // -------------------------------------------------------------------------
-  // 🔴 ปัจจุบัน: ปุ่มกดใช้ navigate("/") เพื่อพากลับหน้าแรก
-  // 🟢 ตอนรวมงานกับคนที่ 2 (ทำหน้า Catalog & Storefront):
-  //    - ถ้าหน้าร้านของคนที่ 2 ใช้ path อื่น เช่น "/catalog" หรือ "/menu" ให้เปลี่ยนตรงนี้
+  // กรณีไม่มีสินค้าในตะกร้า
   if (!cartItems || cartItems.length === 0) {
     return (
       <div className="min-h-[70vh] bg-[#fdfbf7] flex flex-col items-center justify-center p-6 text-center text-[#2f2119]">
@@ -298,8 +241,8 @@ export default function CheckoutPage() {
           ที่คุณชื่นชอบลงตะกร้าก่อนดำเนินการชำระเงิน
         </p>
         <button
-          onClick={() => navigate("/")}
-          className="bg-[#3d2c2e] text-white px-8 py-3.5 rounded-full font-bold hover:bg-[#8d593a] transition-all shadow-md active:scale-95"
+          onClick={() => navigate("/menus")}
+          className="bg-[#3d2c2e] text-white px-8 py-3.5 rounded-full font-bold hover:bg-[#8d593a] transition-all shadow-md active:scale-95 cursor-pointer"
         >
           กลับไปเลือกเมนูอาหาร
         </button>

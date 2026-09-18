@@ -108,13 +108,15 @@ PJ-G4-SP2/
 │   │   ├── hooks/                  # Custom Hooks (useToast, useHomeAnimations)
 │   │   ├── pages/                  # หน้า Route หลักของแอปพลิเคชัน
 │   │   │   ├── admin/              # Admin ProductList & Form
-│   │   │   ├── CheckoutPage.jsx    # หน้าสั่งซื้อและชำระเงิน
+│   │   │   ├── CheckoutPage.jsx    # หน้าสั่งซื้อและชำระเงิน (เชื่อมต่อ API จริง + Stock cut)
 │   │   │   ├── Home.jsx            # หน้าหลัก (Landing Page)
-│   │   │   ├── Login.jsx           # หน้าเข้าสู่ระบบ
-│   │   │   ├── MenuDetail.jsx      # หน้ารายละเอียดเมนู Cooking Kit
-│   │   │   ├── MenuOverview.jsx    # หน้าร้านค้า / รายการเมนูทั้งหมด
-│   │   │   ├── OrderSuccess.jsx    # หน้าคำสั่งซื้อสำเร็จ
-│   │   │   └── Register.jsx        # หน้าลงทะเบียนผู้ใช้ใหม่
+│   │   │   ├── Login.jsx           # หน้าเข้าสู่ระบบ (เชื่อมต่อ API จริง + JWT)
+│   │   │   ├── MenuDetail.jsx      # หน้ารายละเอียดเมนู Cooking Kit (เชื่อมต่อ Cart & Products)
+│   │   │   ├── MenuOverview.jsx    # หน้าร้านค้า / รายการเมนูทั้งหมด (เชื่อมต่อ ProductsContext)
+│   │   │   ├── OrdersPage.jsx      # หน้ารายการคำสั่งซื้อและสถานะจัดส่ง
+│   │   │   ├── OrderSuccess.jsx    # หน้าคำสั่งซื้อสำเร็จและสรุปแต้ม
+│   │   │   ├── ProfilePage.jsx     # หน้าโปรไฟล์และแก้ไขข้อมูลสมาชิก
+│   │   │   └── Register.jsx        # หน้าลงทะเบียนผู้ใช้ใหม่ (เชื่อมต่อ API จริง)
 │   │   ├── utils/                  # ฟังก์ชันช่วยคำนวณราคาและแต้ม
 │   │   ├── App.jsx                 # นิยาม React Router เส้นทางทั้งหมด
 │   │   └── main.jsx                # จุดเริ่มรัน React App
@@ -123,24 +125,24 @@ PJ-G4-SP2/
     ├── api.test.rest               # ไฟล์ทดสอบ API ระบบ Checkout เดิม
     ├── server.bak.js               # ไฟล์สำรองเซิร์ฟเวอร์แบบ Standalone
     ├── src/
-    │   ├── config/
-    │   │   └── db.js               # จัดการเชื่อมต่อ MongoDB Atlas พร้อม Auto Fallback เมื่อออฟไลน์
-    │   ├── data/                   # Data Access Layer สำหรับ Products
-    │   ├── mockDB/                 # ข้อมูลจำลองสำหรับทดสอบ (dishes, users, regions, reviews)
-    │   ├── models/                 # Mongoose Data Models (Product, Cart, Order)
-    │   ├── routes/
-    │   │   ├── index.js            # Main Route Switcher
-    │   │   └── v1/
-    │   │       ├── index.js        # Mount รวมเส้นทางทั้งหมดของระบบ
-    │   │       ├── users.routes.js # API สมาชิก, Login + JWT Token, GET /me
-    │   │       ├── products.routes.js # API เมนูอาหาร + Query Search & Filters
-    │   │       ├── cart.routes.js  # API ตะกร้าสินค้า CRUD ครบวงจร
-    │   │       ├── checkout.routes.js # API สั่งซื้อ, ตัดสต็อก, ดูประวัติคำสั่งซื้อ
-    │   │       ├── regions.routes.js  # API ข้อมูลภูมิภาคและธาตุเจ้าเรือน
-    │   │       └── reviews.routes.js  # API รีวิวจากลูกค้า
-    │   ├── testapi/
-    │   │   └── testv1.rest         # Master API Test Suite รวมทดสอบ 20+ Endpoints
-    │   └── server.js               # เซิร์ฟเวอร์หลัก Express + Error Middleware + Health Check
+        ├── config/
+        │   └── db.js               # จัดการเชื่อมต่อ MongoDB Atlas พร้อม Auto Fallback เมื่อออฟไลน์
+        ├── data/                   # Data Access Layer สำหรับ Products
+        ├── mockDB/                 # ข้อมูลจำลองสำหรับทดสอบ (dishes, users, regions, reviews)
+        ├── models/                 # Mongoose Data Models (Product, Cart, Order)
+        ├── routes/
+        │   ├── index.js            # Main Route Switcher
+        │   └── v1/
+        │       ├── index.js        # Mount รวมเส้นทางทั้งหมดของระบบ
+        │       ├── users.routes.js # API สมาชิก, Login + JWT Token, GET /me
+        │       ├── products.routes.js # API เมนูอาหาร + Query Search & Filters
+        │       ├── cart.routes.js  # API ตะกร้าสินค้า CRUD ครบวงจร
+        │       ├── checkout.routes.js # API สั่งซื้อ, ตัดสต็อก, ดูประวัติคำสั่งซื้อ
+        │       ├── regions.routes.js  # API ข้อมูลภูมิภาคและธาตุเจ้าเรือน
+        │       └── reviews.routes.js  # API รีวิวจากลูกค้า
+        ├── testapi/
+        │   └── testv1.rest         # Master API Test Suite รวมทดสอบ 20+ Endpoints
+        └── server.js               # เซิร์ฟเวอร์หลัก Express + Error Middleware + Health Check
     ├── validation/
     │   └── validateProduct.js      # ฟังก์ชันตรวจสอบความถูกต้องของสินค้า
     └── package.json
@@ -154,11 +156,11 @@ PJ-G4-SP2/
 
 | สมาชิก | บทบาท / ขอบเขตงาน | สถานะ Frontend | สถานะ Backend (v1) | ความพร้อมรวมงาน |
 | :--- | :--- | :---: | :---: | :---: |
-| **Nut (นัท)** | 1. Admin Product & Validation | 🟢 เสร็จสมบูรณ์ | 🟢 เสร็จสมบูรณ์ (JWT + CRUD + Validation) | 🟡 รอต่อ Frontend เข้า API |
-| **Delta (เดลต้า)** | 2. Storefront & Catalog | 🟢 สวยงามครบถ้วน | 🟢 เสร็จสมบูรณ์ (Search, Region, Tag Filter) | 🟡 รอต่อหน้าร้านเข้า API |
-| **Cream (ครีม)** | 3. Cart Management & State | 🟢 ฟังก์ชันคำนวณครบ | 🟢 เสร็จสมบูรณ์ (Cart CRUD + Memory Fallback) | 🟢 API พร้อมต่อหน้าบ้านทันที |
-| **Rin (ริน)** | 4. Checkout & Order Flow | 🟢 UI & Validation ครบ | 🟢 เสร็จสมบูรณ์ (Checkout + Order History) | 🟢 API พร้อมต่อหน้าบ้านทันที |
-| **Nate (เน็ท)** | 5. Core Arch & Global Layout | 🟢 โครงสร้าง & ธีมพร้อม | 🟢 เสร็จสมบูรณ์ (DB Config + Health + Error Handlers) | 🟢 เซิร์ฟเวอร์พร้อมรัน 100% |
+| **Nut (นัท)** | 1. Admin Product & Validation | 🟢 เสร็จสมบูรณ์ 100% | 🟢 เสร็จสมบูรณ์ (JWT + CRUD + Validation) | 🟢 **เชื่อมต่อ API สำเร็จ 100%** |
+| **Delta (เดลต้า)** | 2. Storefront & Catalog | 🟢 เสร็จสมบูรณ์ 100% | 🟢 เสร็จสมบูรณ์ (Search, Region, Tag Filter) | 🟢 **เชื่อมต่อ Cart & Products 100%** |
+| **Cream (ครีม)** | 3. Cart Management & State | 🟢 เสร็จสมบูรณ์ 100% | 🟢 เสร็จสมบูรณ์ (Cart CRUD + Memory Fallback) | 🟢 **เชื่อมต่อ Outlet & Checkout 100%** |
+| **Rin (ริน)** | 4. Checkout & Order Flow | 🟢 เสร็จสมบูรณ์ 100% | 🟢 เสร็จสมบูรณ์ (Checkout + Order History) | 🟢 **เชื่อมต่อ API & Orders History 100%** |
+| **Nate (เน็ท)** | 5. Core Arch & Global Layout | 🟢 เสร็จสมบูรณ์ 100% | 🟢 เสร็จสมบูรณ์ (DB Config + Health + Error Handlers) | 🟢 **ระบบเชื่อมต่อไหลลื่นสมบูรณ์ 100%** |
 
 ---
 
@@ -168,83 +170,57 @@ PJ-G4-SP2/
 * **เป้าหมาย:** ทำระบบหลังบ้านให้ Admin จัดการเมนู Cooking Kit ตรวจสอบข้อมูล (Validation) และระบบสมัคร/ล็อกอิน
 * **สิ่งที่ทำเสร็จแล้ว:**
   * ✅ `ProductForm.jsx`: ฟอร์มเพิ่ม/แก้ไข Cooking Kit พร้อม Inline Validation ครบทุกฟิลด์ (ชื่อ, รายละเอียด, ราคา, สต็อก, วันที่, แท็ก)
-  * ✅ `AdminProductList.jsx`: หน้ารายการสินค้า แสดงตารางสินค้า พร้อมปุ่มแก้ไขและลบแบบ In-line Confirmation
+  * ✅ `AdminProductList.jsx`: หน้ารายการสินค้า แสดงตารางสินค้า พร้อมปุ่มแก้ไขและลบแบบ In-line Confirmation (รองรับทั้ง `_id` และ `id`)
+  * ✅ `ProductsProvider.jsx`: เชื่อมต่อเข้ากับ API `GET/POST/PUT/DELETE /api/v1/products` อัตโนมัติเมื่อเซิร์ฟเวอร์เปิดใช้งาน และมี Graceful Local Fallback เมื่อออฟไลน์
   * ✅ `validateProduct.js`: Validation Rules ฝั่งเซิร์ฟเวอร์ที่สมบูรณ์และตรงกับหน้าบ้าน
   * ✅ `Login.jsx`: เชื่อมต่อเข้ากับ API `POST /api/v1/users/login` จริง พร้อมบันทึก Token/User ลงใน `AuthContext`
-  * ✅ **Backend `users.routes.js` (สมบูรณ์ 100%):** ออก JWT Token, เซ็ต Cookie, มี `GET /users/me`, ซ่อน Password ในคำตอบ, และปรับรหัสผ่าน Mock เป็น `12345678` ให้พร้อมทดสอบ
-  * ✅ **Backend `products.routes.js` (สมบูรณ์ 100%):** รองรับ GET, POST, PUT, DELETE พร้อม Server-side Validation
-* **สิ่งที่ต้องทำต่อ (Next Actions):**
-  * 🔄 เปลี่ยน `ProductsProvider.jsx` ในหน้าบ้านให้ยิง `fetch('/api/v1/products')` แทนการแก้ไข State ในหน่วยความจำ
-  * 🔄 ปรับ `Register.jsx` ให้ส่งคำขอไปยัง `POST /api/v1/users` ของเซิร์ฟเวอร์จริง
+  * ✅ `Register.jsx`: เชื่อมต่อส่งข้อมูลไปยัง API `POST /api/v1/users` จริง แสดงข้อผิดพลาดแบบเรียลไทม์ และแจ้งเตือนผ่าน Toast
+  * ✅ **Backend `users.routes.js` & `products.routes.js` (สมบูรณ์ 100%):** ออก JWT Token, เซ็ต Cookie, มี `GET /users/me`, ซ่อน Password ในคำตอบ, และปรับรหัสผ่าน Mock เป็น `12345678` ให้พร้อมทดสอบ
 
 ---
 
 #### 👤 Person 2: Delta — Product Catalog & Storefront
 * **เป้าหมาย:** หน้าร้านสำหรับลูกค้า ดึงรายการ Cooking Kit มาแสดง พร้อมระบบค้นหา กรองเมนู และแสดงข้อมูลโภชนาการ
 * **สิ่งที่ทำเสร็จแล้ว:**
-  * ✅ `MenuOverview.jsx`: หน้ารวมเมนูอาหาร รองรับการค้นหาตามชื่อ และกรองตามภูมิภาค
-  * ✅ `MenuCard.jsx`: การ์ดสินค้าธีมเอิร์ธโทน แสดงรูปภาพ ราคา ป้ายภูมิภาค และปุ่มเพิ่มลงตะกร้า
-  * ✅ `MenuDetail.jsx`: หน้ารายละเอียดเชิงลึก แสดงรูปสลับได้ ข้อมูลโภชนาการ และแท็กภูมิภาค
-  * ✅ ฟีเจอร์เสริมที่ยอดเยี่ยม: `ElementQuizPage.jsx` (คำนวณธาตุเจ้าเรือน) และ `MenuRandomizerPage.jsx` (วงล้อสุ่มเมนู)
-  * ✅ **Backend `products.routes.js` (สมบูรณ์ 100%):** รองรับ Query Parameters ครบครัน: `?region=`, `?search=`, `?tag=`, `?sort=`, และ Pagination `?limit=&page=`
-  * ✅ **Backend `regions.routes.js` (สมบูรณ์ 100%):** ให้บริการข้อมูล 4 ภาค พร้อมธาตุเจ้าเรือน ดิน น้ำ ลม ไฟ
-* **สิ่งที่ต้องทำต่อ (Next Actions):**
-  * 🔄 เปลี่ยนการดึงข้อมูลใน `MenuOverview.jsx` จากการ `import dishes` ตรงๆ มาเป็นยิง API `GET /api/v1/products` พร้อมส่ง Query Params
+  * ✅ `MenuOverview.jsx`: เชื่อมโยงกับ `ProductsContext` เมื่อแอดมินเพิ่ม/แก้ไขเมนู หน้าร้านจะอัปเดตทันที รองรับการค้นหาตามชื่อ และกรองตามภูมิภาค
+  * ✅ `MenuCard.jsx`: เชื่อมโยงปุ่ม "เพิ่มลงตะกร้า" เข้ากับ Global Cart Context ของระบบ เพิ่มของลงตะกร้าได้ทันที
+  * ✅ `MenuDetail.jsx`: หน้ารายละเอียดเชิงลึก แสดงรูปสลับได้ ข้อมูลโภชนาการ และเลือกจำนวนชิ้นเพิ่มลงตะกร้าได้โดยตรง
+  * ✅ `ElementQuizPage.jsx`: แบบทดสอบธาตุเจ้าเรือน พร้อมปุ่มเชื่อมโยงไปยังหน้ารวมเมนูอาหารเพื่อเลือกซื้อ Cooking Kit ประจำธาตุ
+  * ✅ `MenuRandomizerPage.jsx`: วงล้อสุ่มเมนูอาหารตามธาตุเจ้าเรือน พร้อมปุ่ม "เพิ่มลงตะกร้า" เมนูที่สุ่มได้เข้าตะกร้าสินค้าทันที
+  * ✅ **Backend `products.routes.js` & `regions.routes.js` (สมบูรณ์ 100%):** รองรับ Query Parameters ครบครัน: `?region=`, `?search=`, `?tag=`, `?sort=`, และ Pagination `?limit=&page=`
 
 ---
 
 #### 👤 Person 3: Cream — Cart Management & State Operations
 * **เป้าหมาย:** จัดการระบบตะกร้าสินค้า ปรับเพิ่ม-ลดจำนวน คำนวณราคาสินค้า และแจ้งเตือนแต้มสะสม
 * **สิ่งที่ทำเสร็จแล้ว:**
-  * ✅ `Cart.jsx`: หน้าตะกร้าสินค้า สรุปยอดรวม (Subtotal), ค่าจัดส่ง และยอดสุทธิ (Total)
-  * ✅ `CartItem.jsx`: การ์ดรายการสินค้าในตะกร้า รองรับการกด `+` / `-` และปุ่มลบสินค้า
+  * ✅ `Cart.jsx`: หน้าตะกร้าสินค้า ดึงข้อมูลจาก `useOutletContext()` สรุปยอดรวม (Subtotal), ค่าจัดส่ง และยอดสุทธิ (Total)
+  * ✅ `cartItems.jsx`: การ์ดรายการสินค้าในตะกร้า รองรับการกด `+` / `-` และปุ่มลบสินค้า (รองรับการแมป `_id` และ `id`, `nameTh` และ `name`)
   * ✅ Logic รางวัลแต้มสะสม: แจ้งเตือน Popup อัตโนมัติเมื่อยอดสั่งซื้อครบ 1,499 บาท
-  * ✅ เชื่อมต่อไปยังหน้า Checkout ผ่านปุ่ม "ดำเนินการชำระเงิน"
-  * ✅ **Backend `cart.routes.js` (สร้างใหม่ สมบูรณ์ 100%):**
-    * `GET /api/v1/cart/:userId` — ดึงสินค้าและคำนวณยอดเงิน Subtotal และ Total Items
-    * `POST /api/v1/cart/items` (หรือ `/selected`) — เพิ่มสินค้าเข้าตะกร้า (Auto +quantity)
-    * `PUT /api/v1/cart/items/:itemId` — ปรับเพิ่ม/ลดจำนวนชิ้น
-    * `DELETE /api/v1/cart/items/:itemId` — ลบสินค้าชิ้นเดียวออกจากตะกร้า
-    * `DELETE /api/v1/cart/:userId/clear` — ล้างตะกร้าทั้งหมด
-    * *พร้อม In-memory Cart Store อัตโนมัติ ไม่ต้องพึ่งพาเน็ตเพื่อต่อ MongoDB*
-* **สิ่งที่ต้องทำต่อ (Next Actions):**
-  * 🔄 เชื่อมโยงให้ `MenuCard.jsx` และ `Cart.jsx` เรียกใช้ API หรือ State ตะกร้าชุดเดียวกัน
+  * ✅ เชื่อมต่อไปยังหน้า Checkout ผ่านปุ่ม "ดำเนินการชำระเงิน" พร้อมส่งต่อรายการสินค้า
+  * ✅ **Backend `cart.routes.js` (สมบูรณ์ 100%):** ให้บริการ Cart CRUD เต็มรูปแบบ พร้อม In-memory fallback
 
 ---
 
 #### 👤 Person 4: Rin — User Cart Sync & Checkout Flow
 * **เป้าหมาย:** หน้าชำระเงิน เลือกแพ็กเกจ A La Carte หรือ Subscription รายสัปดาห์ ตรวจสอบที่อยู่ และตัดสต็อกสินค้า
 * **สิ่งที่ทำเสร็จแล้ว:**
-  * ✅ `CheckoutPage.jsx`: หน้าชำระเงินที่สมบูรณ์แบบ รองรับการเลือก Plan (S/M/L/XL), คำนวณแต้ม, ที่อยู่จัดส่ง และวิธีชำระเงิน (PromptPay พร้อม QR Code ไดนามิก, บัตรเครดิต, เก็บเงินปลายทาง)
-  * ✅ `OrderSuccess.jsx`: หน้าแสดงใบเสร็จคำสั่งซื้อสำเร็จและแต้มที่ได้รับ
-  * ✅ `Order.js` และ `Cart.js`: ออกแบบ Mongoose Schema รองรับการใช้งานจริง
-  * ✅ **Backend `checkout.routes.js` (สมบูรณ์ 100%):**
-    * `POST /api/v1/checkout` — บันทึก Order, ตัดสต็อกจริงในคลัง, และล้างตะกร้า
-    * `GET /api/v1/orders/user/:userId` — **ดึงประวัติการสั่งซื้อของผู้ใช้** (รองรับปุ่มโปรไฟล์ *"รายการคำสั่งซื้อของฉัน"*)
-    * `GET /api/v1/orders/:orderId` — ดูรายละเอียดใบเสร็จรายบิล
-    * `PATCH /api/v1/orders/:orderId/status` — แอดมินปรับสถานะจัดส่ง
-    * `GET /api/v1/orders` — ดูรายการคำสั่งซื้อทั้งหมดสำหรับแอดมิน
-    * *รองรับทั้ง String ID (`dish_001`, `USR-001`) และ MongoDB ObjectId ป้องกัน CastError*
-* **สิ่งที่ต้องทำต่อ (Next Actions):**
-  * 🔄 เปลี่ยนจาก Mock User ID `"USR-001"` มาดึง `currentUser` จาก `useAuth()`
-  * 🔄 ปลดล็อกโค้ด `fetch('/api/v1/checkout')` ในหน้า CheckoutPage เพื่อส่งคำสั่งซื้อเข้า API จริง
+  * ✅ `CheckoutPage.jsx`: เชื่อมต่อเข้ากับ `currentUser` จาก `AuthContext` และรายการสินค้าจาก `useOutletContext()`
+  * ✅ เชื่อมต่อส่งคำขอสั่งซื้อจริงเข้าสู่ `POST /api/v1/checkout` เพื่อตัดสต็อกสินค้าในคลัง และเรียก `handleClearCart()` ล้างตะกร้า
+  * ✅ `OrderSuccess.jsx`: รับข้อมูล Order จริงจากกระบวนการ Checkout แสดงเลขที่ใบสั่งซื้อ ยอดเงิน และแต้มสะสมที่ได้รับจริง
+  * ✅ `OrdersPage.jsx` *(สร้างใหม่!)*: หน้ารายการคำสั่งซื้อของฉัน ดึงข้อมูลจาก `GET /api/v1/orders/user/:userId` แสดงสถานะชำระเงิน รอบจัดส่ง และประวัติย้อนหลัง
+  * ✅ **Backend `checkout.routes.js` (สมบูรณ์ 100%):** บันทึกคำสั่งซื้อ, ตัดสต็อก, และรองรับการดึงประวัติรายบุคคล
 
 ---
 
 #### 👤 Person 5: Nate — Core Infrastructure, App Layout & DB Setup
 * **เป้าหมาย:** วางโครงสร้างสถาปัตยกรรม Database, Routing, Global Layout และ Middleware ส่วนกลาง
 * **สิ่งที่ทำเสร็จแล้ว:**
-  * ✅ `Layout.jsx`, `Navbar.jsx`, `Footer.jsx`: ดีไซน์โมเดิร์นเอิร์ธโทน Responsive รองรับมือถือและเดสก์ท็อป พร้อมแอนิเมชัน GSAP และ Dropdown โปรไฟล์
-  * ✅ Central Toast Notification: `ToastProvider.jsx` และ `useToast.js` สำหรับแสดง Alert แจ้งเตือนสีสวยงามทั่วแอป
-  * ✅ `AuthProvider.jsx`: จัดการ State ผู้ใช้ที่ล็อกอิน และบันทึกลงใน `localStorage`
-  * ✅ **Backend Infrastructure (สมบูรณ์ 100%):**
-    * `server/src/config/db.js` — ระบบเชื่อมต่อ MongoDB Atlas พร้อม Graceful In-memory Fallback เมื่อออฟไลน์
-    * `server.js` — Mount รวมทุก Route เข้า `/api/v1`, `/api`, `/` และเพิ่ม Health Check `GET /api/health`
-    * `server/.env` — ลบ Git Merge Conflict markers และจัดระเบียบตัวแปรสภาพแวดล้อม
-    * `mockDB/reviews.js` — แก้ไขบั๊ก Image Import ใน Node.js และสร้าง `reviews.routes.js`
-    * `server/src/testapi/testv1.rest` — สร้าง **Master Test Suite** ครบ 20+ คำสั่งทดสอบ
-* **สิ่งที่ต้องทำต่อ (Next Actions):**
-  * 🔄 เชื่อมต่อ State ระหว่างหน้าร้าน (Delta) ตะกร้า (Cream) และชำระเงิน (Rin) ให้ไหลลื่นใน App Context
+  * ✅ `Layout.jsx`: ศูนย์กลางการจัดการ Cart State (`cartItems`, `handleAddToCart`, `handleUpdateQuantity`, `handleRemoveItem`, `handleClearCart`) ส่งต่อให้ทุกหน้าผ่าน React Router `Outlet`
+  * ✅ `Navbar.jsx`: รองรับ Cart Badge แบบไดนามิกตามจำนวนสินค้าจริงในตะกร้า, มีเมนูโปรไฟล์ Dropdown พร้อมลิงก์ไปหน้าคำสั่งซื้อ (`/orders`) และโปรไฟล์ (`/profile`)
+  * ✅ `ProfilePage.jsx` *(สร้างใหม่!)*: หน้าจัดการข้อมูลส่วนตัว แสดงระดับสมาชิก (Bronze/Silver/Gold), แต้มสะสมเบี้ย, และฟอร์มแก้ไขข้อมูลเชื่อมต่อ API `PUT /api/v1/users/:id`
+  * ✅ `AuthProvider.jsx`: เพิ่มฟังก์ชัน `updateUser` ซิงก์ข้อมูลผู้ใช้ทันทีเมื่อมีการแก้ไข
+  * ✅ **Backend Infrastructure (สมบูรณ์ 100%):** สถาปัตยกรรมโมดูลาร์ v1 พร้อม Error Handler, Health Check, และ Master REST Client Test Suite ครบถ้วน
 
 ---
 

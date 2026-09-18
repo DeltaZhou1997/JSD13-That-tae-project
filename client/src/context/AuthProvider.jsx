@@ -29,9 +29,21 @@ export default function AuthProvider({ children }) {
     }
   }, []);
 
+  const updateUser = useCallback((updatedData) => {
+    setCurrentUser((prev) => {
+      const nextUser = { ...prev, ...updatedData };
+      try {
+        localStorage.setItem("currentUser", JSON.stringify(nextUser));
+      } catch (e) {
+        console.error("Failed to update user in localStorage", e);
+      }
+      return nextUser;
+    });
+  }, []);
+
   const value = useMemo(
-    () => ({ currentUser, login, logout }),
-    [currentUser, login, logout],
+    () => ({ currentUser, login, logout, updateUser }),
+    [currentUser, login, logout, updateUser],
   );
 
   return (

@@ -1,22 +1,28 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useOutletContext } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { useProducts } from '../context/ProductsContext.js'
 import { dishes } from '../mock-data/index.js' 
 
 export default function MenuDetail() {
   const { id } = useParams()
-  const { language, addToCart, setIsCartOpen } = useApp() || { language: 'th', addToCart: () => {}, setIsCartOpen: () => {} };
+  const { language } = useApp() || { language: 'th' };
+  const { handleAddToCart } = useOutletContext() || {};
+  const { getProductById } = useProducts();
   const [menu, setMenu] = useState(null)
   const [quantity, setQuantity] = useState(1)
   const [selectedImage, setSelectedImage] = useState('')
 
   useEffect(() => {
-    const foundMenu = dishes[id];
-    if (foundMenu) {
-      setMenu(foundMenu);
-      setSelectedImage(foundMenu.imageUrl[0]);
+    const foundDish = dishes[id] || (getProductById ? getProductById(id) : null);
+    if (foundDish) {
+      setMenu(foundDish);
+      const img = Array.isArray(foundDish.imageUrl)
+        ? foundDish.imageUrl[0]
+        : foundDish.imageUrl || '';
+      setSelectedImage(img);
     }
-  }, [id])
+  }, [id, getProductById])
 
   if (!menu) return (
     <main className="mx-auto max-w-5xl px-5 py-20 text-center">
@@ -77,8 +83,10 @@ export default function MenuDetail() {
               <button onClick={() => setQuantity(q => q + 1)} className="w-12 h-12 text-xl hover:bg-[#f0e6d8] dark:hover:bg-[#523a24] transition">+</button>
             </div>
             <button 
-              onClick={() => { addToCart(menu, quantity); setIsCartOpen(true); }} 
-              className="flex-1 rounded-xl bg-[#8b5e34] hover:bg-[#755535] text-white font-semibold transition text-lg shadow-lg"
+              onClick={() => {
+                if (handleAddToCart) handleAddToCart(menu, quantity);
+              }} 
+              className="flex-1 rounded-xl bg-[#8b5e34] hover:bg-[#755535] text-white font-semibold transition text-lg shadow-lg py-3 cursor-pointer"
             >
               🛒 {language === 'th' ? 'เพิ่มลงตะกร้า' : 'Add to Cart'}
             </button>

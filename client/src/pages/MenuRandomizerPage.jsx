@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useOutletContext } from "react-router-dom";
 import ElementSelector from "../components/menu-randomizer/ElementSelector.jsx";
 import RandomResultCard from "../components/menu-randomizer/RandomResultCard.jsx";
 
@@ -7,6 +8,9 @@ import dishes from "../mock-data/dishes.js";
 const rawDishes = dishes || {};
 
 export default function MenuRandomizerPage() {
+  const outletContext = useOutletContext() || {};
+  const contextAddToCart = outletContext.handleAddToCart;
+
   const [selectedElement, setSelectedElement] = useState("earth");
   const [currentDish, setCurrentDish] = useState(null);
 
@@ -73,10 +77,13 @@ export default function MenuRandomizerPage() {
   const handleAddToCart = (dish) => {
     if (!dish) return;
 
-    // TODO: เมื่อมี CartContext ให้เปลี่ยนเป็น addToCart(dish);
-    alert(
-      `เพิ่ม "${dish.name || dish.nameTh || "เมนูอาหาร"}" ลงในตะกร้าเรียบร้อยแล้วครับ!`,
-    );
+    if (contextAddToCart) {
+      contextAddToCart(dish, 1);
+    } else {
+      alert(
+        `เพิ่ม "${dish.name || dish.nameTh || "เมนูอาหาร"}" ลงในตะกร้าเรียบร้อยแล้วครับ!`,
+      );
+    }
 
     setModalState("IDLE");
   };

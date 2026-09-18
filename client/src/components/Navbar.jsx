@@ -106,7 +106,7 @@ const navigationByRole = {
   },
 };
 
-export default function Navbar() {
+export default function Navbar({ cartCount = 0 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const headerRef = useRef(null);
@@ -314,26 +314,28 @@ export default function Navbar() {
           ))}
         </div>
 
-        {currentUser ? (
-          <div className="mr-1 hidden items-center gap-2 lg:flex">
-            {currentRole === "customer" && (
-              <Link
-                to={action.to}
-                aria-label={`ตะกร้า มีสินค้า ${action.badge} รายการ`}
-                className="relative grid h-13 w-13 shrink-0 place-items-center rounded-full text-[#4c1f08] transition-colors duration-200 hover:bg-[#8d593a]/15"
-              >
-                <BasketIcon />
-                <span className="absolute -right-1 -top-1 grid h-6 min-w-6 place-items-center rounded-full border-2 border-[#f1ead7] bg-[#c89465] px-1 text-xs font-bold text-white">
-                  {action.badge}
+        <div className="mr-1 hidden items-center gap-3 lg:flex">
+          {currentRole !== "admin" && (
+            <Link
+              to="/cart"
+              aria-label={`ตะกร้า มีสินค้า ${cartCount} รายการ`}
+              className="relative grid h-12 w-12 shrink-0 place-items-center rounded-full text-[#4c1f08] transition-colors duration-200 hover:bg-[#8d593a]/15 cursor-pointer"
+            >
+              <BasketIcon className="h-8 w-8" />
+              {cartCount > 0 && (
+                <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full border-2 border-[#f1ead7] bg-[#c89465] px-1 text-xs font-bold text-white shadow-sm">
+                  {cartCount}
                 </span>
-              </Link>
-            )}
+              )}
+            </Link>
+          )}
 
+          {currentUser ? (
             <div ref={profileMenuRef} className="relative">
               <button
                 type="button"
                 onClick={() => setIsProfileOpen((current) => !current)}
-                className="inline-flex h-13 items-center gap-2.5 whitespace-nowrap rounded-full bg-[#4c1f08] py-1.5 pl-2 pr-4 font-bold text-white shadow-sm cursor-pointer hover:bg-[#6b3215] transition-colors"
+                className="inline-flex h-12 items-center gap-2.5 whitespace-nowrap rounded-full bg-[#4c1f08] py-1.5 pl-2 pr-4 font-bold text-white shadow-sm cursor-pointer hover:bg-[#6b3215] transition-colors"
                 aria-haspopup="menu"
                 aria-expanded={isProfileOpen}
                 aria-controls="profile-dropdown-menu"
@@ -443,15 +445,15 @@ export default function Navbar() {
                 </button>
               </div>
             </div>
-          </div>
-        ) : (
-          <Link
-            to={action.to}
-            className="mr-1 hidden whitespace-nowrap rounded-full bg-[#4c1f08] px-5 py-3 text-sm font-bold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215] lg:inline-flex md:text-xl"
-          >
-            {action.label}
-          </Link>
-        )}
+          ) : (
+            <Link
+              to="/login"
+              className="whitespace-nowrap rounded-full bg-[#4c1f08] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215]"
+            >
+              เข้าสู่ระบบ
+            </Link>
+          )}
+        </div>
 
         <div
           ref={dropdownRef}
@@ -502,23 +504,76 @@ export default function Navbar() {
                     ออกจากระบบ
                   </button>
                 </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  {currentRole === "customer" && (
+                    <>
+                      <Link
+                        to="/cart"
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e]"
+                      >
+                        🛒 ตะกร้า ({cartCount})
+                      </Link>
+                      <Link
+                        to="/orders"
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e]"
+                      >
+                        📦 คำสั่งซื้อ
+                      </Link>
+                      <Link
+                        to="/profile"
+                        className="col-span-2 flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e]"
+                      >
+                        👤 โปรไฟล์ของฉัน
+                      </Link>
+                    </>
+                  )}
+                  {currentRole === "admin" && (
+                    <>
+                      <Link
+                        to="/admin/products"
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e]"
+                      >
+                        📦 รายการสินค้า
+                      </Link>
+                      <Link
+                        to="/admin/products/new"
+                        className="flex items-center justify-center gap-2 rounded-2xl bg-[#f1ead7] p-2.5 text-xs font-bold text-[#3d2c2e]"
+                      >
+                        ➕ เพิ่มสินค้า
+                      </Link>
+                    </>
+                  )}
+                </div>
               </div>
             ) : (
-              <Link
-                data-mobile-menu-item
-                to={action.to}
-                className="flex items-center gap-3 rounded-full bg-[#3d2c2e] p-4 text-white shadow-[0_10px_25px_rgba(61,44,46,.18)]"
-              >
-                <span className="grid h-11 w-11 place-items-center rounded-full bg-white/12 text-xl">
-                  {action.icon}
-                </span>
-                <span>
-                  <strong className="block">{navigation.mobileTitle}</strong>
-                  <span className="mt-0.5 block text-sm text-[#e7d8cb]">
-                    {navigation.mobileDetail}
+              <div className="space-y-2">
+                <Link
+                  data-mobile-menu-item
+                  to="/cart"
+                  className="flex items-center justify-between rounded-full bg-[#f1ead7] px-5 py-3 text-[#3d2c2e] font-bold text-sm"
+                >
+                  <span className="flex items-center gap-2">🛒 ตะกร้าสินค้า</span>
+                  <span className="bg-[#8d593a] text-white text-xs px-2.5 py-0.5 rounded-full">
+                    {cartCount} รายการ
                   </span>
-                </span>
-              </Link>
+                </Link>
+                <Link
+                  data-mobile-menu-item
+                  to="/login"
+                  className="flex items-center gap-3 rounded-full bg-[#3d2c2e] p-4 text-white shadow-[0_10px_25px_rgba(61,44,46,.18)]"
+                >
+                  <span className="grid h-11 w-11 place-items-center rounded-full bg-white/12 text-xl">
+                    👋
+                  </span>
+                  <span>
+                    <strong className="block">เข้าสู่ระบบ</strong>
+                    <span className="mt-0.5 block text-sm text-[#e7d8cb]">
+                      เข้าสู่ระบบเพื่อสะสมแต้มและสั่งซื้อ
+                    </span>
+                  </span>
+                </Link>
+              </div>
             )}
           </div>
         </div>

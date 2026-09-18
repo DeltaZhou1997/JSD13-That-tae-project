@@ -43,13 +43,21 @@ export default function QuizResult({ resultElement, onReset }) {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={onReset}
-        className="w-full py-3 bg-[#3D2E2B] hover:bg-[#2A1F1D] text-white font-bold rounded-xl text-sm transition-all shadow-md"
-      >
-        ทำแบบทดสอบอีกครั้ง
-      </button>
+      <div className="flex flex-col sm:flex-row gap-3 pt-2">
+        <button
+          type="button"
+          onClick={onReset}
+          className="flex-1 py-3 bg-white border border-[#3D2E2B] text-[#3D2E2B] font-bold rounded-xl text-sm hover:bg-slate-50 transition-all cursor-pointer"
+        >
+          ทำแบบทดสอบอีกครั้ง
+        </button>
+        <a
+          href="/menus"
+          className="flex-1 py-3 bg-[#3D2E2B] hover:bg-[#2A1F1D] text-white font-bold rounded-xl text-sm transition-all shadow-md flex items-center justify-center cursor-pointer"
+        >
+          เลือกดูเมนูอาหาร 🍲
+        </a>
+      </div>
     </div>
   );
 }

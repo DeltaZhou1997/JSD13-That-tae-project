@@ -21,6 +21,8 @@ import MenuOverview from './pages/MenuOverview'
 import MenuDetail from './pages/MenuDetail'
 
 import Cart from './components/Cream/Cart.jsx';
+import OrdersPage from './pages/OrdersPage.jsx';
+import ProfilePage from './pages/ProfilePage.jsx';
 
 
 const router = createBrowserRouter([
@@ -82,10 +84,22 @@ const router = createBrowserRouter([
         {
           path: "cart",
           element: <Cart />
+        },
+        {
+          path: "orders",
+          element: <OrdersPage />
+        },
+        {
+          path: "profile",
+          element: <ProfilePage />
+        },
+        {
+          path: "profile/edit",
+          element: <ProfilePage />
         }
-    ]
-  }
-]);
+      ]
+    }
+  ]);
 
 function App() {
   return (

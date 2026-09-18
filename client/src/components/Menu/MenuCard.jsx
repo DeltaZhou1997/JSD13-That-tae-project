@@ -1,13 +1,14 @@
 import { useApp } from '../../context/AppContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useOutletContext } from 'react-router-dom';
 
 export default function MenuCard({ menu }) {
-  const { language, addToCart } = useApp() || { language: 'th', addToCart: () => {} };
+  const { language } = useApp() || { language: 'th' };
+  const { handleAddToCart } = useOutletContext() || {};
   const navigate = useNavigate();
 
-  const title = language === 'th' ? menu.nameTh : menu.nameEn;
-  const regionName = language === 'th' ? menu.regionNameTh : menu.region;
-  const imageUrl = menu.imageUrl && menu.imageUrl.length > 0 ? menu.imageUrl[0] : '';
+  const title = (language === 'th' ? (menu.nameTh || menu.name) : (menu.nameEn || menu.name)) || menu.name || '';
+  const regionName = menu.regionNameTh || menu.region || '';
+  const imageUrl = Array.isArray(menu.imageUrl) ? (menu.imageUrl[0] || '') : (menu.imageUrl || '');
 
   return (
     <div 
@@ -37,7 +38,9 @@ export default function MenuCard({ menu }) {
             className="bg-[#dcb37b] hover:bg-[#c99c60] text-[#3b2a1a] px-3 py-1.5 rounded-lg flex justify-center items-center text-sm font-medium transition-colors"
             onClick={(e) => {
               e.stopPropagation();
-              addToCart(menu, 1);
+              if (handleAddToCart) {
+                handleAddToCart(menu, 1);
+              }
             }}
           >
             🛒 {language === 'th' ? 'เพิ่ม' : 'Add'}
