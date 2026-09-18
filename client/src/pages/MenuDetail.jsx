@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react'
-import { Link, useParams, useOutletContext } from 'react-router-dom'
-import { useApp } from '../context/AppContext'
-import { useProducts } from '../context/ProductsContext.js'
-import { dishes } from '../mock-data/index.js'
+import { useEffect, useState } from 'react';
+import { Link, useParams, useOutletContext } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
+import { useProducts } from '../context/ProductsContext.js';
+import { dishes } from '../mock-data/index.js';
 
 const CATEGORY_LABELS = {
   meat: 'เนื้อสัตว์ & โปรตีน',
@@ -10,30 +10,47 @@ const CATEGORY_LABELS = {
   seafood: 'อาหารทะเล',
   protein: 'โปรตีนถั่วเหลือง',
   dairy_egg: 'ไข่และผลิตภัณฑ์นม',
-  vegetable: 'ผัก & พืชสมุนไพร',
+  vegetable: 'ผัก & สมุนไพร',
   herb_spice: 'พริก & เครื่องเทศ',
   carb: 'แป้ง & เส้น',
   coconut: 'กะทิ',
-  seasoning: 'เครื่องปรุง & ไขมัน',
+  seasoning: 'เครื่องปรุง & ซอส',
   dessert: 'ของหวาน',
   other: 'วัตถุดิบ',
 };
 
-const ELEMENT_COLORS = {
-  ดิน: 'bg-[#f7efe6] text-[#8b5e34] border-[#e2cfbd] dark:bg-[#483321] dark:text-[#f2d8b8] dark:border-[#5a422d]',
-  น้ำ: 'bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe] dark:bg-[#1e293b] dark:text-[#93c5fd] dark:border-[#334155]',
-  ลม: 'bg-[#f0fdf4] text-[#15803d] border-[#bbf7d0] dark:bg-[#143224] dark:text-[#86efac] dark:border-[#1e4632]',
-  ไฟ: 'bg-[#fef2f2] text-[#b91c1c] border-[#fecaca] dark:bg-[#3b1818] dark:text-[#fca5a5] dark:border-[#542323]',
+const ELEMENT_BADGES = {
+  ดิน: {
+    badge: 'bg-amber-50 text-amber-900 border-amber-200/80',
+    dot: 'bg-amber-600',
+    name: 'ธาตุดิน',
+  },
+  น้ำ: {
+    badge: 'bg-sky-50 text-sky-800 border-sky-200/80',
+    dot: 'bg-sky-600',
+    name: 'ธาตุน้ำ',
+  },
+  ลม: {
+    badge: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
+    dot: 'bg-emerald-600',
+    name: 'ธาตุลม',
+  },
+  ไฟ: {
+    badge: 'bg-rose-50 text-rose-800 border-rose-200/80',
+    dot: 'bg-rose-600',
+    name: 'ธาตุไฟ',
+  },
 };
 
 export default function MenuDetail() {
-  const { id } = useParams()
+  const { id } = useParams();
   const { language } = useApp() || { language: 'th' };
   const { handleAddToCart } = useOutletContext() || {};
   const { getProductById } = useProducts();
-  const [menu, setMenu] = useState(null)
-  const [quantity, setQuantity] = useState(1)
-  const [selectedImage, setSelectedImage] = useState('')
+  const [menu, setMenu] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState('');
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'table'
 
   const cleanUrl = (url) => {
     if (!url || typeof url !== 'string') return '';
@@ -54,14 +71,23 @@ export default function MenuDetail() {
       const cleaned = (rawImgs.length > 0 ? rawImgs : (foundDish.images || [])).map(cleanUrl);
       setSelectedImage(cleaned[0] || '');
     }
-  }, [id, getProductById])
+  }, [id, getProductById]);
 
   if (!menu) {
     return (
-      <main className="mx-auto max-w-5xl px-5 py-20 text-center">
-        <h1 className="text-2xl font-semibold">ไม่พบเมนูนี้ (404)</h1>
-        <Link to="/menus" className="mt-4 inline-block underline text-[#8b5e34]">
-          กลับไปหน้าร้านค้า
+      <main className="mx-auto max-w-4xl px-5 py-24 text-center">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-stone-100 flex items-center justify-center text-stone-400">
+          <svg className="w-8 h-8 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h1 className="text-2xl font-bold text-stone-800">ไม่พบเมนูนี้ (404)</h1>
+        <p className="mt-2 text-stone-500">เมนูที่คุณกำลังค้นหาอาจถูกย้ายหรือไม่มีอยู่ในระบบ</p>
+        <Link
+          to="/menus"
+          className="mt-6 inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#8b5e34] text-white font-medium shadow-sm hover:bg-[#724a26] transition"
+        >
+          ← กลับไปหน้าร้านค้า
         </Link>
       </main>
     );
@@ -78,287 +104,467 @@ export default function MenuDetail() {
   const nutrition = menu.nutritionCache || null;
   const perServing = nutrition?.perServing || null;
   const dominantElement = menu.dominantElement || 'ดิน';
-  const elementBadgeStyle = ELEMENT_COLORS[dominantElement] || ELEMENT_COLORS['ดิน'];
+  const elementStyle = ELEMENT_BADGES[dominantElement] || ELEMENT_BADGES['ดิน'];
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-8 sm:py-10 bg-[#fdfbf7] dark:bg-[#2c1e16]">
-      {/* Breadcrumb Navigation */}
-      <nav className="mb-7 text-sm opacity-70 text-[#523a24] dark:text-[#f0e6d8]">
-        <Link to="/menus" className="hover:underline">Storefront</Link>
-        <span className="mx-2">›</span>
-        <span>{regionName}</span>
-        <span className="mx-2">›</span>
-        <span className="font-medium opacity-100">{title}</span>
-      </nav>
+    <div className="bg-[#faf8f5] min-h-screen pb-16">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
+        
+        {/* Breadcrumbs */}
+        <nav className="mb-6 flex items-center gap-2 text-xs sm:text-sm text-stone-500 font-medium">
+          <Link to="/" className="hover:text-stone-800 transition">หน้าแรก</Link>
+          <span className="text-stone-400">/</span>
+          <Link to="/menus" className="hover:text-stone-800 transition">เมนูอาหาร</Link>
+          <span className="text-stone-400">/</span>
+          <span className="text-stone-600">{regionName}</span>
+          <span className="text-stone-400">/</span>
+          <span className="text-stone-900 font-semibold truncate max-w-[200px] sm:max-w-xs">{title}</span>
+        </nav>
 
-      {/* Main Showcase Section */}
-      <section className="grid gap-9 lg:grid-cols-2 lg:items-center">
-        <div>
-          <img
-            src={cleanUrl(selectedImage) || images[0] || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80"}
-            alt={title}
-            onError={(e) => {
-              e.currentTarget.onerror = null;
-              e.currentTarget.src = (images && images[1]) || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80";
-            }}
-            className="h-96 w-full rounded-2xl border border-[#d4c5b0] object-cover shadow-md bg-[#f0e6d8] dark:bg-[#3d2c2e]"
-          />
-          {images.length > 1 && (
-            <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
-              {images.map((img, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(img)}
-                  className={`shrink-0 overflow-hidden rounded-lg border-2 cursor-pointer ${
-                    cleanUrl(selectedImage) === cleanUrl(img) ? 'border-[#8b5e34]' : 'border-transparent'
-                  }`}
-                >
-                  <img
-                    src={cleanUrl(img)}
-                    alt=""
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80";
-                    }}
-                    className="h-20 w-20 object-cover"
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col h-full justify-center">
-          {/* Tags: Region & Dominant Element */}
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="bg-[#f0e6d8] dark:bg-[#523a24] text-[#8b5e34] dark:text-[#dcb37b] text-xs font-bold px-3 py-1 rounded-full">
-              {regionName}
-            </span>
-            {menu.dominantElement && (
-              <span className={`text-xs font-bold px-3 py-1 rounded-full border flex items-center gap-1.5 ${elementBadgeStyle}`}>
-                <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
-                ธาตุเจ้าเรือนหลัก: ธาตุ{dominantElement}
-              </span>
-            )}
-            {menu.elementSuitability && menu.elementSuitability.length > 0 && (
-              <span className="text-xs text-[#8b5e34] dark:text-[#dcb37b] opacity-75">
-                (บำรุงธาตุ {menu.elementSuitability.join(', ')})
-              </span>
-            )}
-          </div>
-
-          <h1 className="text-3xl font-bold sm:text-4xl text-[#3b2a1a] dark:text-[#f0e6d8] mb-4">
-            {title}
-          </h1>
-          <p className="text-[#523a24] dark:text-[#d4c5b0] leading-relaxed mb-6 text-lg">
-            {menu.description}
-          </p>
-
-          <div className="flex items-end gap-4 mb-6">
-            <span className="text-4xl font-bold text-[#8b5e34]">฿{menu.price}</span>
-            <span className="text-sm opacity-70 mb-1">/ {menu.servings || 2} เสิร์ฟ</span>
-          </div>
-
-          {/* Quick Macronutrient Summary Badges per Serving */}
-          {perServing && (
-            <div className="mb-6 grid grid-cols-4 gap-2 rounded-2xl bg-[#f4ebd9] dark:bg-[#3b2a1a] p-3 text-center border border-[#e5d5c5] dark:border-[#523a24]">
-              <div className="flex flex-col">
-                <span className="text-xs text-[#8b5e34] dark:text-[#dcb37b] font-medium">พลังงาน</span>
-                <span className="text-base font-bold text-[#3b2a1a] dark:text-[#f0e6d8]">{perServing.calories}</span>
-                <span className="text-[10px] opacity-70">kcal / เสิร์ฟ</span>
-              </div>
-              <div className="flex flex-col border-l border-[#d4c5b0] dark:border-[#523a24]">
-                <span className="text-xs text-[#8b5e34] dark:text-[#dcb37b] font-medium">โปรตีน</span>
-                <span className="text-base font-bold text-[#3b2a1a] dark:text-[#f0e6d8]">{perServing.protein}g</span>
-                <span className="text-[10px] opacity-70">ต่อเสิร์ฟ</span>
-              </div>
-              <div className="flex flex-col border-l border-[#d4c5b0] dark:border-[#523a24]">
-                <span className="text-xs text-[#8b5e34] dark:text-[#dcb37b] font-medium">คาร์โบไฮเดรต</span>
-                <span className="text-base font-bold text-[#3b2a1a] dark:text-[#f0e6d8]">{perServing.carbs}g</span>
-                <span className="text-[10px] opacity-70">ต่อเสิร์ฟ</span>
-              </div>
-              <div className="flex flex-col border-l border-[#d4c5b0] dark:border-[#523a24]">
-                <span className="text-xs text-[#8b5e34] dark:text-[#dcb37b] font-medium">ไขมัน</span>
-                <span className="text-base font-bold text-[#3b2a1a] dark:text-[#f0e6d8]">{perServing.fat}g</span>
-                <span className="text-[10px] opacity-70">ต่อเสิร์ฟ</span>
+        {/* Hero Section: Product Showcase */}
+        <section className="bg-white rounded-3xl border border-[#ebe4dc] p-6 sm:p-8 lg:p-10 shadow-xs grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
+          
+          {/* Left: Image Showcase */}
+          <div className="flex flex-col gap-4">
+            <div className="relative overflow-hidden rounded-2xl border border-stone-200/80 bg-stone-50 shadow-xs">
+              <img
+                src={cleanUrl(selectedImage) || images[0] || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80"}
+                alt={title}
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = (images && images[1]) || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80";
+                }}
+                className="h-[320px] sm:h-[400px] w-full object-cover transition-all duration-300"
+              />
+              <div className="absolute top-4 left-4 flex flex-wrap gap-2">
+                <span className="bg-white/95 backdrop-blur-xs text-stone-800 text-xs font-bold px-3 py-1 rounded-full shadow-xs border border-stone-200">
+                  {regionName}
+                </span>
+                <span className={`text-xs font-bold px-3 py-1 rounded-full border flex items-center gap-1.5 shadow-xs ${elementStyle.badge}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${elementStyle.dot}`}></span>
+                  {elementStyle.name}
+                </span>
               </div>
             </div>
-          )}
 
-          {/* Add to Cart Actions */}
-          <div className="flex gap-4">
-            <div className="flex items-center border border-[#d4c5b0] rounded-xl overflow-hidden bg-white dark:bg-[#3b2a1a]">
-              <button
-                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="w-12 h-12 text-xl hover:bg-[#f0e6d8] dark:hover:bg-[#523a24] transition flex items-center justify-center cursor-pointer"
-                aria-label="ลดจำนวน"
-              >
-                −
-              </button>
-              <span className="w-12 text-center font-semibold">{quantity}</span>
-              <button
-                onClick={() => setQuantity((q) => q + 1)}
-                className="w-12 h-12 text-xl hover:bg-[#f0e6d8] dark:hover:bg-[#523a24] transition flex items-center justify-center cursor-pointer"
-                aria-label="เพิ่มจำนวน"
-              >
-                +
-              </button>
-            </div>
-            <button
-              onClick={() => {
-                if (handleAddToCart) handleAddToCart(menu, quantity);
-              }}
-              className="flex-1 rounded-xl bg-[#8b5e34] hover:bg-[#755535] text-white font-semibold transition text-lg shadow-lg py-3 cursor-pointer flex items-center justify-center gap-2"
-            >
-              <svg className="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              <span>{language === 'th' ? 'เพิ่มลงตะกร้า' : 'Add to Cart'}</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Ingredient Breakdown & Macronutrients Per 100g (ตามโครงสร้าง ER Diagram) */}
-      {recipe.length > 0 && (
-        <section className="mt-12 bg-white dark:bg-[#342418] rounded-3xl p-6 sm:p-8 border border-[#e5d5c5] dark:border-[#523a24] shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-[#e5d5c5] dark:border-[#523a24]">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#f0e6d8] dark:bg-[#523a24] text-[#8b5e34] dark:text-[#dcb37b] flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-[#3b2a1a] dark:text-[#f0e6d8]">
-                  วัตถุดิบในชุด Cooking Kit และธาตุเจ้าเรือน
-                </h2>
-                <p className="text-xs sm:text-sm text-[#8b5e34] dark:text-[#dcb37b]">
-                  แจกแจงวัตถุดิบแยกย่อย รสยาตามแพทย์แผนไทย และสารอาหารหลักในหน่วย 100 กรัม (Basis 100g)
-                </p>
-              </div>
-            </div>
-            <span className="text-xs bg-[#f4ebd9] dark:bg-[#483321] text-[#8b5e34] dark:text-[#dcb37b] px-3 py-1.5 rounded-full font-medium w-fit">
-              ทั้งหมด {recipe.length} รายการ
-            </span>
-          </div>
-
-          {/* Responsive Ingredient Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-[#e5d5c5] dark:border-[#523a24] text-xs uppercase text-[#8b5e34] dark:text-[#dcb37b]">
-                  <th className="pb-3 pr-4">วัตถุดิบ (Ingredient)</th>
-                  <th className="pb-3 px-3 text-center">หมวดหมู่</th>
-                  <th className="pb-3 px-3 text-center">รสยา (แพทย์แผนไทย)</th>
-                  <th className="pb-3 px-3 text-center">ธาตุที่ควรกิน</th>
-                  <th className="pb-3 px-3 text-right">ปริมาณในชุด</th>
-                  <th className="pb-3 px-3 text-right">พลังงาน (ต่อ 100g)</th>
-                  <th className="pb-3 px-3 text-right">โปรตีน (ต่อ 100g)</th>
-                  <th className="pb-3 px-3 text-right">คาร์บ (ต่อ 100g)</th>
-                  <th className="pb-3 pl-3 text-right">ไขมัน (ต่อ 100g)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#f0e6d8] dark:divide-[#483321]">
-                {recipe.map((item, index) => {
-                  const n = item.nutrientsPer100g || {};
+            {/* Thumbnails */}
+            {images.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto pb-1">
+                {images.map((img, index) => {
+                  const isSelected = cleanUrl(selectedImage) === cleanUrl(img);
                   return (
-                    <tr key={item.ingredientId || index} className="hover:bg-[#faf6ef] dark:hover:bg-[#3c2b1d] transition">
-                      <td className="py-3 pr-4 font-medium text-[#3b2a1a] dark:text-[#f0e6d8]">
-                        <div>{item.nameTh}</div>
-                      </td>
-                      <td className="py-3 px-3 text-center">
-                        <span className="text-xs bg-[#f4ebd9] dark:bg-[#523a24] text-[#8b5e34] dark:text-[#dcb37b] px-2 py-0.5 rounded-md">
-                          {CATEGORY_LABELS[item.category] || item.categoryTh || 'วัตถุดิบ'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-center">
-                        <span className="text-xs text-[#523a24] dark:text-[#d4c5b0]">
-                          {item.medicinalTaste || '-'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 text-center">
-                        <div className="flex items-center justify-center gap-1 flex-wrap">
-                          {Array.isArray(item.elements) && item.elements.length > 0 ? (
-                            item.elements.map((el) => (
-                              <span key={el} className="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-[#f0e6d8] dark:bg-[#523a24] text-[#8b5e34] dark:text-[#dcb37b]">
-                                {el}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-xs opacity-50">-</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-3 px-3 text-right font-semibold text-[#8b5e34] dark:text-[#dcb37b]">
-                        {item.quantity} {item.unit || 'g'}
-                      </td>
-                      <td className="py-3 px-3 text-right font-mono">{n.calories ?? '-'} kcal</td>
-                      <td className="py-3 px-3 text-right font-mono">{n.protein !== undefined ? `${n.protein}g` : '-'}</td>
-                      <td className="py-3 px-3 text-right font-mono">{n.carbs !== undefined ? `${n.carbs}g` : '-'}</td>
-                      <td className="py-3 pl-3 text-right font-mono">{n.fat !== undefined ? `${n.fat}g` : '-'}</td>
-                    </tr>
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImage(img)}
+                      className={`shrink-0 overflow-hidden rounded-xl border-2 cursor-pointer transition-all ${
+                        isSelected
+                          ? 'border-[#8b5e34] ring-2 ring-[#8b5e34]/20 scale-105'
+                          : 'border-stone-200 opacity-70 hover:opacity-100'
+                      }`}
+                    >
+                      <img
+                        src={cleanUrl(img)}
+                        alt=""
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=300&q=80";
+                        }}
+                        className="h-16 w-16 sm:h-20 sm:w-20 object-cover"
+                      />
+                    </button>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
+            )}
           </div>
 
-          {/* Total Nutrition Cache Summary Card */}
-          {nutrition && nutrition.totals && (
-            <div className="mt-6 pt-5 border-t border-[#e5d5c5] dark:border-[#523a24] flex flex-wrap items-center justify-between gap-4 bg-[#fbf8f2] dark:bg-[#2c1e16] p-4 rounded-2xl">
-              <div className="text-xs text-[#523a24] dark:text-[#d4c5b0]">
-                <span className="font-bold text-[#8b5e34] dark:text-[#dcb37b]">สรุปโภชนาการรวมทั้งเซต ({menu.servings || 2} เสิร์ฟ):</span>
-                <span className="ml-2">น้ำตาล {nutrition.totals.sugar}g | ใยอาหาร {nutrition.totals.fiber}g | โซเดียม {nutrition.totals.sodium}mg</span>
+          {/* Right: Product Details & Purchase */}
+          <div className="flex flex-col justify-center">
+            
+            {/* Element Suitability Header */}
+            {menu.elementSuitability && menu.elementSuitability.length > 0 && (
+              <div className="mb-3 inline-flex items-center gap-2 text-xs font-medium text-stone-500 bg-stone-50 px-3 py-1.5 rounded-full border border-stone-200/60 w-fit">
+                <svg className="w-4 h-4 text-[#8b5e34] fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>ปรับสมดุลธาตุ: {menu.elementSuitability.map((el) => `ธาตุ${el}`).join(', ')}</span>
               </div>
-              <div className="flex gap-4 text-xs sm:text-sm font-semibold text-[#3b2a1a] dark:text-[#f0e6d8]">
-                <span>รวม {nutrition.totals.calories} kcal</span>
-                <span>P: {nutrition.totals.protein}g</span>
-                <span>C: {nutrition.totals.carbs}g</span>
-                <span>F: {nutrition.totals.fat}g</span>
+            )}
+
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-stone-900 tracking-tight leading-snug mb-3">
+              {title}
+            </h1>
+
+            <p className="text-stone-600 text-base sm:text-lg leading-relaxed mb-6 font-normal">
+              {menu.description}
+            </p>
+
+            {/* Price & Servings */}
+            <div className="flex items-baseline gap-3 mb-6 pb-6 border-b border-stone-100">
+              <span className="text-4xl sm:text-5xl font-black text-[#8b5e34]">
+                ฿{menu.price}
+              </span>
+              <span className="text-sm font-semibold text-stone-500 bg-stone-100 px-2.5 py-1 rounded-md">
+                ชุด Cooking Kit สำหรับ {menu.servings || 2} ที่
+              </span>
+            </div>
+
+            {/* Per-Serving Macronutrients Metric Cards */}
+            {perServing && (
+              <div className="mb-8">
+                <p className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-2.5">
+                  สารอาหารเฉลี่ยต่อ 1 ที่เสิร์ฟ (Nutrition per Serving)
+                </p>
+                <div className="grid grid-cols-4 gap-2.5 sm:gap-3">
+                  <div className="bg-amber-50/80 border border-amber-100 rounded-2xl p-2.5 sm:p-3 text-center">
+                    <span className="block text-[11px] font-semibold text-amber-800">พลังงาน</span>
+                    <span className="block text-lg sm:text-xl font-bold text-amber-900 leading-tight my-0.5">
+                      {perServing.calories}
+                    </span>
+                    <span className="block text-[10px] text-amber-700/80">kcal</span>
+                  </div>
+
+                  <div className="bg-emerald-50/80 border border-emerald-100 rounded-2xl p-2.5 sm:p-3 text-center">
+                    <span className="block text-[11px] font-semibold text-emerald-800">โปรตีน</span>
+                    <span className="block text-lg sm:text-xl font-bold text-emerald-900 leading-tight my-0.5">
+                      {perServing.protein}g
+                    </span>
+                    <span className="block text-[10px] text-emerald-700/80">กรัม</span>
+                  </div>
+
+                  <div className="bg-orange-50/80 border border-orange-100 rounded-2xl p-2.5 sm:p-3 text-center">
+                    <span className="block text-[11px] font-semibold text-orange-800">คาร์โบไฮเดรต</span>
+                    <span className="block text-lg sm:text-xl font-bold text-orange-900 leading-tight my-0.5">
+                      {perServing.carbs}g
+                    </span>
+                    <span className="block text-[10px] text-orange-700/80">กรัม</span>
+                  </div>
+
+                  <div className="bg-stone-100/80 border border-stone-200/80 rounded-2xl p-2.5 sm:p-3 text-center">
+                    <span className="block text-[11px] font-semibold text-stone-700">ไขมัน</span>
+                    <span className="block text-lg sm:text-xl font-bold text-stone-900 leading-tight my-0.5">
+                      {perServing.fat}g
+                    </span>
+                    <span className="block text-[10px] text-stone-600/80">กรัม</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Quantity Selector & Add to Cart Button */}
+            <div className="flex gap-4 items-center">
+              <div className="flex items-center border border-stone-300 rounded-2xl bg-stone-50 p-1">
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  className="w-10 h-10 rounded-xl bg-white hover:bg-stone-200 text-stone-700 font-bold text-lg transition flex items-center justify-center cursor-pointer shadow-2xs"
+                  aria-label="ลดจำนวน"
+                >
+                  −
+                </button>
+                <span className="w-12 text-center font-bold text-stone-900 text-base">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => q + 1)}
+                  className="w-10 h-10 rounded-xl bg-white hover:bg-stone-200 text-stone-700 font-bold text-lg transition flex items-center justify-center cursor-pointer shadow-2xs"
+                  aria-label="เพิ่มจำนวน"
+                >
+                  +
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (handleAddToCart) handleAddToCart(menu, quantity);
+                }}
+                className="flex-1 rounded-2xl bg-[#8b5e34] hover:bg-[#724a26] text-white font-bold text-base sm:text-lg shadow-md hover:shadow-lg transition-all py-3.5 px-6 cursor-pointer flex items-center justify-center gap-2.5"
+              >
+                <svg className="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span>{language === 'th' ? 'เพิ่มลงตะกร้า' : 'Add to Cart'}</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Ingredients & Nutrition Breakdown Section */}
+        {recipe.length > 0 && (
+          <section className="bg-white rounded-3xl border border-[#ebe4dc] p-6 sm:p-8 lg:p-10 shadow-xs mt-10">
+            
+            {/* Header & View Switcher */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-stone-100">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-[#8b5e34] border border-amber-100 flex items-center justify-center shrink-0">
+                  <svg className="w-6 h-6 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-stone-900">
+                    วัตถุดิบในชุด Cooking Kit และธาตุเจ้าเรือน
+                  </h2>
+                  <p className="text-xs sm:text-sm text-stone-500 font-medium">
+                    แยกย่อยส่วนผสมจริง {recipe.length} รายการ พร้อมระบุรสยาแพทย์แผนไทยและสารอาหารต่อ 100 กรัม
+                  </p>
+                </div>
+              </div>
+
+              {/* View Switcher Tabs (Cards vs Table) */}
+              <div className="flex items-center bg-stone-100 p-1 rounded-xl border border-stone-200 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('cards')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    viewMode === 'cards'
+                      ? 'bg-white text-stone-900 shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  <svg className="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                  </svg>
+                  การ์ดวัตถุดิบ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('table')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                    viewMode === 'table'
+                      ? 'bg-white text-stone-900 shadow-xs'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  <svg className="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  ตารางโภชนาการ
+                </button>
               </div>
             </div>
-          )}
+
+            {/* View 1: Responsive Visual Ingredient Cards (Easy to read, modern light look) */}
+            {viewMode === 'cards' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 mt-6">
+                {recipe.map((item, idx) => {
+                  const n = item.nutrientsPer100g || {};
+                  return (
+                    <div
+                      key={item.ingredientId || idx}
+                      className="bg-[#faf8f5] hover:bg-white rounded-2xl border border-stone-200/80 p-4 transition-all duration-200 hover:shadow-sm hover:border-[#8b5e34]/30 flex flex-col justify-between"
+                    >
+                      <div>
+                        {/* Top: Name & Quantity */}
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <h4 className="font-bold text-stone-900 text-sm leading-snug">
+                            {item.nameTh}
+                          </h4>
+                          <span className="shrink-0 bg-stone-200/70 text-stone-800 text-xs font-extrabold px-2.5 py-0.5 rounded-md">
+                            {item.quantity} {item.unit || 'g'}
+                          </span>
+                        </div>
+
+                        {/* Category & Taste Badges */}
+                        <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                          <span className="text-[11px] bg-stone-200/50 text-stone-600 px-2 py-0.5 rounded-md font-medium">
+                            {CATEGORY_LABELS[item.category] || item.categoryTh || 'วัตถุดิบ'}
+                          </span>
+                          {item.medicinalTaste && (
+                            <span className="text-[11px] bg-amber-50 text-amber-800 border border-amber-200/60 px-2 py-0.5 rounded-md font-medium">
+                              {item.medicinalTaste}
+                            </span>
+                          )}
+                          {Array.isArray(item.elements) && item.elements.length > 0 && (
+                            <span className="text-[11px] bg-sky-50 text-sky-800 border border-sky-200/60 px-2 py-0.5 rounded-md font-medium">
+                              {item.elements.join(', ')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Nutrient Micronutrient Strip (per 100g) */}
+                      <div className="pt-2.5 border-t border-stone-200/60 grid grid-cols-4 gap-1 text-center text-[10px]">
+                        <div>
+                          <span className="block text-stone-600 font-medium">แคลอรี</span>
+                          <span className="font-bold text-stone-800">{n.calories ?? '-'}</span>
+                        </div>
+                        <div>
+                          <span className="block text-stone-600 font-medium">โปรตีน</span>
+                          <span className="font-bold text-stone-800">{n.protein ?? '-'}g</span>
+                        </div>
+                        <div>
+                          <span className="block text-stone-600 font-medium">คาร์บ</span>
+                          <span className="font-bold text-stone-800">{n.carbs ?? '-'}g</span>
+                        </div>
+                        <div>
+                          <span className="block text-stone-600 font-medium">ไขมัน</span>
+                          <span className="font-bold text-stone-800">{n.fat ?? '-'}g</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* View 2: High-contrast Detailed Nutrition Table */}
+            {viewMode === 'table' && (
+              <div className="overflow-x-auto mt-6 rounded-2xl border border-stone-200">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="bg-stone-50 border-b border-stone-200 text-xs font-bold text-stone-600 uppercase tracking-wider">
+                      <th className="py-3 px-4">วัตถุดิบ (Ingredient)</th>
+                      <th className="py-3 px-3 text-center">หมวดหมู่</th>
+                      <th className="py-3 px-3 text-center">รสยา (แพทย์แผนไทย)</th>
+                      <th className="py-3 px-3 text-center">ธาตุที่ควรกิน</th>
+                      <th className="py-3 px-3 text-right">ปริมาณในชุด</th>
+                      <th className="py-3 px-3 text-right">พลังงาน (/100g)</th>
+                      <th className="py-3 px-3 text-right">โปรตีน (/100g)</th>
+                      <th className="py-3 px-3 text-right">คาร์บ (/100g)</th>
+                      <th className="py-3 px-4 text-right">ไขมัน (/100g)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-stone-100">
+                    {recipe.map((item, index) => {
+                      const n = item.nutrientsPer100g || {};
+                      return (
+                        <tr key={item.ingredientId || index} className="hover:bg-stone-50/70 transition">
+                          <td className="py-3 px-4 font-semibold text-stone-900">
+                            {item.nameTh}
+                          </td>
+                          <td className="py-3 px-3 text-center">
+                            <span className="text-xs bg-stone-100 text-stone-600 px-2 py-0.5 rounded-md font-medium">
+                              {CATEGORY_LABELS[item.category] || item.categoryTh || 'วัตถุดิบ'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-center">
+                            <span className="text-xs text-stone-600 font-medium">
+                              {item.medicinalTaste || '-'}
+                            </span>
+                          </td>
+                          <td className="py-3 px-3 text-center">
+                            <div className="flex items-center justify-center gap-1 flex-wrap">
+                              {Array.isArray(item.elements) && item.elements.length > 0 ? (
+                                item.elements.map((el) => (
+                                  <span key={el} className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-stone-100 text-stone-700">
+                                    {el}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-xs text-stone-400">-</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-3 text-right font-bold text-[#8b5e34]">
+                            {item.quantity} {item.unit || 'g'}
+                          </td>
+                          <td className="py-3 px-3 text-right font-mono font-medium text-stone-700">{n.calories ?? '-'} kcal</td>
+                          <td className="py-3 px-3 text-right font-mono font-medium text-stone-700">{n.protein !== undefined ? `${n.protein}g` : '-'}</td>
+                          <td className="py-3 px-3 text-right font-mono font-medium text-stone-700">{n.carbs !== undefined ? `${n.carbs}g` : '-'}</td>
+                          <td className="py-3 px-4 text-right font-mono font-medium text-stone-700">{n.fat !== undefined ? `${n.fat}g` : '-'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {/* Total Nutrition Cache Summary Banner */}
+            {nutrition && nutrition.totals && (
+              <div className="mt-8 rounded-2xl bg-[#faf6f0] border border-[#e8ded4] p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-2 h-2 rounded-full bg-[#8b5e34]"></span>
+                    <h3 className="text-sm font-bold text-stone-900">
+                      สรุปคุณค่าทางโภชนาการรวมทั้งชุด Cooking Kit ({menu.servings || 2} เสิร์ฟ)
+                    </h3>
+                  </div>
+                  <p className="text-xs text-stone-500">
+                    น้ำตาลรวม: <strong className="text-stone-700">{nutrition.totals.sugar}g</strong> | ใยอาหาร: <strong className="text-stone-700">{nutrition.totals.fiber}g</strong> | โซเดียม: <strong className="text-stone-700">{nutrition.totals.sodium}mg</strong>
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm font-bold">
+                  <div className="bg-white px-3.5 py-2 rounded-xl border border-stone-200/80 text-stone-800 shadow-2xs">
+                    พลังงานรวม <span className="text-[#8b5e34] font-black">{nutrition.totals.calories}</span> kcal
+                  </div>
+                  <div className="bg-white px-3.5 py-2 rounded-xl border border-stone-200/80 text-stone-800 shadow-2xs">
+                    โปรตีน <span className="text-emerald-700 font-black">{nutrition.totals.protein}g</span>
+                  </div>
+                  <div className="bg-white px-3.5 py-2 rounded-xl border border-stone-200/80 text-stone-800 shadow-2xs">
+                    คาร์บ <span className="text-orange-700 font-black">{nutrition.totals.carbs}g</span>
+                  </div>
+                  <div className="bg-white px-3.5 py-2 rounded-xl border border-stone-200/80 text-stone-800 shadow-2xs">
+                    ไขมัน <span className="text-stone-700 font-black">{nutrition.totals.fat}g</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Culinary Heritage & Storage/Reheating Section */}
+        <section className="mt-10 grid gap-6 md:grid-cols-2">
+          
+          {/* Heritage Card */}
+          <div className="bg-white rounded-3xl border border-[#ebe4dc] p-6 sm:p-8 shadow-xs">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-amber-50 text-[#8b5e34] border border-amber-100 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-stone-900">
+                ภูมิปัญญาและประวัติอาหาร
+              </h3>
+            </div>
+            <p className="text-stone-600 text-sm sm:text-base leading-relaxed">
+              {menu.history || menu.description}
+            </p>
+          </div>
+
+          {/* Cooking & Storage Instructions Card */}
+          <div className="bg-white rounded-3xl border border-[#ebe4dc] p-6 sm:p-8 shadow-xs flex flex-col justify-between gap-6">
+            
+            {/* Storage */}
+            <div>
+              <h4 className="font-bold text-stone-900 mb-2 flex items-center gap-2 text-sm">
+                <span className="w-7 h-7 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center shrink-0 border border-sky-100">
+                  <svg className="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </span>
+                การเก็บรักษาวัตถุดิบ
+              </h4>
+              <p className="text-stone-600 text-xs sm:text-sm leading-relaxed pl-9">
+                {menu.storageInstruction || "ควรเก็บในตู้เย็นอุณหภูมิ 0-4°C และปรุงภายใน 2 วันเพื่อความสดใหม่"}
+              </p>
+            </div>
+
+            <div className="h-px bg-stone-100" />
+
+            {/* Reheating */}
+            <div>
+              <h4 className="font-bold text-stone-900 mb-2 flex items-center gap-2 text-sm">
+                <span className="w-7 h-7 rounded-lg bg-rose-50 text-rose-700 flex items-center justify-center shrink-0 border border-rose-100">
+                  <svg className="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                  </svg>
+                </span>
+                คำแนะนำการปรุง / อุ่นร้อน
+              </h4>
+              <p className="text-stone-600 text-xs sm:text-sm leading-relaxed pl-9">
+                {menu.reheatingInstruction || "ทำตามลำดับขั้นตอนในคู่มือ ปรุงด้วยความร้อนปานกลางจนสุกทั่วถึง"}
+              </p>
+            </div>
+          </div>
+
         </section>
-      )}
-
-      {/* Culinary Heritage & Storage Instruction Section */}
-      <section className="mt-12 bg-[#f4ebd9] dark:bg-[#3b2a1a] rounded-3xl p-6 sm:p-8 border border-[#e5d5c5] dark:border-[#523a24]">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-xl bg-[#8b5e34] text-white flex items-center justify-center shrink-0">
-            <svg className="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-[#523a24] dark:text-[#dcb37b]">
-            ประวัติอาหารและภูมิปัญญา
-          </h2>
-        </div>
-        <p className="text-lg leading-8 text-[#3b2a1a] dark:text-[#f0e6d8]">
-          {menu.history}
-        </p>
-
-        <div className="grid md:grid-cols-2 gap-6 mt-8 border-t border-[#d4c5b0] dark:border-[#523a24] pt-8">
-          <div className="bg-white/60 dark:bg-black/20 p-5 rounded-2xl border border-[#e5d5c5]/60 dark:border-[#523a24]/60">
-            <h3 className="font-bold mb-2 flex items-center gap-2 text-[#8b5e34] dark:text-[#dcb37b]">
-              <svg className="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-              </svg>
-              การเก็บรักษาวัตถุดิบ
-            </h3>
-            <p className="opacity-80 text-sm leading-relaxed">{menu.storageInstruction}</p>
-          </div>
-          <div className="bg-white/60 dark:bg-black/20 p-5 rounded-2xl border border-[#e5d5c5]/60 dark:border-[#523a24]/60">
-            <h3 className="font-bold mb-2 flex items-center gap-2 text-[#8b5e34] dark:text-[#dcb37b]">
-              <svg className="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-              </svg>
-              คำแนะนำการปรุง / อุ่นร้อน
-            </h3>
-            <p className="opacity-80 text-sm leading-relaxed">{menu.reheatingInstruction}</p>
-          </div>
-        </div>
-      </section>
-    </main>
+      </div>
+    </div>
   );
 }

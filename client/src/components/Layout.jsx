@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Navbar from './Navbar.jsx'
 import Footer from './Footer.jsx'
+import useToast from '../hooks/useToast.js'
 
 function Layout({ context }) {
   const [cartItems, setCartItems] = useState([])
+  const toast = useToast()
 
   const handleAddToCart = (product, count = 1) => {
     const targetId = product._id || product.id;
@@ -35,7 +37,9 @@ function Layout({ context }) {
       ];
     });
 
-    alert(`🎉 เพิ่ม "${displayName}" (${qtyToAdd} ชุด) ลงตะกร้าแล้ว!`);
+    if (toast?.success) {
+      toast.success(`เพิ่ม "${displayName}" (${qtyToAdd} ชุด) ลงตะกร้าแล้ว`);
+    }
   };
 
   const handleClearCart = () => {

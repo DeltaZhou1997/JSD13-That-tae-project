@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
 
 :root {
   font-family: "IBM Plex Sans Thai", system-ui, sans-serif;
