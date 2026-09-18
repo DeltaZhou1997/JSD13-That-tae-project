@@ -5,16 +5,25 @@ import { useProducts } from '../context/ProductsContext.js'
 import { dishes } from '../mock-data/index.js'
 
 const CATEGORY_LABELS = {
-  meat: 'เนื้อสัตว์',
+  meat: 'เนื้อสัตว์ & โปรตีน',
   poultry: 'สัตว์ปีก',
   seafood: 'อาหารทะเล',
   protein: 'โปรตีนถั่วเหลือง',
   dairy_egg: 'ไข่และผลิตภัณฑ์นม',
-  vegetable: 'ผักสด',
-  herb_spice: 'สมุนไพรและเครื่องเทศ',
-  carb: 'คาร์โบไฮเดรต/เส้น',
+  vegetable: 'ผัก & พืชสมุนไพร',
+  herb_spice: 'พริก & เครื่องเทศ',
+  carb: 'แป้ง & เส้น',
   coconut: 'กะทิ',
-  seasoning: 'เครื่องปรุงรส/น้ำพริก',
+  seasoning: 'เครื่องปรุง & ไขมัน',
+  dessert: 'ของหวาน',
+  other: 'วัตถุดิบ',
+};
+
+const ELEMENT_COLORS = {
+  ดิน: 'bg-[#f7efe6] text-[#8b5e34] border-[#e2cfbd] dark:bg-[#483321] dark:text-[#f2d8b8] dark:border-[#5a422d]',
+  น้ำ: 'bg-[#eff6ff] text-[#1d4ed8] border-[#bfdbfe] dark:bg-[#1e293b] dark:text-[#93c5fd] dark:border-[#334155]',
+  ลม: 'bg-[#f0fdf4] text-[#15803d] border-[#bbf7d0] dark:bg-[#143224] dark:text-[#86efac] dark:border-[#1e4632]',
+  ไฟ: 'bg-[#fef2f2] text-[#b91c1c] border-[#fecaca] dark:bg-[#3b1818] dark:text-[#fca5a5] dark:border-[#542323]',
 };
 
 export default function MenuDetail() {
@@ -57,6 +66,8 @@ export default function MenuDetail() {
   const recipe = Array.isArray(menu.recipe) ? menu.recipe : [];
   const nutrition = menu.nutritionCache || null;
   const perServing = nutrition?.perServing || null;
+  const dominantElement = menu.dominantElement || 'ดิน';
+  const elementBadgeStyle = ELEMENT_COLORS[dominantElement] || ELEMENT_COLORS['ดิน'];
 
   return (
     <main className="mx-auto max-w-5xl px-5 py-8 sm:py-10 bg-[#fdfbf7] dark:bg-[#2c1e16]">
@@ -95,9 +106,24 @@ export default function MenuDetail() {
         </div>
 
         <div className="flex flex-col h-full justify-center">
-          <span className="bg-[#f0e6d8] dark:bg-[#523a24] text-[#8b5e34] dark:text-[#dcb37b] text-xs font-bold px-3 py-1 rounded-full w-fit mb-4">
-            {regionName}
-          </span>
+          {/* Tags: Region & Dominant Element */}
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <span className="bg-[#f0e6d8] dark:bg-[#523a24] text-[#8b5e34] dark:text-[#dcb37b] text-xs font-bold px-3 py-1 rounded-full">
+              {regionName}
+            </span>
+            {menu.dominantElement && (
+              <span className={`text-xs font-bold px-3 py-1 rounded-full border flex items-center gap-1.5 ${elementBadgeStyle}`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                ธาตุเจ้าเรือนหลัก: ธาตุ{dominantElement}
+              </span>
+            )}
+            {menu.elementSuitability && menu.elementSuitability.length > 0 && (
+              <span className="text-xs text-[#8b5e34] dark:text-[#dcb37b] opacity-75">
+                (บำรุงธาตุ {menu.elementSuitability.join(', ')})
+              </span>
+            )}
+          </div>
+
           <h1 className="text-3xl font-bold sm:text-4xl text-[#3b2a1a] dark:text-[#f0e6d8] mb-4">
             {title}
           </h1>
@@ -182,10 +208,10 @@ export default function MenuDetail() {
               </div>
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-[#3b2a1a] dark:text-[#f0e6d8]">
-                  วัตถุดิบในชุด Cooking Kit
+                  วัตถุดิบในชุด Cooking Kit และธาตุเจ้าเรือน
                 </h2>
                 <p className="text-xs sm:text-sm text-[#8b5e34] dark:text-[#dcb37b]">
-                  แจกแจงวัตถุดิบแยกย่อย พร้อมสารอาหารหลักในหน่วยมาตรฐาน 100 กรัม (Basis 100g)
+                  แจกแจงวัตถุดิบแยกย่อย รสยาตามแพทย์แผนไทย และสารอาหารหลักในหน่วย 100 กรัม (Basis 100g)
                 </p>
               </div>
             </div>
@@ -200,7 +226,9 @@ export default function MenuDetail() {
               <thead>
                 <tr className="border-b border-[#e5d5c5] dark:border-[#523a24] text-xs uppercase text-[#8b5e34] dark:text-[#dcb37b]">
                   <th className="pb-3 pr-4">วัตถุดิบ (Ingredient)</th>
-                  <th className="pb-3 px-3 text-center">ประเภท</th>
+                  <th className="pb-3 px-3 text-center">หมวดหมู่</th>
+                  <th className="pb-3 px-3 text-center">รสยา (แพทย์แผนไทย)</th>
+                  <th className="pb-3 px-3 text-center">ธาตุที่ควรกิน</th>
                   <th className="pb-3 px-3 text-right">ปริมาณในชุด</th>
                   <th className="pb-3 px-3 text-right">พลังงาน (ต่อ 100g)</th>
                   <th className="pb-3 px-3 text-right">โปรตีน (ต่อ 100g)</th>
@@ -215,14 +243,29 @@ export default function MenuDetail() {
                     <tr key={item.ingredientId || index} className="hover:bg-[#faf6ef] dark:hover:bg-[#3c2b1d] transition">
                       <td className="py-3 pr-4 font-medium text-[#3b2a1a] dark:text-[#f0e6d8]">
                         <div>{item.nameTh}</div>
-                        {item.nameEn && (
-                          <div className="text-xs text-opacity-60 text-[#523a24] dark:text-[#d4c5b0]">{item.nameEn}</div>
-                        )}
                       </td>
                       <td className="py-3 px-3 text-center">
                         <span className="text-xs bg-[#f4ebd9] dark:bg-[#523a24] text-[#8b5e34] dark:text-[#dcb37b] px-2 py-0.5 rounded-md">
-                          {CATEGORY_LABELS[item.category] || item.category || 'วัตถุดิบ'}
+                          {CATEGORY_LABELS[item.category] || item.categoryTh || 'วัตถุดิบ'}
                         </span>
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <span className="text-xs text-[#523a24] dark:text-[#d4c5b0]">
+                          {item.medicinalTaste || '-'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        <div className="flex items-center justify-center gap-1 flex-wrap">
+                          {Array.isArray(item.elements) && item.elements.length > 0 ? (
+                            item.elements.map((el) => (
+                              <span key={el} className="text-[11px] font-semibold px-1.5 py-0.5 rounded bg-[#f0e6d8] dark:bg-[#523a24] text-[#8b5e34] dark:text-[#dcb37b]">
+                                {el}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-xs opacity-50">-</span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3 px-3 text-right font-semibold text-[#8b5e34] dark:text-[#dcb37b]">
                         {item.quantity} {item.unit || 'g'}
@@ -243,7 +286,7 @@ export default function MenuDetail() {
             <div className="mt-6 pt-5 border-t border-[#e5d5c5] dark:border-[#523a24] flex flex-wrap items-center justify-between gap-4 bg-[#fbf8f2] dark:bg-[#2c1e16] p-4 rounded-2xl">
               <div className="text-xs text-[#523a24] dark:text-[#d4c5b0]">
                 <span className="font-bold text-[#8b5e34] dark:text-[#dcb37b]">สรุปโภชนาการรวมทั้งเซต ({menu.servings || 2} เสิร์ฟ):</span>
-                <span className="ml-2">ใยอาหาร {nutrition.totals.fiber}g | โซเดียม {nutrition.totals.sodium}mg</span>
+                <span className="ml-2">น้ำตาล {nutrition.totals.sugar}g | ใยอาหาร {nutrition.totals.fiber}g | โซเดียม {nutrition.totals.sodium}mg</span>
               </div>
               <div className="flex gap-4 text-xs sm:text-sm font-semibold text-[#3b2a1a] dark:text-[#f0e6d8]">
                 <span>รวม {nutrition.totals.calories} kcal</span>
