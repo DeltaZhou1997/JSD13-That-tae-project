@@ -1,29 +1,36 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { Layout } from './components/index.js'
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { Layout } from "./components/index.js";
 
-import HomePage from './pages/Home.jsx'
+import HomePage from "./pages/Home.jsx";
 
-import ToastProvider from './context/ToastProvider.jsx'
-import { AppProvider } from './context/AppContext.jsx';
-import Login from "./pages/Login.jsx"
-import Register from "./pages/Register.jsx"
-import AdminProductList from './pages/admin/AdminProductList.jsx'
-import ProductForm from './pages/admin/ProductForm.jsx'
-import ProductsProvider from './context/ProductsProvider.jsx'
-import AuthProvider from './context/AuthProvider.jsx'
+import ToastProvider from "./context/ToastProvider.jsx";
+import { AppProvider } from "./context/AppContext.jsx";
+import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
+import AdminProductList from "./pages/admin/AdminProductList.jsx";
+import ProductForm from "./pages/admin/ProductForm.jsx";
+import ProductsProvider from "./context/ProductsProvider.jsx";
+import AuthProvider from "./context/AuthProvider.jsx";
 
 import CheckoutPage from "./pages/CheckoutPage.jsx";
 import OrderSuccess from "./pages/OrderSuccess.jsx";
 import ElementQuizPage from "./pages/ElementQuizPage.jsx";
 import MenuRandomizerPage from "./pages/MenuRandomizerPage.jsx";
 
-import MenuOverview from './pages/MenuOverview'
-import MenuDetail from './pages/MenuDetail'
+import MenuOverview from "./pages/MenuOverview";
+import MenuDetail from "./pages/MenuDetail";
 
-import Cart from './components/cart/Cart.jsx';
-import OrdersPage from './pages/OrdersPage.jsx';
-import ProfilePage from './pages/ProfilePage.jsx';
+import Cart from "./components/cart/Cart.jsx";
+import OrdersPage from "./pages/OrdersPage.jsx";
+import ProfilePage from "./pages/ProfilePage.jsx";
 
+// 🆕 Stripe — โหลด Stripe SDK ด้วย Publishable Key จาก .env
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+
+const stripePromise = loadStripe(
+  import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_test_placeholder",
+);
 
 const router = createBrowserRouter([
   {
@@ -32,27 +39,27 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <HomePage />
+        element: <HomePage />,
       },
       {
         path: "admin/products",
-        element: <AdminProductList />
+        element: <AdminProductList />,
       },
       {
         path: "admin/products/new",
-        element: <ProductForm />
+        element: <ProductForm />,
       },
       {
         path: "admin/products/edit/:id",
-        element: <ProductForm />
+        element: <ProductForm />,
       },
       {
         path: "login",
-        element: <Login />
+        element: <Login />,
       },
       {
         path: "register",
-        element: <Register />
+        element: <Register />,
       },
       {
         path: "checkout",
@@ -74,44 +81,46 @@ const router = createBrowserRouter([
 
       {
         path: "/menus",
-        element: <MenuOverview />
+        element: <MenuOverview />,
       },
 
       {
         path: "/menus/:id",
-        element: <MenuDetail />
+        element: <MenuDetail />,
       },
-        {
-          path: "cart",
-          element: <Cart />
-        },
-        {
-          path: "orders",
-          element: <OrdersPage />
-        },
-        {
-          path: "profile",
-          element: <ProfilePage />
-        },
-        {
-          path: "profile/edit",
-          element: <ProfilePage />
-        }
-      ]
-    }
-  ]);
+      {
+        path: "cart",
+        element: <Cart />,
+      },
+      {
+        path: "orders",
+        element: <OrdersPage />,
+      },
+      {
+        path: "profile",
+        element: <ProfilePage />,
+      },
+      {
+        path: "profile/edit",
+        element: <ProfilePage />,
+      },
+    ],
+  },
+]);
 
 function App() {
   return (
     <AuthProvider>
       <ProductsProvider>
         <ToastProvider>
-          <RouterProvider router={router} />
+          {/* 🆕 ครอบ Elements ของ Stripe เพื่อให้ทุกหน้าเข้าถึง Stripe ได้ */}
+          <Elements stripe={stripePromise}>
+            <RouterProvider router={router} />
+          </Elements>
         </ToastProvider>
       </ProductsProvider>
     </AuthProvider>
-  )
+  );
 }
 
-export default App
-
+export default App;

@@ -42,6 +42,35 @@ const orderSchema = new mongoose.Schema(
       enum: ["PROMPTPAY", "CREDIT_CARD", "COD"],
       required: true,
     },
+
+    // ========== ฟิลด์ใหม่สำหรับระบบชำระเงิน ==========
+
+    // สถานะการชำระเงิน (แยกจากสถานะ Order)
+    paymentStatus: {
+      type: String,
+      enum: ["UNPAID", "PAID", "REFUNDED"],
+      default: "PAID",
+    },
+
+    // ยอดเงินที่พนักงานต้องเก็บสำหรับ COD
+    codAmount: {
+      type: Number,
+      default: null,
+    },
+
+    // Stripe Payment Intent ID (เก็บไว้อ้างอิงกับ Stripe)
+    stripePaymentIntentId: {
+      type: String,
+      default: null,
+    },
+
+    // เหตุผลกรณียกเลิก Order (เช่น COD ลูกค้าปฏิเสธรับของ)
+    cancelReason: {
+      type: String,
+      default: null,
+    },
+
+    // ========== ฟิลด์เดิม ==========
     itemsSubtotal: { type: Number, required: true },
     shippingFee: { type: Number, default: 60 },
     grandTotal: { type: Number, required: true },
