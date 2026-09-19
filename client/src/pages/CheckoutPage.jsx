@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
+import {
+  useStripe,
+  useElements,
+  CardNumberElement,
+} from "@stripe/react-stripe-js";
 
 import { users } from "../mock-data/users";
 import { useAuth } from "../context/AuthContext.js";
@@ -19,31 +23,28 @@ import CheckoutSummary from "../components/checkout/CheckoutSummary";
 export default function CheckoutPage() {
   const navigate = useNavigate();
 
-  // 🆕 Stripe Hooks — ใช้สำหรับยืนยันการชำระเงินกับ Stripe
+  // Stripe Hooks
   const stripe = useStripe();
   const elements = useElements();
 
-  // เชื่อมต่อคนที่ 5 & 1: Auth Context จากระบบล็อกอิน
+  // Auth Context
   const { currentUser: authUser } = useAuth();
   const currentUser = authUser || users[0];
   const currentUserId = currentUser?.id || "USR-001";
 
-  // จุดเชื่อมต่อคนที่ 4: รูปแบบการสั่งซื้อ (Plan Selector)
+  // Plan Selector
   const [selectedPlan, setSelectedPlan] = useState(null);
 
-  // State สำหรับเก็บข้อความ Inline Error แจ้งเตือนสีแดงใต้ช่องกรอก
+  // Errors & Loading state
   const [errors, setErrors] = useState({});
-
-  // 🆕 State สำหรับสถานะการชำระเงิน
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
-  // เชื่อมต่อคนที่ 3: Cart Items จาก Outlet Context ของ Layout
+  // Cart Context
   const { cartItems: outletCartItems = [], handleClearCart } =
     useOutletContext() || {};
   const cartItems = outletCartItems;
 
-  // State จัดการข้อมูลฟอร์มจัดส่ง และ ข้อมูลบัตรเครดิต
-  // -------------------------------------------------------------------------
+  // Form Data
   const [formData, setFormData] = useState({
     fullName: `${currentUser.firstName} ${currentUser.lastName}`,
     phone: currentUser.phone || "",
@@ -63,8 +64,7 @@ export default function CheckoutPage() {
 
   const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS.PROMPTPAY);
 
-  // ระบบคำนวณโควต้าแพ็กเกจ & คำนวณราคาสินค้า
-  // -------------------------------------------------------------------------
+  // การคำนวณราคา & สิทธิ์
   const totalKitsCount = cartItems.reduce(
     (sum, item) => sum + item.quantity,
     0,
@@ -94,46 +94,34 @@ export default function CheckoutPage() {
   };
 
   // =========================================================================
-  // 🔑 handleSubmitOrder — จุดเชื่อมต่อ Stripe + COD + Backend
+  // จุดประมวลผลการสั่งซื้อ & ชำระเงิน
   // =========================================================================
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
 
-    // 1. ตรวจสอบความถูกต้องของข้อมูลที่อยู่จัดส่ง
+    // 1. ตรวจสอบที่อยู่จัดส่ง
     const newErrors = {};
-
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "กรุณากรอกชื่อ-นามสกุล";
-    }
+    if (!formData.fullName.trim()) newErrors.fullName = "กรุณากรอกชื่อ-นามสกุล";
     if (!formData.phone.trim()) {
       newErrors.phone = "กรุณากรอกเบอร์โทรศัพท์";
     } else if (!/^[0-9-]{9,12}$/.test(formData.phone.trim())) {
       newErrors.phone = "รูปแบบเบอร์โทรศัพท์ไม่ถูกต้อง";
     }
-    if (!formData.address.trim()) {
-      newErrors.address = "กรุณากรอกที่อยู่จัดส่ง";
-    }
-    if (!formData.district.trim()) {
-      newErrors.district = "กรุณากรอกอำเภอ/เขต";
-    }
-    if (!formData.province.trim()) {
-      newErrors.province = "กรุณากรอกจังหวัด";
-    }
+    if (!formData.address.trim()) newErrors.address = "กรุณากรอกที่อยู่จัดส่ง";
+    if (!formData.district.trim()) newErrors.district = "กรุณากรอกอำเภอ/เขต";
+    if (!formData.province.trim()) newErrors.province = "กรุณากรอกจังหวัด";
     if (!formData.zipcode.trim()) {
       newErrors.zipcode = "กรุณากรอกรหัสไปรษณีย์";
     } else if (!/^\d{5}$/.test(formData.zipcode.trim())) {
       newErrors.zipcode = "รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก";
     }
 
-    // 2. ตรวจสอบข้อมูลบัตรเครดิต — ตอนนี้ใช้ Stripe CardElement
-    //    (ไม่ต้อง validate เลขบัตรเอง Stripe จัดการให้)
     if (paymentMethod === PAYMENT_METHODS.CREDIT_CARD) {
       if (!cardData.cardName.trim()) {
         newErrors.cardName = "กรุณากรอกชื่อบนบัตร";
       }
     }
 
-    // หากมีช่องที่กรอกไม่ครบ ให้หยุดทำงานและโชว์ Error สีแดง
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -142,41 +130,58 @@ export default function CheckoutPage() {
     setErrors({});
     setIsProcessingPayment(true);
 
-    // =====================================================================
-    // 3. 🆕 แยก Flow ตาม paymentMethod
-    // =====================================================================
     let stripePaymentIntentId = null;
+    let isFallbackPayment = false;
 
     try {
-      // ----- FLOW A: บัตรเครดิต (ผ่าน Stripe) -----
-      if (paymentMethod === PAYMENT_METHODS.CREDIT_CARD) {
-        console.log("💳 [Stripe] เริ่มกระบวนการชำระเงินด้วยบัตรเครดิต...");
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
-        // ขั้นตอน 3a: สร้าง Payment Intent จาก Backend
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
-        const piResponse = await fetch(
-          `${apiUrl}/api/v1/payment/create-payment-intent`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              amount: grandTotal,
-              paymentMethodType: "card",
-            }),
-          },
-        );
-        const piData = await piResponse.json();
+      // =====================================================================
+      // FLOW A: บัตรเครดิตผ่าน Stripe (มีการดักจับข้อผิดพลาดอย่างเข้มงวด)
+      // =====================================================================
+      if (paymentMethod === PAYMENT_METHODS.CREDIT_CARD) {
+        let piData;
+        try {
+          const piResponse = await fetch(
+            `${apiUrl}/api/v1/payment/create-payment-intent`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                amount: grandTotal,
+                paymentMethodType: "card",
+              }),
+            },
+          );
+
+          if (!piResponse.ok) {
+            throw new Error("GATEWAY_DOWN");
+          }
+
+          piData = await piResponse.json();
+        } catch (netErr) {
+          // 🚨 ดักจับเคส Stripe ล่ม / ปิดเซิร์ฟเวอร์ / เน็ตหลุด
+          setErrors({
+            payment:
+              "ระบบชำระเงินผ่านบัตรเครดิตขัดข้องชั่วคราว ไม่สามารถทำรายการได้ กรุณาเลือกชำระผ่าน 'พร้อมเพย์' หรือ 'เก็บเงินปลายทาง'",
+          });
+          setIsProcessingPayment(false);
+          return; // ⛔ บล็อกการทำงานทันที ห้ามไปหน้าสำเร็จ!
+        }
 
         if (!piData.success) {
-          throw new Error(piData.message || "ไม่สามารถสร้างคำขอชำระเงินได้");
+          setErrors({
+            payment: piData.message || "ไม่สามารถเชื่อมต่อระบบบัตรเครดิตได้",
+          });
+          setIsProcessingPayment(false);
+          return;
         }
 
         stripePaymentIntentId = piData.paymentIntentId;
 
-        // ขั้นตอน 3b: ยืนยันการชำระเงินกับ Stripe
-        // (ข้อมูลบัตรจะส่งจาก Browser ไป Stripe โดยตรง ไม่ผ่าน Server เรา)
+        // ดำเนินการตัดเงินผ่าน Stripe
         if (!piData.isMock && stripe && elements) {
-          const cardElement = elements.getElement(CardElement);
+          const cardElement = elements.getElement(CardNumberElement);
           const { error, paymentIntent } = await stripe.confirmCardPayment(
             piData.clientSecret,
             {
@@ -190,58 +195,43 @@ export default function CheckoutPage() {
           );
 
           if (error) {
-            console.error("❌ [Stripe] การชำระเงินล้มเหลว:", error.message);
-            setErrors({ payment: `การชำระเงินล้มเหลว: ${error.message}` });
+            setErrors({ payment: `การชำระเงินไม่สำเร็จ: ${error.message}` });
             setIsProcessingPayment(false);
-            return;
+            return; // ⛔ บัตรถูกปฏิเสธ ห้ามไปต่อ
           }
-
-          console.log("✅ [Stripe] ชำระเงินสำเร็จ:", paymentIntent.status);
-        } else {
-          // Mock mode — จำลองว่าชำระสำเร็จ
-          console.log("🔶 [Mock Stripe] จำลองการชำระเงินสำเร็จ");
         }
       }
 
-      // ----- FLOW B: PromptPay (ผ่าน Stripe) -----
+      // =====================================================================
+      // FLOW B: PromptPay (พร้อมระบบ Fallback เมื่อ Stripe ล่ม)
+      // =====================================================================
       if (paymentMethod === PAYMENT_METHODS.PROMPTPAY) {
-        console.log("📱 [Stripe] เริ่มกระบวนการชำระเงินผ่าน PromptPay...");
-
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
-        const piResponse = await fetch(
-          `${apiUrl}/api/v1/payment/create-payment-intent`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              amount: grandTotal,
-              paymentMethodType: "promptpay",
-            }),
-          },
-        );
-        const piData = await piResponse.json();
-
-        if (piData.success) {
-          stripePaymentIntentId = piData.paymentIntentId;
-          console.log(
-            "✅ [Stripe] Payment Intent สำหรับ PromptPay สร้างสำเร็จ",
+        try {
+          const piResponse = await fetch(
+            `${apiUrl}/api/v1/payment/create-payment-intent`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                amount: grandTotal,
+                paymentMethodType: "promptpay",
+              }),
+            },
           );
+          const piData = await piResponse.json();
+          if (piData.success) {
+            stripePaymentIntentId = piData.paymentIntentId;
+          } else {
+            isFallbackPayment = true;
+          }
+        } catch (err) {
+          // หากเชื่อมต่อ Stripe ไม่สำเร็จ ให้เปิดโหมด Fallback สลับไปตรวจสลิป
+          console.warn("⚠️ Stripe ไม่ตอบสนอง สลับไปใช้ PromptPay สำรอง");
+          isFallbackPayment = true;
         }
-
-        // หมายเหตุ: ในโปรดักชันจริง PromptPay ต้องใช้ Stripe's confirmPromptPayPayment
-        // แต่ในโปรเจคนี้เราใช้ QR Code ที่สร้างเอง + Mock การยืนยัน
       }
 
-      // ----- FLOW C: COD (ไม่ต้องชำระเงินตอนนี้) -----
-      if (paymentMethod === PAYMENT_METHODS.COD) {
-        console.log(
-          "💵 [COD] ลูกค้าเลือกเก็บเงินปลายทาง — ไม่ต้องชำระเงินตอนนี้",
-        );
-      }
-
-      // =====================================================================
-      // 4. จัดกลุ่มข้อมูล Payload ตามมาตรฐาน OrderSchema
-      // =====================================================================
+      // จัด Payload ส่งบันทึก Order
       const orderPayload = {
         orderId: `ORD-${Math.floor(100000 + Math.random() * 900000)}`,
         userId: currentUserId,
@@ -273,21 +263,8 @@ export default function CheckoutPage() {
           deliveryDate: formData.deliveryDate,
         },
         paymentMethod: paymentMethod,
-        payment: {
-          method: paymentMethod,
-          cardDetails:
-            paymentMethod === PAYMENT_METHODS.CREDIT_CARD
-              ? { cardName: cardData.cardName }
-              : null,
-        },
-        // 🆕 Stripe Payment Intent ID
+        isFallbackPayment: isFallbackPayment,
         stripePaymentIntentId: stripePaymentIntentId,
-        pricing: {
-          subtotal: itemsSubtotal,
-          shippingFee: 60,
-          grandTotal: grandTotal,
-          earnedPoints: earnedPoints,
-        },
         itemsSubtotal,
         shippingFee: 60,
         grandTotal,
@@ -295,13 +272,7 @@ export default function CheckoutPage() {
         createdAt: new Date().toISOString(),
       };
 
-      console.log(
-        "🚀 Payload พร้อมส่งเข้า Backend POST /api/v1/checkout:",
-        orderPayload,
-      );
-
-      // 5. ส่ง Order ไป Backend
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      // บันทึกคำสั่งซื้อเข้า Backend
       const response = await fetch(`${apiUrl}/api/v1/checkout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -315,40 +286,49 @@ export default function CheckoutPage() {
           state: { order: result.order || orderPayload },
         });
       } else {
-        const err = await response.json();
-        console.warn(
-          "⚠️ API แจ้งเตือนข้อผิดพลาด สลับไปบันทึกผ่าน State สำรอง:",
-          err,
-        );
+        // หากส่งเข้าเซิร์ฟเวอร์ไม่ได้ แต่เป็นบัตรเครดิต ห้ามปล่อยผ่าน
+        if (paymentMethod === PAYMENT_METHODS.CREDIT_CARD) {
+          setErrors({
+            payment:
+              "ไม่สามารถบันทึกคำสั่งซื้อได้ กรุณาลองใหม่อีกครั้ง หรือติดต่อเจ้าหน้าที่",
+          });
+          setIsProcessingPayment(false);
+          return;
+        }
+
         if (handleClearCart) handleClearCart();
         navigate("/order-success", { state: { order: orderPayload } });
       }
     } catch (err) {
-      console.warn("⚠️ เกิดข้อผิดพลาด:", err);
-
-      // ถ้าเป็น error จาก Stripe (ชำระเงินไม่ผ่าน) ให้แสดง error ไม่ต้อง navigate
-      if (err.message?.includes("การชำระเงินล้มเหลว")) {
-        setErrors({ payment: err.message });
+      // 🚨 จุดดักจับข้อผิดพลาดทั่วไป: หากเป็นบัตรเครดิต ห้ามพาไปหน้าสำเร็จเด็ดขาด!
+      if (paymentMethod === PAYMENT_METHODS.CREDIT_CARD) {
+        setErrors({
+          payment:
+            "เกิดข้อผิดพลาดในการตัดบัตรเครดิต การชำระเงินยังไม่สมบูรณ์ กรุณาลองใหม่อีกครั้ง หรือเปลี่ยนช่องทางชำระเงิน",
+        });
         setIsProcessingPayment(false);
         return;
       }
 
-      // กรณีอื่น (เช่น server offline) ให้ navigate ไป success ด้วย state สำรอง
+      // ถ้าเป็น PromptPay ที่เซิร์ฟเวอร์ดับ ยอมให้ไปหน้าสำเร็จพร้อมโหมดแนบสลิป
       if (handleClearCart) handleClearCart();
-      const fallbackPayload = {
-        orderId: `ORD-${Math.floor(100000 + Math.random() * 900000)}`,
-        paymentMethod: paymentMethod,
-        grandTotal: grandTotal,
-        earnedPoints: earnedPoints,
-        shippingAddress: {
-          fullName: formData.fullName,
-          phone: formData.phone,
-          address: `${formData.address} เขต/อำเภอ${formData.district} จังหวัด${formData.province} ${formData.zipcode}`,
-          deliveryDate: formData.deliveryDate,
+      navigate("/order-success", {
+        state: {
+          order: {
+            orderId: `ORD-${Math.floor(100000 + Math.random() * 900000)}`,
+            paymentMethod,
+            grandTotal,
+            earnedPoints,
+            isFallbackPayment: true,
+            shippingAddress: {
+              fullName: formData.fullName,
+              phone: formData.phone,
+              address: `${formData.address} เขต/อำเภอ${formData.district} จังหวัด${formData.province} ${formData.zipcode}`,
+              deliveryDate: formData.deliveryDate,
+            },
+          },
         },
-        createdAt: new Date().toISOString(),
-      };
-      navigate("/order-success", { state: { order: fallbackPayload } });
+      });
     } finally {
       setIsProcessingPayment(false);
     }
@@ -390,7 +370,6 @@ export default function CheckoutPage() {
     );
   }
 
-  // เรนเดอร์หน้าจอปกติเมื่อมีสินค้าในตะกร้า
   return (
     <div className="min-h-screen bg-[#fdfbf7] py-10 px-4 sm:px-6 lg:px-8 text-[#2f2119]">
       <div className="max-w-6xl mx-auto">
@@ -403,28 +382,14 @@ export default function CheckoutPage() {
           </h1>
         </div>
 
-        {/* ส่วนแสดงข้อมูลผู้ใช้และแต้มสะสม (เชื่อมคนที่ 5) */}
         <CheckoutUserStatus currentUser={currentUser} />
 
-        {/* 🆕 แสดง Error จากการชำระเงิน (ถ้ามี) */}
-        {errors.payment && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-2xl p-4 text-center">
-            <p className="text-sm text-red-700 font-semibold">
-              ❌ {errors.payment}
-            </p>
-            <p className="text-xs text-red-500 mt-1">
-              กรุณาตรวจสอบข้อมูลการชำระเงินและลองใหม่อีกครั้ง
-            </p>
-          </div>
-        )}
-
-        {/* UI ส่วนเลือกรูปแบบการสั่งซื้อ */}
+        {/* Plan Selector */}
         <div className="mb-8 bg-[#fcf8f2] border border-[#e8dfd1] rounded-3xl p-6 shadow-sm">
           <h2 className="text-lg font-bold text-[#3d2c2e] mb-3 flex items-center gap-2">
             <span>📦</span> เลือกรูปแบบการสั่งซื้อ
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            {/* ตัวเลือก A La Carte (ซื้อแยกรายชุดตามจริง) */}
             <button
               type="button"
               onClick={() => setSelectedPlan(null)}
@@ -438,7 +403,6 @@ export default function CheckoutPage() {
               <div className="text-xs opacity-80 mt-0.5">ซื้อแยกรายชุด</div>
             </button>
 
-            {/* ตัวเลือก Subscription Plans (S, M, L, XL) */}
             {Object.values(SUBSCRIPTION_PLANS).map((plan) => (
               <button
                 key={plan.id}
@@ -467,7 +431,7 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        {/* ฟอร์มข้อมูลจัดส่งและสรุปรายการสั่งซื้อ */}
+        {/* ฟอร์มจัดส่งและสรุปราคา */}
         <form
           onSubmit={handleSubmitOrder}
           className="grid grid-cols-1 lg:grid-cols-12 gap-8"
@@ -487,6 +451,7 @@ export default function CheckoutPage() {
               promptPayQrUrl={promptPayQrUrl}
               cardData={cardData}
               onCardInputChange={handleCardInputChange}
+              paymentError={errors.payment}
             />
           </div>
 
@@ -507,7 +472,7 @@ export default function CheckoutPage() {
         </form>
       </div>
 
-      {/* 🆕 Overlay ขณะกำลังชำระเงิน */}
+      {/* Loading Overlay */}
       {isProcessingPayment && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-3xl p-8 text-center shadow-2xl max-w-sm mx-4">

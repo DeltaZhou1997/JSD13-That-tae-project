@@ -1,12 +1,10 @@
 import React from "react";
 
-// =========================================================================
-// 📌 แมปชื่อ paymentMethod ให้เป็นภาษาไทยที่อ่านง่าย
-// =========================================================================
+// แมปชื่อ paymentMethod ให้เป็นภาษาไทยที่อ่านง่าย
 const PAYMENT_METHOD_LABELS = {
-  PROMPTPAY: "พร้อมเพย์ (PromptPay)",
+  PROMPTPAY: "สแกน QR Code พร้อมเพย์",
   CREDIT_CARD: "บัตรเครดิต / เดบิต",
-  COD: "เก็บเงินปลายทาง (COD)",
+  COD: "เก็บเงินปลายทาง (เงินสด / สแกนโอน)",
 };
 
 export default function OrderDetailsCard({ orderData }) {
@@ -17,6 +15,7 @@ export default function OrderDetailsCard({ orderData }) {
     grandTotal,
     pricing,
     paymentMethod,
+    isFallbackPayment,
   } = orderData;
 
   // รองรับการรับค่าทั้งจาก orderData.grandTotal และ orderData.pricing.grandTotal
@@ -31,8 +30,9 @@ export default function OrderDetailsCard({ orderData }) {
   const shipDate =
     deliveryDate || shippingAddress?.deliveryDate || "รอบจัดส่งถัดไป";
 
-  // 🆕 ตรวจสอบสถานะการชำระเงิน
+  // เช็คเงื่อนไขสถานะการจ่ายเงิน
   const isCOD = paymentMethod === "COD";
+  const isFallback = isFallbackPayment === true;
   const paymentLabel = PAYMENT_METHOD_LABELS[paymentMethod] || paymentMethod;
 
   return (
@@ -43,23 +43,29 @@ export default function OrderDetailsCard({ orderData }) {
         <span className="font-bold text-[#3d2c2e]">{orderId}</span>
       </div>
 
-      {/* 🆕 ช่องทางการชำระเงิน */}
+      {/* ช่องทางชำระเงิน */}
       <div className="flex justify-between border-b border-[#e8dfd1] pb-2">
         <span className="text-[#6f675f]">ช่องทางชำระเงิน:</span>
         <span className="font-medium text-[#2f2119]">{paymentLabel}</span>
       </div>
 
-      {/* 🆕 สถานะการชำระเงิน (Badge) */}
+      {/* สถานะการชำระเงิน (Badge เปลี่ยนสีตามเคส) */}
       <div className="flex justify-between items-center border-b border-[#e8dfd1] pb-2">
         <span className="text-[#6f675f]">สถานะชำระเงิน:</span>
         <span
           className={`inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-bold ${
-            isCOD
-              ? "bg-amber-100 text-amber-700"
-              : "bg-emerald-100 text-emerald-700"
+            isFallback
+              ? "bg-sky-100 text-sky-800"
+              : isCOD
+                ? "bg-amber-100 text-amber-700"
+                : "bg-emerald-100 text-emerald-700"
           }`}
         >
-          {isCOD ? "⏳ รอเก็บเงินปลายทาง" : "✅ ชำระแล้ว"}
+          {isFallback
+            ? "⏳ รอเจ้าหน้าที่ตรวจสอบยอดเงิน"
+            : isCOD
+              ? "⏳ รอเก็บเงินปลายทาง"
+              : "✅ ชำระแล้ว"}
         </span>
       </div>
 

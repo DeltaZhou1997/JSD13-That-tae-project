@@ -1,39 +1,26 @@
-import React, { useState } from "react";
+import React from "react";
 import { PAYMENT_METHODS } from "../../constants/checkout";
-import { CardElement } from "@stripe/react-stripe-js";
+import {
+  CardNumberElement,
+  CardExpiryElement,
+  CardCvcElement,
+} from "@stripe/react-stripe-js";
 
-// ========================================================================
-// 💳 PaymentMethodSelector — Component เลือกวิธีการชำระเงิน
-// ========================================================================
-// อธิบาย: Component นี้ให้ลูกค้าเลือก 3 ช่องทางชำระเงิน:
-//   1. PromptPay — แสดง QR Code (มี 2 โหมด: QR เดิม หรือ Stripe PromptPay)
-//   2. บัตรเครดิต/เดบิต — ใช้ Stripe CardElement (ปลอดภัย)
-//   3. เก็บเงินปลายทาง (COD) — ไม่ต้องกรอกข้อมูลชำระเงิน
-//
-// สิ่งที่เปลี่ยน:
-//   - ช่องกรอกบัตรเครดิตเดิม (input ธรรมดา) → แทนที่ด้วย Stripe CardElement
-//     Stripe CardElement คือ iframe ที่ Stripe สร้างให้ เลขบัตรจริง
-//     ไม่เคยผ่าน Server ของเรา ปลอดภัยตามมาตรฐาน PCI DSS
-//   - เพิ่มข้อความอธิบายสำหรับ COD
-// ========================================================================
-
-// Style สำหรับ Stripe CardElement ให้เข้ากับ Theme ของเว็บ "ธาตุแท้"
-const CARD_ELEMENT_OPTIONS = {
+// สไตล์ตกแต่งภายในช่อง Stripe Elements
+const ELEMENT_STYLE = {
   style: {
     base: {
       fontSize: "14px",
       color: "#2f2119",
       fontFamily: '"Noto Sans Thai", sans-serif',
       "::placeholder": {
-        color: "#a89f95",
+        color: "#9ca3af",
       },
     },
     invalid: {
       color: "#dc2626",
-      iconColor: "#dc2626",
     },
   },
-  hidePostalCode: true, // ซ่อน Zip Code เพราะเรามีในฟอร์มที่อยู่แล้ว
 };
 
 export default function PaymentMethodSelector({
@@ -42,26 +29,25 @@ export default function PaymentMethodSelector({
   promptPayQrUrl,
   cardData,
   onCardInputChange,
+  paymentError, // 👈 🆕 รับข้อความแจ้งเตือน Error เข้ามา
 }) {
-  // สถานะ Error จาก Stripe CardElement
-  const [cardError, setCardError] = useState(null);
-
-  // สกัด Boolean Flag เพื่อให้โค้ดอ่านง่าย
   const isCreditCard = paymentMethod === PAYMENT_METHODS.CREDIT_CARD;
   const isCOD = paymentMethod === PAYMENT_METHODS.COD;
+  const isPromptPay = paymentMethod === PAYMENT_METHODS.PROMPTPAY;
 
   return (
     <div className="bg-[#fcf8f2] border border-[#e8dfd1] rounded-3xl p-6 shadow-sm">
+      {/* หัวข้อ */}
       <div className="flex items-center gap-2 mb-5">
         <span className="text-xl">💳</span>
         <h2 className="text-xl font-bold text-[#3d2c2e]">ช่องทางการชำระเงิน</h2>
       </div>
 
       <div className="space-y-3">
-        {/* ==================== PromptPay ==================== */}
+        {/* ==================== 1. PromptPay ==================== */}
         <label
           className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
-            paymentMethod === PAYMENT_METHODS.PROMPTPAY
+            isPromptPay
               ? "border-[#8d593a] bg-[#f6ede5]"
               : "border-[#e8dfd1] bg-white"
           }`}
@@ -71,20 +57,20 @@ export default function PaymentMethodSelector({
               type="radio"
               name="paymentMethod"
               value={PAYMENT_METHODS.PROMPTPAY}
-              checked={paymentMethod === PAYMENT_METHODS.PROMPTPAY}
+              checked={isPromptPay}
               onChange={() => setPaymentMethod(PAYMENT_METHODS.PROMPTPAY)}
-              className="accent-[#8d593a]"
+              className="accent-[#8d593a] w-4 h-4"
             />
             <span className="font-semibold text-sm">
               สแกน QR Code พร้อมเพย์
             </span>
           </div>
-          <span className="text-xs bg-[#8d593a]/10 text-[#8d593a] px-2 py-1 rounded font-bold">
+          <span className="text-xs bg-[#8d593a]/10 text-[#8d593a] px-2.5 py-1 rounded font-bold">
             PromptPay
           </span>
         </label>
 
-        {paymentMethod === PAYMENT_METHODS.PROMPTPAY && (
+        {isPromptPay && (
           <div className="p-5 bg-white border border-[#e8dfd1] rounded-2xl text-center my-2">
             <span className="inline-block text-xs bg-[#f6ede5] text-[#8d593a] px-3 py-1 rounded-full font-medium mb-3">
               สแกน QR Code เพื่อชำระเงินผ่าน PromptPay
@@ -99,13 +85,10 @@ export default function PaymentMethodSelector({
             <p className="text-xs text-[#6f675f]">
               เมื่อชำระเงินเสร็จสิ้น ระบบจะทำการยืนยันให้อัตโนมัติใน 1-2 นาที
             </p>
-            <p className="text-[10px] text-[#a89f95] mt-1">
-              ระบบชำระเงินผ่าน Stripe Payment Gateway (Test Mode)
-            </p>
           </div>
         )}
 
-        {/* ==================== Credit Card (Stripe) ==================== */}
+        {/* ==================== 2. Credit Card ==================== */}
         <label
           className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
             isCreditCard
@@ -120,46 +103,35 @@ export default function PaymentMethodSelector({
               value={PAYMENT_METHODS.CREDIT_CARD}
               checked={isCreditCard}
               onChange={() => setPaymentMethod(PAYMENT_METHODS.CREDIT_CARD)}
-              className="accent-[#8d593a]"
+              className="accent-[#8d593a] w-4 h-4"
             />
             <span className="font-semibold text-sm">บัตรเครดิต / เดบิต</span>
           </div>
-          <span className="text-xs text-[#6f675f]">💳 Visa / Mastercard</span>
+          <span className="text-xs text-[#6f675f] flex items-center gap-1">
+            💳 Visa / Mastercard
+          </span>
         </label>
 
         {isCreditCard && (
-          <div className="p-5 bg-white border border-[#e8dfd1] rounded-2xl space-y-4 my-2">
-            {/* ============================================================ */}
-            {/* Stripe CardElement                                           */}
-            {/* ============================================================ */}
-            {/* อธิบาย: CardElement คือ "secure iframe" ที่ Stripe สร้างให้   */}
-            {/* ข้อมูลบัตรเครดิตจะถูกเก็บใน iframe ของ Stripe                 */}
-            {/* ไม่เคยผ่าน Server ของเรา → ปลอดภัยตามมาตรฐาน PCI DSS         */}
-            {/* ============================================================ */}
+          <div className="p-6 bg-white border border-[#e8dfd1] rounded-2xl space-y-4 my-2">
+            {/* 1. หมายเลขบัตร */}
             <div>
-              <label className="block text-xs font-semibold text-[#6f675f] mb-2">
-                ข้อมูลบัตรเครดิต / เดบิต
+              <label className="block text-xs font-semibold text-[#6f675f] mb-1.5">
+                หมายเลขบัตร
               </label>
-              <div className="bg-[#fdfbf7] border border-[#e8dfd1] rounded-xl px-4 py-3">
-                <CardElement
-                  options={CARD_ELEMENT_OPTIONS}
-                  onChange={(event) => {
-                    if (event.error) {
-                      setCardError(event.error.message);
-                    } else {
-                      setCardError(null);
-                    }
+              <div className="w-full bg-[#fdfbf7] border border-[#e8dfd1] rounded-xl px-4 py-3 focus-within:ring-2 focus-within:ring-[#8d593a] focus-within:outline-none transition-all">
+                <CardNumberElement
+                  options={{
+                    ...ELEMENT_STYLE,
+                    placeholder: "1234 5678 9012 3456",
                   }}
                 />
               </div>
-              {cardError && (
-                <p className="text-xs text-red-600 mt-1.5">⚠️ {cardError}</p>
-              )}
             </div>
 
-            {/* ข้อมูลเพิ่มเติม: ชื่อบนบัตร (เก็บไว้เพื่อแสดงผลเท่านั้น) */}
+            {/* 2. ชื่อบนบัตร */}
             <div>
-              <label className="block text-xs font-semibold text-[#6f675f] mb-1">
+              <label className="block text-xs font-semibold text-[#6f675f] mb-1.5">
                 ชื่อบนบัตร
               </label>
               <input
@@ -168,34 +140,58 @@ export default function PaymentMethodSelector({
                 placeholder="NATCHA SOOKJAI"
                 value={cardData.cardName}
                 onChange={onCardInputChange}
-                className="w-full bg-[#fdfbf7] border border-[#e8dfd1] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8d593a]"
+                className="w-full bg-[#fdfbf7] border border-[#e8dfd1] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8d593a] transition-all"
               />
             </div>
 
-            <div className="flex items-center gap-2 pt-1">
-              <span className="text-xs text-[#a89f95]">🔒</span>
-              <p className="text-[10px] text-[#a89f95]">
-                ข้อมูลบัตรถูกเข้ารหัสและส่งตรงถึง Stripe อย่างปลอดภัย —
-                ไม่ผ่านเซิร์ฟเวอร์ของเรา
-              </p>
+            {/* 3. วันหมดอายุ & CVC */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-[#6f675f] mb-1.5">
+                  วันหมดอายุ (MM/YY)
+                </label>
+                <div className="w-full bg-[#fdfbf7] border border-[#e8dfd1] rounded-xl px-4 py-3 focus-within:ring-2 focus-within:ring-[#8d593a] focus-within:outline-none transition-all">
+                  <CardExpiryElement
+                    options={{
+                      ...ELEMENT_STYLE,
+                      placeholder: "MM/YY",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#6f675f] mb-1.5">
+                  รหัส CVC / CVV
+                </label>
+                <div className="w-full bg-[#fdfbf7] border border-[#e8dfd1] rounded-xl px-4 py-3 focus-within:ring-2 focus-within:ring-[#8d593a] focus-within:outline-none transition-all">
+                  <CardCvcElement
+                    options={{
+                      ...ELEMENT_STYLE,
+                      placeholder: "123",
+                    }}
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* บัตรทดสอบ Stripe — แนะนำให้ครูและนักเรียนใช้ทดลอง */}
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
-              <p className="text-[10px] text-blue-700 font-bold mb-1">
-                🧪 บัตรทดสอบ (Stripe Test Mode):
-              </p>
-              <p className="text-[10px] text-blue-600 font-mono">
-                เลขบัตร: 4242 4242 4242 4242
-              </p>
-              <p className="text-[10px] text-blue-600 font-mono">
-                วันหมดอายุ: 12/34 &nbsp;|&nbsp; CVC: 123
-              </p>
-            </div>
+            {/* ============================================================ */}
+            {/* 🚨 🆕 กล่องสีแดงแสดง Error ย้ายมาอยู่ตรงนี้ (เห็นชัดเจนทันที)     */}
+            {/* ============================================================ */}
+            {paymentError && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3.5 mt-3 flex items-start gap-2.5 text-left animate-in fade-in duration-200">
+                <span className="text-red-600 font-bold text-base leading-none mt-0.5">
+                  ✖
+                </span>
+                <p className="text-xs text-red-700 leading-relaxed font-medium">
+                  {paymentError}
+                </p>
+              </div>
+            )}
           </div>
         )}
 
-        {/* ==================== COD (เก็บเงินปลายทาง) ==================== */}
+        {/* ==================== 3. COD ==================== */}
         <label
           className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
             isCOD
@@ -210,29 +206,34 @@ export default function PaymentMethodSelector({
               value={PAYMENT_METHODS.COD}
               checked={isCOD}
               onChange={() => setPaymentMethod(PAYMENT_METHODS.COD)}
-              className="accent-[#8d593a]"
+              className="accent-[#8d593a] w-4 h-4"
             />
             <span className="font-semibold text-sm">เก็บเงินปลายทาง (COD)</span>
           </div>
-          <span className="text-xs text-[#6f675f]">💵 เงินสด</span>
+          <span className="text-xs text-[#6f675f] flex items-center gap-1.5">
+            <span>💵 เงินสด</span>
+            <span className="opacity-40">|</span>
+            <span>📱 สแกนจ่าย</span>
+          </span>
         </label>
 
-        {/* ข้อความแจ้งเตือนสำหรับ COD */}
         {isCOD && (
           <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl my-2">
-            <div className="flex items-start gap-2">
-              <span className="text-lg mt-0.5">💵</span>
+            <div className="flex items-start gap-2.5">
+              <span className="text-xl mt-0.5">📦</span>
               <div>
-                <p className="text-sm font-bold text-amber-800">
-                  ชำระเงินสดเมื่อรับสินค้า
+                <p className="text-sm font-bold text-amber-900">
+                  ชำระเงินเมื่อได้รับสินค้า (เงินสด หรือ สแกนจ่าย)
                 </p>
                 <p className="text-xs text-amber-700 mt-1 leading-relaxed">
-                  กรุณาเตรียมเงินสดให้พร้อมเมื่อพนักงานจัดส่งนำสินค้ามาส่ง
-                  พนักงานจะเก็บเงินตามยอดที่แสดงในสรุปคำสั่งซื้อ
-                </p>
-                <p className="text-[10px] text-amber-600 mt-2">
-                  หมายเหตุ: หากไม่มีผู้รับสินค้าหรือไม่สามารถชำระเงินได้
-                  สินค้าจะถูกส่งคืนคลังสินค้า
+                  ท่านสามารถเตรียม{" "}
+                  <span className="font-semibold text-amber-900">เงินสด</span>{" "}
+                  ให้พอดี หรือเลือก{" "}
+                  <span className="font-semibold text-amber-900">
+                    สแกน QR Code
+                  </span>{" "}
+                  เพื่อโอนเงินผ่าน Mobile Banking
+                  กับพนักงานจัดส่งได้โดยตรงเมื่อสินค้าถึงบ้าน
                 </p>
               </div>
             </div>
