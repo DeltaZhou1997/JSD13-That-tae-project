@@ -5,12 +5,14 @@ const regionOptions = [
   { value: 'northeastern', th: 'ภาคอีสาน', en: 'Northeastern' },
   { value: 'central', th: 'ภาคกลาง', en: 'Central' },
   { value: 'southern', th: 'ภาคใต้', en: 'Southern' },
+  { value: 'fusion', th: 'ไทยฟิวชั่น', en: 'Fusion' },
 ]
 
-const healthOptions = [
-  { value: 'diabetes', th: 'คุมเบาหวาน', en: 'Diabetes' },
-  { value: 'low_sodium', th: 'โรคไต (โซเดียมต่ำ)', en: 'Low Sodium' },
-  { value: 'allergy_free', th: 'แพ้อาหาร', en: 'Allergy Friendly' },
+const elementOptions = [
+  { value: 'ดิน', th: 'ธาตุดิน', en: 'Earth' },
+  { value: 'น้ำ', th: 'ธาตุน้ำ', en: 'Water' },
+  { value: 'ลม', th: 'ธาตุลม', en: 'Wind' },
+  { value: 'ไฟ', th: 'ธาตุไฟ', en: 'Fire' },
 ]
 
 export default function MenuFilters({ filters, setFilters }) {
@@ -32,11 +34,18 @@ export default function MenuFilters({ filters, setFilters }) {
     })
   }
 
+  const toggleElement = (elValue) => {
+    setFilters(prev => ({
+      ...prev,
+      element: prev.element === elValue ? '' : elValue
+    }))
+  }
+
   const chipClass = (active) =>
-    `rounded-full border px-3 py-1.5 text-sm transition cursor-pointer ${
+    `rounded-full border px-3 py-1.5 text-xs sm:text-sm font-medium transition cursor-pointer ${
       active
-        ? 'border-[#8b5e34] bg-[#8b5e34] text-white'
-        : 'border-[#d4c5b0] hover:border-[#8b5e34] hover:bg-[#8b5e34]/10'
+        ? 'border-[#8b5e34] bg-[#8b5e34] text-white shadow-sm'
+        : 'border-[#d4c5b0] hover:border-[#8b5e34] hover:bg-[#8b5e34]/10 text-[#3b2a1a] dark:text-[#f0e6d8]'
     }`
 
   return (
@@ -47,30 +56,35 @@ export default function MenuFilters({ filters, setFilters }) {
         </h2>
         <button 
           onClick={() => setFilters({ search: '', region: [], health: [], element: '' })} 
-          className="text-xs underline opacity-60 hover:opacity-100 text-[#8b5e34]"
+          className="text-xs underline opacity-60 hover:opacity-100 text-[#8b5e34] dark:text-[#dcb37b] cursor-pointer"
         >
           {language === 'th' ? 'ล้างทั้งหมด' : 'Clear All'}
         </button>
       </div>
 
+      {/* Search Input */}
       <div className="mb-6">
         <input 
           type="text" 
           value={filters.search}
           onChange={handleSearchChange}
           placeholder={language === 'th' ? "ค้นหาชื่อเมนู..." : "Search menu..."}
-          className="w-full p-2.5 rounded-lg border border-[#d4c5b0] bg-white dark:bg-[#523a24] dark:border-[#755535] focus:outline-none focus:ring-2 focus:ring-[#8b5e34]"
+          className="w-full p-2.5 rounded-xl border border-[#d4c5b0] bg-white dark:bg-[#523a24] dark:border-[#755535] text-sm focus:outline-none focus:ring-2 focus:ring-[#8b5e34]"
         />
       </div>
 
+      {/* Element Filters */}
       <div className="mb-6">
-        <p className="mb-2 text-sm font-medium">{language === 'th' ? 'ภูมิภาค' : 'Region'}</p>
+        <p className="mb-2 text-sm font-semibold text-[#523a24] dark:text-[#dcb37b]">
+          {language === 'th' ? 'ธาตุเจ้าเรือน' : 'Body Element'}
+        </p>
         <div className="flex flex-wrap gap-2">
-          {regionOptions.map((item) => (
+          {elementOptions.map((item) => (
             <button 
               key={item.value} 
-              onClick={() => toggleFilter('region', item.value)} 
-              className={chipClass(filters.region.includes(item.value))}
+              type="button"
+              onClick={() => toggleElement(item.value)} 
+              className={chipClass(filters.element === item.value)}
             >
               {item[language]}
             </button>
@@ -78,19 +92,21 @@ export default function MenuFilters({ filters, setFilters }) {
         </div>
       </div>
 
+      {/* Region Filters */}
       <div className="mb-6">
-        <p className="mb-2 text-sm font-medium">{language === 'th' ? 'สุขภาพ' : 'Health'}</p>
-        <div className="space-y-2 flex flex-col">
-          {healthOptions.map((item) => (
-            <label key={item.value} className="flex cursor-pointer items-center gap-2 text-sm">
-              <input 
-                type="checkbox" 
-                checked={filters.health.includes(item.value)} 
-                onChange={() => toggleFilter('health', item.value)} 
-                className="accent-[#8b5e34] w-4 h-4" 
-              />
+        <p className="mb-2 text-sm font-semibold text-[#523a24] dark:text-[#dcb37b]">
+          {language === 'th' ? 'ภูมิภาค' : 'Region'}
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {regionOptions.map((item) => (
+            <button 
+              key={item.value} 
+              type="button"
+              onClick={() => toggleFilter('region', item.value)} 
+              className={chipClass(filters.region.includes(item.value))}
+            >
               {item[language]}
-            </label>
+            </button>
           ))}
         </div>
       </div>

@@ -1,0 +1,277 @@
+### ===================================================================
+### 🛒 Cooking Kit E-Commerce — "ธาตุแท้" (That Tae)
+### Master API Test Suite for v1 (Sprint 2 Complete System)
+### ===================================================================
+
+@baseUrl = http://localhost:3001/api/v1
+@rootUrl = http://localhost:3001
+@userId = USR-001
+@productId = dish_001
+
+### ===================================================================
+### 0. Health Check (ตรวจสอบสถานะการทำงานของเซิร์ฟเวอร์)
+### ===================================================================
+
+### 0.1 Root Health Check
+GET {{rootUrl}}/
+Accept: application/json
+
+### 0.2 API Health Status
+GET {{rootUrl}}/api/health
+Accept: application/json
+
+
+### ===================================================================
+### 1. หมวดหมู่ผู้ใช้งานและการยืนยันตัวตน (Users & Authentication)
+### ===================================================================
+
+### 1.1 ดึงรายชื่อผู้ใช้ทั้งหมด (ซ่อน Password)
+GET {{baseUrl}}/users
+Accept: application/json
+
+### 1.2 ดึงข้อมูลผู้ใช้รายบุคคลตาม ID
+GET {{baseUrl}}/users/{{userId}}
+Accept: application/json
+
+### 1.3 ล็อกอินเข้าสู่ระบบ (รับ JWT Token + User Info)
+# @name loginRequest
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "12345678"
+}
+
+### บันทึก Token จาก Response ของการ Login ไว้ใช้ต่ออัตโนมัติ
+@authToken = {{loginRequest.response.body.token}}
+
+### 1.4 ดึงข้อมูลโปรไฟล์ผู้ใช้ปัจจุบันจาก Token (GET /users/me)
+GET {{baseUrl}}/users/me
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 1.5 สมัครสมาชิกใหม่ (Register)
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "firstName": "สลิลทิพย์",
+  "lastName": "รัตนโชติ",
+  "email": "salinthip@example.com",
+  "password": "StrongPassword123!",
+  "phone": "0899998888",
+  "birthDate": "1995-05-15",
+  "gender": "Female",
+  "bloodType": "B",
+  "conditions": ["แพ้อาหารทะเล", "ควบคุมโซเดียม"],
+  "tierStatus": "Bronze",
+  "role": "customer"
+}
+
+### 1.6 แก้ไขข้อมูลส่วนตัวของผู้ใช้ (Update User)
+PUT {{baseUrl}}/users/{{userId}}
+Content-Type: application/json
+
+{
+  "firstName": "สมชาย (แก้ไขชื่อ)",
+  "phone": "0812345678",
+  "conditions": ["Keto", "ธาตุไฟ"],
+  "tierStatus": "Silver"
+}
+
+### 1.7 ทดสอบลบผู้ใช้ (Delete User)
+DELETE {{baseUrl}}/users/USR-005
+Accept: application/json
+
+
+### ===================================================================
+### 2. หมวดหมู่สินค้า Cooking Kit (Products & Catalog)
+### ===================================================================
+
+### 2.1 ดึงรายการเมนู Cooking Kit ทั้งหมด
+GET {{baseUrl}}/products
+Accept: application/json
+
+### 2.2 ค้นหาเมนูด้วยคำค้นหา (Search Query)
+GET {{baseUrl}}/products?search=แกง
+Accept: application/json
+
+### 2.3 กรองเมนูตามภูมิภาค (Filter by Region)
+GET {{baseUrl}}/products?region=northern
+Accept: application/json
+
+### 2.4 ดึงรายละเอียดเมนูชิ้นเดียวตาม ID
+GET {{baseUrl}}/products/{{productId}}
+Accept: application/json
+
+### 2.5 สร้างเมนู Cooking Kit ใหม่ (ผ่านการตรวจ Validation)
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "name": "แกงฮังเลหมูสูตรโบราณ",
+  "region": "northern",
+  "regionNameTh": "ภาคเหนือ",
+  "description": "เนื้อหมูเคี่ยวนุ่มหอมเครื่องเทศล้านนา รสชาติเข้มข้นกลมกล่อม",
+  "history": "อาหารมงคลยอดนิยมของชาวล้านนา มักใช้รับแขกบ้านแขกเมือง",
+  "price": 249,
+  "quantity": 30,
+  "calories": 480,
+  "date": "2026-12-31",
+  "tags": ["ภาคเหนือ", "ธาตุลม", "เครื่องแกงสด"],
+  "ingredients": "หมูสามชั้น 400g, ผงฮังเล, น้ำอ้อย, กระเทียมดอง",
+  "cookingSteps": "1. หมักหมู 30 นาที 2. เคี่ยวไฟอ่อนจนนุ่มเปื่อย",
+  "imageUrl": "https://images.unsplash.com/photo-1546069901-ba9599a7e63c"
+}
+
+### 2.6 แก้ไขข้อมูลเมนูสินค้า
+PUT {{baseUrl}}/products/{{productId}}
+Content-Type: application/json
+
+{
+  "name": "ข้าวซอยไก่แม่แจ่ม (สูตรปรับปรุง)",
+  "price": 199,
+  "quantity": 45,
+  "calories": 420,
+  "description": "รสชาติเข้มข้น หอมกะทิสดและเครื่องเทศคั่วใหม่ทุกเช้า",
+  "date": "2026-12-31",
+  "tags": ["ภาคเหนือ", "ธาตุน้ำ", "สูตรดั้งเดิม"]
+}
+
+### 2.7 ทดสอบลบสินค้าออกจากคลัง
+DELETE {{baseUrl}}/products/dish_002
+Accept: application/json
+
+
+### ===================================================================
+### 3. หมวดหมู่ตะกร้าสินค้า (Cart Management)
+### ===================================================================
+
+### 3.1 ดึงรายการสินค้าในตะกร้าของผู้ใช้ (GET /cart/:userId)
+GET {{baseUrl}}/cart/{{userId}}
+Accept: application/json
+
+### 3.2 เพิ่ม Cooking Kit เข้าตะกร้า (POST /cart/items)
+POST {{baseUrl}}/cart/items
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "productId": "dish_001",
+  "quantity": 2
+}
+
+### 3.3 เพิ่มสินค้าชิ้นที่สองเข้าตะกร้า
+POST {{baseUrl}}/cart/items
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "productId": "dish_003",
+  "quantity": 1
+}
+
+### 3.4 ปรับเปลี่ยนจำนวนสินค้าในตะกร้า (PUT /cart/items/:itemId)
+PUT {{baseUrl}}/cart/items/dish_001
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "quantity": 3
+}
+
+### 3.5 ลบสินค้า 1 ชนิดออกจากตะกร้า
+DELETE {{baseUrl}}/cart/items/dish_003
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}"
+}
+
+### 3.6 ล้างตะกร้าสินค้าทั้งหมด
+DELETE {{baseUrl}}/cart/{{userId}}/clear
+Accept: application/json
+
+
+### ===================================================================
+### 4. หมวดหมู่สั่งซื้อและคำสั่งซื้อ (Checkout & Orders)
+### ===================================================================
+
+### 4.1 สั่งซื้อสินค้า ตัดสต็อก และสร้าง Order (POST /checkout)
+# @name checkoutRequest
+POST {{baseUrl}}/checkout
+Content-Type: application/json
+
+{
+  "userId": "{{userId}}",
+  "items": [
+    {
+      "productId": "dish_001",
+      "productName": "ข้าวซอยไก่สูตรเข้มข้น",
+      "price": 189,
+      "quantity": 2
+    },
+    {
+      "productId": "dish_004",
+      "productName": "แกงส้มชะอมกุ้งสด",
+      "price": 220,
+      "quantity": 1
+    }
+  ],
+  "planType": "SINGLE_KIT",
+  "shippingAddress": {
+    "fullName": "สมชาย ใจดี",
+    "phone": "0812345678",
+    "address": "123/45 ถนนสุขุมวิท ซอย 21",
+    "district": "คลองเตยเหนือ",
+    "province": "กรุงเทพมหานคร",
+    "zipcode": "10110",
+    "deliveryDate": "2026-09-25"
+  },
+  "paymentMethod": "PROMPTPAY",
+  "itemsSubtotal": 598,
+  "shippingFee": 60,
+  "grandTotal": 658,
+  "earnedPoints": 59
+}
+
+### บันทึก Order ID จาก Response อัตโนมัติ
+@newOrderId = {{checkoutRequest.response.body.order.orderId}}
+
+### 4.2 ดูรายละเอียดคำสั่งซื้อรายบิล (GET /orders/:orderId)
+GET {{baseUrl}}/orders/{{newOrderId}}
+Accept: application/json
+
+### 4.3 ดูประวัติคำสั่งซื้อทั้งหมดของลูกค้า (GET /orders/user/:userId)
+GET {{baseUrl}}/orders/user/{{userId}}
+Accept: application/json
+
+### 4.4 อัปเดตสถานะคำสั่งซื้อ (PATCH /orders/:orderId/status)
+PATCH {{baseUrl}}/orders/{{newOrderId}}/status
+Content-Type: application/json
+
+{
+  "status": "PREPARING"
+}
+
+### 4.5 ดูรายการคำสั่งซื้อทั้งหมดในระบบ (สำหรับ Admin)
+GET {{baseUrl}}/orders
+Accept: application/json
+
+
+### ===================================================================
+### 5. หมวดหมู่ข้อมูลสนับสนุนเว็บไซต์ (Regions & Reviews)
+### ===================================================================
+
+### 5.1 ดึงข้อมูลภูมิภาคทั้งหมด (4 ภาค + ธาตุเจ้าเรือน + รสชาติ)
+GET {{baseUrl}}/regions
+Accept: application/json
+
+### 5.2 ดึงข้อมูลภูมิภาคเดี่ยว (เช่น ภาคเหนือ 'north')
+GET {{baseUrl}}/regions/north
+Accept: application/json
+
+### 5.3 ดึงข้อมูลรีวิวจากลูกค้าทั้งหมด
+GET {{baseUrl}}/reviews
+Accept: application/json

@@ -28,7 +28,7 @@ export default function StorySection() {
           <h2 className="mt-4 text-3xl font-bold sm:text-5xl">
             สดจากชุมชน เติบโตไปพร้อมเกษตรกร
           </h2>
-          <p className="mt-5 leading-8 text-[#e8dfd1]">
+          <p className="mt-5 leading-8 text-xl text-[#e8dfd1]">
             ธาตุแท้เลือกซื้อวัตถุดิบตามฤดูกาลในราคาที่เป็นธรรม
             จัดสัดส่วนเท่าที่ต้องใช้ และเล่าเรื่องของผู้ผลิตผ่าน InfoCard
             ในกล่อง เพื่อให้ทุกมื้อสร้างคุณค่ามากกว่าความอร่อย
