@@ -304,7 +304,7 @@ export default function MenuRandomizerPage() {
             <div
               key={idx}
               onClick={() => {
-                if (item.id) navigate(`/menu/${item.id}`);
+                if (item.id) navigate(`/menus/${item.id}`);
               }}
               className="bg-white rounded-2xl overflow-hidden border border-[#EAE2D5] shadow-xs hover:shadow-md transition-all group cursor-pointer"
             >
