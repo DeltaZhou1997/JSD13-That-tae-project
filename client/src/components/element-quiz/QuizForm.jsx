@@ -1,3 +1,4 @@
+// client/src/components/element-quiz/QuizForm.jsx
 import React, { useState } from "react";
 import { QUIZ_QUESTIONS } from "../../data/quizData";
 import lotusOrnament from "../../assets/quiz/quiz_head.png";
@@ -10,11 +11,10 @@ export default function QuizForm({ answers, onSelectAnswer, onSubmit }) {
   const handleOptionClick = (element) => {
     onSelectAnswer(currentQuestion.id, element);
 
-    // Auto next question if not last
     if (currentIndex < totalQuestions - 1) {
       setTimeout(() => {
         setCurrentIndex((prev) => prev + 1);
-      }, 250); // ดีเลย์เล็กน้อยให้เห็นแอนิเมชันตอนเลือก
+      }, 250);
     }
   };
 
@@ -50,22 +50,29 @@ export default function QuizForm({ answers, onSelectAnswer, onSubmit }) {
 
       {/* 2. Main Question Card */}
       <div className="bg-[#FAF8F5] border border-[#EBE4D8] rounded-3xl p-6 sm:p-8 shadow-sm mb-6">
-        {/* ลวดลายประดับด้านบนหัวข้อคำถาม */}
-        <div className="flex justify-center items-center gap-3 mb-3">
+        {/* ลวดลายประดับด้านบน: เส้น + ไอคอนลายกนก */}
+        <div className="flex justify-center items-center gap-3 mb-4">
           <div className="h-[1px] w-12 sm:w-16 bg-[#D8CEBE]"></div>
           <img
             src={lotusOrnament}
             alt="ประดับ"
-            className="w-10 h-10 sm:w-8 sm:h-8 object-contain"
+            className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
           />
           <div className="h-[1px] w-12 sm:w-16 bg-[#D8CEBE]"></div>
         </div>
 
-        <h3 className="text-xl sm:text-2xl font-bold text-[#3D2E2B] mb-8 text-center leading-relaxed">
-          {currentQuestion.title}
+        {/* 🌟 หัวข้อคำถาม พร้อมประกายดาว ✦ ขนาบซ้าย-ขวา เหมือนหน้าสุ่มเมนู */}
+        <h3 className="text-xl sm:text-2xl font-bold text-[#3D2E2B] mb-7 text-center leading-relaxed flex items-center justify-center gap-2 flex-wrap">
+          <span className="text-[#C49758] animate-sparkle-1 text-base shrink-0">
+            ✦
+          </span>
+          <span>{currentQuestion.title}</span>
+          <span className="text-[#C49758] animate-sparkle-2 text-base shrink-0">
+            ✦
+          </span>
         </h3>
 
-        {/* 3. Grid 2 Columns (ช้อยส์แบบ 2x2 ตามภาพอ้างอิง) */}
+        {/* 3. Grid 2 Columns ช้อยส์ 2x2 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {currentQuestion.options.map((opt, idx) => {
             const isSelected = answers[currentQuestion.id] === opt.element;
@@ -76,20 +83,20 @@ export default function QuizForm({ answers, onSelectAnswer, onSubmit }) {
                 key={idx}
                 type="button"
                 onClick={() => handleOptionClick(opt.element)}
-                className={`relative p-4 rounded-2xl text-left transition-all border flex items-center gap-4 cursor-pointer overflow-hidden ${
+                className={`relative p-3.5 sm:p-4 rounded-2xl text-left transition-all border flex items-center gap-3 sm:gap-4 cursor-pointer overflow-hidden min-h-[100px] ${
                   isSelected
                     ? "border-[#5A3E36] bg-[#F7F2EB] shadow-sm ring-1 ring-[#5A3E36]"
                     : "border-[#E8DFD1] bg-white hover:border-[#8C7B73] hover:bg-[#FAF7F2]"
                 }`}
               >
-                {/* ไอคอนเครื่องหมายถูกที่มุมขวาบนเมื่อถูกเลือก */}
+                {/* เครื่องหมายถูกมุมขวาบนเมื่อถูกเลือก */}
                 {isSelected && (
-                  <div className="absolute top-2 right-2 w-5 h-5 bg-[#5A3E36] text-white rounded-full flex items-center justify-center text-[10px] shadow-sm animate-in zoom-in duration-150">
+                  <div className="absolute top-2 right-2 w-5 h-5 bg-[#5A3E36] text-white rounded-full flex items-center justify-center text-[10px] shadow-sm">
                     ✓
                   </div>
                 )}
 
-                {/* รูปภาพประกอบของแต่ละช้อยส์ (เช่น quiz1_c1.png) */}
+                {/* รูปภาพประกอบแต่ละช้อยส์ */}
                 <div className="w-28 h-24 sm:w-32 sm:h-28 shrink-0 flex items-center justify-center overflow-hidden">
                   <img
                     src={opt.image}
@@ -102,10 +109,10 @@ export default function QuizForm({ answers, onSelectAnswer, onSubmit }) {
                 </div>
 
                 {/* ข้อความและตัวอักษร A, B, C, D */}
-                <div className="flex-1 min-w-0 pr-4">
+                <div className="flex-1 min-w-0 pr-2">
                   <div className="flex items-center gap-2 mb-1">
                     <span
-                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 transition-colors ${
+                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 transition-colors ${
                         isSelected
                           ? "bg-[#8D593A] text-white"
                           : "bg-[#A68A78] text-white"
@@ -113,12 +120,12 @@ export default function QuizForm({ answers, onSelectAnswer, onSubmit }) {
                     >
                       {letter}
                     </span>
-                    <span className="font-bold text-sm text-[#3D2E2B] truncate block">
+                    <span className="font-bold text-sm text-[#3D2E2B] leading-snug">
                       {opt.text}
                     </span>
                   </div>
                   {opt.subtext && (
-                    <p className="text-[11px] text-[#7A6B63] leading-tight truncate">
+                    <p className="text-[11px] text-[#7A6B63] leading-tight">
                       {opt.subtext}
                     </p>
                   )}

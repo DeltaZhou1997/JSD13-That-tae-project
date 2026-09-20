@@ -207,7 +207,7 @@ export default function MenuRandomizerPage() {
         </div>
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#3B2A1A] tracking-tight flex items-center justify-center gap-3">
           <span className="text-[#C49758] animate-sparkle-1 text-2xl">✦</span>
-          วันนี้ทานอะไรดีนะ?
+          วันนี้กินอะไรดีนะ?
           <span className="text-[#C49758] animate-sparkle-2 text-2xl">✦</span>
         </h1>
         <p className="mt-3 text-sm sm:text-base text-[#6E5A4E]">
