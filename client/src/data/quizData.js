@@ -2,6 +2,26 @@ import earthIcon from "../assets/element-earth.png";
 import waterIcon from "../assets/element-water.png";
 import airIcon from "../assets/element-wind.png";
 import fireIcon from "../assets/element-fire.png";
+import q1_c1 from "../assets/quiz/quiz1_c1.png";
+import q1_c2 from "../assets/quiz/quiz1_c2.png";
+import q1_c3 from "../assets/quiz/quiz1_c3.png";
+import q1_c4 from "../assets/quiz/quiz1_c4.png";
+import q2_c1 from "../assets/quiz/quiz2_c1.png";
+import q2_c2 from "../assets/quiz/quiz2_c2.png";
+import q2_c3 from "../assets/quiz/quiz2_c3.png";
+import q2_c4 from "../assets/quiz/quiz2_c4.png";
+import q3_c1 from "../assets/quiz/quiz3_c1.png";
+import q3_c2 from "../assets/quiz/quiz3_c2.png";
+import q3_c3 from "../assets/quiz/quiz3_c3.png";
+import q3_c4 from "../assets/quiz/quiz3_c4.png";
+import q4_c1 from "../assets/quiz/quiz4_c1.png";
+import q4_c2 from "../assets/quiz/quiz4_c2.png";
+import q4_c3 from "../assets/quiz/quiz4_c3.png";
+import q4_c4 from "../assets/quiz/quiz4_c4.png";
+import q5_c1 from "../assets/quiz/quiz5_c1.png";
+import q5_c2 from "../assets/quiz/quiz5_c2.png";
+import q5_c3 from "../assets/quiz/quiz5_c3.png";
+import q5_c4 from "../assets/quiz/quiz5_c4.png";
 
 export const ELEMENT_INFO = {
   earth: {
@@ -47,10 +67,30 @@ export const QUIZ_QUESTIONS = [
     id: 1,
     title: "1. คุณเกิดในกลุ่มเดือนใด?",
     options: [
-      { text: "ตุลาคม - ธันวาคม", element: "earth" },
-      { text: "มกราคม - มีนาคม", element: "water" },
-      { text: "เมษายน - มิถุนายน", element: "air" },
-      { text: "กรกฎาคม - กันยายน", element: "fire" },
+      {
+        text: "ตุลาคม - ธันวาคม",
+        subtext: "ฤดูหนาว อบอุ่น มั่นคง",
+        element: "earth",
+        image: q1_c1,
+      },
+      {
+        text: "มกราคม - มีนาคม",
+        subtext: "ฤดูร้อน สดใส มีพลัง",
+        element: "water",
+        image: q1_c2,
+      },
+      {
+        text: "เมษายน - มิถุนายน",
+        subtext: "ฤดูฝน เย็นชุ่มชื้น สมดุล",
+        element: "air",
+        image: q1_c3,
+      },
+      {
+        text: "กรกฎาคม - กันยายน",
+        subtext: "ปลายฝน ต้นหนาว สดชื่น",
+        element: "fire",
+        image: q1_c4,
+      },
     ],
   },
   {
@@ -58,17 +98,28 @@ export const QUIZ_QUESTIONS = [
     title: "2. ลักษณะรูปร่างและโครงสร้างร่างกายของคุณใกล้เคียงข้อใดที่สุด?",
     options: [
       {
-        text: "กระดูกใหญ่ อวบอิ่ม น้ำหนักขึ้นง่าย แต่มีความอดทนสูง",
+        text: "กระดูกใหญ่ อวบอิ่ม",
+        subtext: "น้ำหนักขึ้นง่าย มีความอดทนสูง",
         element: "earth",
+        image: q2_c1,
       },
-      { text: "สมส่วน ผิวพรรณเต่งตึง สมบูรณ์ มีน้ำมีนวล", element: "water" },
       {
-        text: "รูปร่างผอมโปร่ง กระดูกค่อนข้างเห็นชัด เคลื่อนไหวรวดเร็ว",
+        text: "สมส่วน ผิวพรรณเต่งตึง",
+        subtext: "สมบูรณ์ มีน้ำมีนวล สดใส",
+        element: "water",
+        image: q2_c2,
+      },
+      {
+        text: "รูปร่างผอมโปร่ง",
+        subtext: "กระดูกเห็นชัด เคลื่อนไหวรวดเร็ว",
         element: "air",
+        image: q2_c3,
       },
       {
-        text: "รูปร่างปานกลาง ขี้ร้อน เหงื่อออกง่าย ผมบางหรือหงอกไว",
+        text: "รูปร่างปานกลาง",
+        subtext: "ขี้ร้อน เหงื่อออกง่าย",
         element: "fire",
+        image: q2_c4,
       },
     ],
   },
@@ -76,12 +127,29 @@ export const QUIZ_QUESTIONS = [
     id: 3,
     title: "3. เมื่ออากาศเปลี่ยน หรือเมื่อไม่สบาย มักมีอาการแบบใดบ่อยที่สุด?",
     options: [
-      { text: "หนักเนื้อหนักตัว ปวดเมื่อยตามข้อ ปวดหลัง", element: "earth" },
-      { text: "หวัด ไอ มีเสมหะ หรือน้ำมูกไหลบ่อยๆ", element: "water" },
-      { text: "ท้องอืด ท้องเฟ้อ เวียนหัว มึนศีรษะ ลมจับ", element: "air" },
       {
-        text: "เป็นร้อนใน แผลในปาก ไข้ขึ้น หรือผิวหนังอักเสบ",
+        text: "หนักเนื้อหนักตัว",
+        subtext: "ปวดเมื่อยตามข้อ ปวดหลัง",
+        element: "earth",
+        image: q3_c1,
+      },
+      {
+        text: "หวัด ไอ มีเสมหะ",
+        subtext: "น้ำมูกไหลบ่อยเมื่ออากาศเปลี่ยน",
+        element: "water",
+        image: q3_c2,
+      },
+      {
+        text: "ท้องอืด ท้องเฟ้อ",
+        subtext: "เวียนหัว มึนศีรษะ ลมจับบ่อย",
+        element: "air",
+        image: q3_c3,
+      },
+      {
+        text: "เป็นร้อนใน แผลในปาก",
+        subtext: "ตัวร้อนง่าย ผิวหนังอักเสบ",
         element: "fire",
+        image: q3_c4,
       },
     ],
   },
@@ -89,18 +157,29 @@ export const QUIZ_QUESTIONS = [
     id: 4,
     title: "4. พฤติกรรมหรืออุปนิสัยประจำตัวของคุณคือข้อใด?",
     options: [
-      { text: "เฉื่อยชา เรียบง่าย ชอบความมั่นคง นอนหลับลึก", element: "earth" },
       {
-        text: "ใจดี อารมณ์ดี ช่างพูด ชื่นชอบความสะอาดสดชื่น",
+        text: "เรียบง่าย มั่นคง",
+        subtext: "รักสงบ ชอบนอนหลับลึก",
+        element: "earth",
+        image: q4_c1,
+      },
+      {
+        text: "ใจดี อารมณ์ดี",
+        subtext: "ช่างพูด ชื่นชอบความสดชื่น",
         element: "water",
+        image: q4_c2,
       },
       {
-        text: "คิดเร็ว ทำเร็ว ช่างพูดช่างคุย แต่ตื่นตกใจง่าย",
+        text: "คิดเร็ว ทำเร็ว",
+        subtext: "คล่องแคล่ว ตื่นตัวง่าย",
         element: "air",
+        image: q4_c3,
       },
       {
-        text: "จริงจัง มีพลังสูง มุ่งมั่น แต่หงุดหงิดง่ายเมื่อร้อน",
+        text: "จริงจัง มีพลังสูง",
+        subtext: "มุ่งมั่น หงุดหงิดง่ายเมื่อร้อน",
         element: "fire",
+        image: q4_c4,
       },
     ],
   },
@@ -108,12 +187,29 @@ export const QUIZ_QUESTIONS = [
     id: 5,
     title: "5. รสชาติอาหารที่คุณรู้สึกว่ากินแล้วสบายตัวและชอบเป็นพิเศษคือ?",
     options: [
-      { text: "รสกลมกล่อม หวาน มัน เค็ม หรืออาหารแกงกะทิ", element: "earth" },
-      { text: "รสเปรี้ยว จี๊ดจ๊าด ยำ ต้มยำ สดชื่น", element: "water" },
-      { text: "รสเผ็ดร้อน หอมเครื่องเทศ ผัดเผ็ด ลาบ", element: "air" },
       {
-        text: "รสจืด เย็นๆ ขมเบาๆ หรือเครื่องดื่ม/ของหวานคลายร้อน",
+        text: "รสกลมกล่อม หวาน มัน เค็ม",
+        subtext: "อาหารประเภทแกงกะทิ อบอุ่น",
+        element: "earth",
+        image: q5_c1,
+      },
+      {
+        text: "รสเปรี้ยว จี๊ดจ๊าด",
+        subtext: "ยำ ต้มยำ สดชื่น ชุ่มคอ",
+        element: "water",
+        image: q5_c2,
+      },
+      {
+        text: "รสเผ็ดร้อน หอมสมุนไพร",
+        subtext: "ผัดเผ็ด เครื่องเทศ ขับลม",
+        element: "air",
+        image: q5_c3,
+      },
+      {
+        text: "รสจืด เย็นๆ ขมเบาๆ",
+        subtext: "เมนูผัก สมุนไพรดับร้อน",
         element: "fire",
+        image: q5_c4,
       },
     ],
   },
