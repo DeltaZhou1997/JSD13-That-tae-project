@@ -140,7 +140,7 @@ export default function MenuDetail() {
   const cleanUrl = (url) => {
     if (!url || typeof url !== 'string') return '';
     if (url.startsWith('file://')) {
-      const match = url.match(/assets\/([^\/]+)\/([^\/]+)$/);
+      const match = url.match(/assets\/([^/]+)\/([^/]+)$/);
       return match ? `/assets/${match[1]}/${match[2]}` : url;
     }
     return url;
