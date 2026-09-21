@@ -22,7 +22,7 @@ import PaymentMethodSelector from "../components/checkout/PaymentMethodSelector"
 import CheckoutSummary from "../components/checkout/CheckoutSummary";
 import PlanSelector from "../components/checkout/PlanSelector";
 import PromptPayModal from "../components/checkout/PromptPayModal";
-import PaymentArchitectureToggle from "../components/checkout/PaymentArchitectureToggle"; // 🌟 นำเข้า Toggle Component
+import PaymentArchitectureToggle from "../components/checkout/PaymentArchitectureToggle";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -33,7 +33,7 @@ export default function CheckoutPage() {
   const currentUser = authUser || users[0];
   const currentUserId = currentUser?.id || "USR-001";
 
-  //  State สลับระบบชำระเงิน ('v2' = Stripe Hosted | 'v1' = In-App UI)
+  // State สลับระบบชำระเงิน ('v2' = Stripe Hosted | 'v1' = In-App UI)
   const [paymentVersion, setPaymentVersion] = useState("v2");
 
   // State ทั่วไป
@@ -104,9 +104,8 @@ export default function CheckoutPage() {
     setCardData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // บันทึกคำสั่งซื้อสำหรับ v1 และกรณี COD
+  // ส่งข้อมูลคำสั่งซื้อและนำทางไปหน้าสำเร็จ (v1)
   const finalizeOrder = async (orderPayload) => {
-    setIsProcessingPayment(true);
     const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
     try {
       const response = await fetch(`${apiUrl}/api/v1/checkout`, {
@@ -177,7 +176,7 @@ export default function CheckoutPage() {
     };
 
     // =========================================================================
-    // โหมด v2: Stripe Hosted Checkout (Redirect ไปหน้า Stripe )
+    // โหมด v2: Stripe Hosted Checkout (Redirect ไปหน้า Stripe)
     // =========================================================================
     if (paymentVersion === "v2") {
       if (paymentMethod === PAYMENT_METHODS.COD) {
@@ -195,7 +194,18 @@ export default function CheckoutPage() {
         const data = await res.json();
 
         if (data.success && data.url) {
-          window.location.href = data.url; // 🚀 เด้งไปหน้าชำระเงินของ Stripe ทันที!
+          // 🌟 บันทึกข้อมูลคำสั่งซื้อจริงไว้ใน sessionStorage ก่อนเด้งไปหน้า Stripe
+          sessionStorage.setItem(
+            "last_v2_order",
+            JSON.stringify({
+              ...orderPayload,
+              orderId: data.orderId || orderPayload.orderId,
+            }),
+          );
+          if (handleClearCart) handleClearCart();
+
+          // 🚀 เด้งไปหน้าชำระเงินของ Stripe ทันที!
+          window.location.href = data.url;
         } else {
           setErrors({
             payment:
@@ -214,7 +224,7 @@ export default function CheckoutPage() {
     }
 
     // =========================================================================
-    // โหมด v1: In-App Checkout (สไตล์ Shopee )
+    // โหมด v1: In-App Checkout (สไตล์ Shopee)
     // =========================================================================
     if (paymentMethod === PAYMENT_METHODS.PROMPTPAY) {
       setPendingOrderPayload(orderPayload);
@@ -309,7 +319,7 @@ export default function CheckoutPage() {
           </h1>
         </div>
 
-        {/* 1. แถบสลับโหมด v1 vs v2 (ดึงเป็น Component บรรทัดเดียว คลีนตามาก) */}
+        {/* แถบสลับโหมด v1 vs v2 */}
         <PaymentArchitectureToggle
           paymentVersion={paymentVersion}
           onToggleVersion={setPaymentVersion}

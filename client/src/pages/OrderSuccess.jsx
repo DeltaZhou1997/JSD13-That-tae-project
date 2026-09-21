@@ -20,7 +20,35 @@ const DEFAULT_ORDER_DATA = {
 
 export default function OrderSuccess() {
   const location = useLocation();
-  const orderData = location.state?.order || DEFAULT_ORDER_DATA;
+  const searchParams = new URLSearchParams(location.search);
+
+  // ดึงข้อมูลจาก URL Query Params (กรณีเด้งกลับมาจาก Stripe v2)
+  const sessionId = searchParams.get("session_id");
+  const urlOrderId = searchParams.get("order_id");
+
+  // 1. อ่านจาก React Router State (กรณีสั่งซื้อผ่าน v1)
+  const stateOrder = location.state?.order;
+
+  // 2. อ่านจาก sessionStorage (กรณีเด้งกลับมาจาก Stripe v2)
+  let savedV2Order = null;
+  try {
+    const raw = sessionStorage.getItem("last_v2_order");
+    if (raw) savedV2Order = JSON.parse(raw);
+  } catch (err) {
+    console.error("Failed to parse last_v2_order:", err);
+  }
+
+  // เลือกลำดับข้อมูล: state (v1) ➔ sessionStorage (v2) ➔ DEFAULT_ORDER_DATA (fallback สุดท้าย)
+  const baseOrder = stateOrder || savedV2Order || DEFAULT_ORDER_DATA;
+
+  const orderData = {
+    ...baseOrder,
+    orderId: urlOrderId || baseOrder.orderId,
+    paymentMethod: sessionId
+      ? "STRIPE (CREDIT_CARD / PROMPTPAY)"
+      : baseOrder.paymentMethod,
+    isFallbackPayment: false,
+  };
 
   const points = orderData.earnedPoints ?? orderData.pricing?.earnedPoints ?? 0;
   const isCOD = orderData.paymentMethod === "COD";
@@ -138,9 +166,7 @@ export default function OrderSuccess() {
             : "ขอบคุณที่สั่งซื้อ Cooking Kit กับธาตุแท้ เรากำลังเตรียมวัตถุดิบสดใหม่ส่งตรงถึงบ้านคุณ"}
         </p>
 
-        {/* ============================================================ */}
-        {/* 🚨 แสดงเฉพาะเคส PromptPay สำรอง (Stripe ล่ม)                   */}
-        {/* ============================================================ */}
+        {/* 🚨 แสดงเฉพาะเคส PromptPay สำรอง (Stripe ล่ม) */}
         {isFallback && (
           <div className="bg-sky-50 border border-sky-200 rounded-2xl p-5 mb-6 text-left">
             <div className="flex items-start gap-3">
@@ -242,9 +268,7 @@ export default function OrderSuccess() {
           </div>
         )}
 
-        {/* ============================================================ */}
-        {/* 💵 กล่อง COD (แบบกระชับ 2 บรรทัดตามภาพที่คุณต้องการเป๊ะๆ)       */}
-        {/* ============================================================ */}
+        {/* 💵 กล่อง COD */}
         {isCOD && (
           <div className="bg-[#fffdfa] border border-[#f5e6cf] rounded-2xl p-4 mb-6 text-left shadow-sm">
             <div className="flex items-center gap-3.5">
