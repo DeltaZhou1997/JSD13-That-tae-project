@@ -3,6 +3,7 @@ import { Link, useParams, useOutletContext } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { useProducts } from '../context/ProductsContext.js';
 import { dishes } from '../mock-data/index.js';
+import RecipePieCharts from '../components/Menu/RecipePieChart.jsx';
 
 const CATEGORY_LABELS = {
   meat: 'เนื้อสัตว์ & โปรตีน',
@@ -430,6 +431,8 @@ export default function MenuDetail() {
                 </button>
               </div>
             </div>
+
+            <RecipePieCharts recipe={recipe} />
 
             {/* View 1: Responsive Visual Ingredient Cards (Easy to read, modern light look) */}
             {viewMode === 'cards' && (
