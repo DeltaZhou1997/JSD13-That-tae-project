@@ -4,6 +4,7 @@ import {
   ProductsContext,
   createInitialProducts,
 } from "./ProductsContext.js";
+import { createTempObjectId } from "../utils/objectId.js";
 
 export default function ProductsProvider({ children }) {
   const [products, setProducts] = useState(createInitialProducts);
@@ -36,30 +37,32 @@ export default function ProductsProvider({ children }) {
     [products],
   );
 
-  const createNextId = useCallback(() => {
-    const maxNumber = products.reduce((max, product) => {
-      const current = Number(String(product._id || product.id).replace(/\D/g, ""));
-      return Number.isNaN(current) ? max : Math.max(max, current);
-    }, 0);
-    return `dish_${String(maxNumber + 1).padStart(3, "0")}`;
-  }, [products]);
-
   const addProduct = useCallback(
     async (data) => {
-      const newProduct = { ...data, _id: createNextId() };
+      const tempId = createTempObjectId();
+      const newProduct = { ...data, _id: tempId };
       setProducts((prev) => [...prev, newProduct]);
       try {
-        await fetch(`${apiUrl}/api/v1/products`, {
+        const res = await fetch(`${apiUrl}/api/v1/products`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
+        const json = await res.json();
+        const serverProduct = json?.product;
+
+        if (res.ok && serverProduct?._id && serverProduct._id !== tempId) {
+          setProducts((prev) =>
+            prev.map((product) => (product._id === tempId ? serverProduct : product)),
+          );
+          return serverProduct;
+        }
       } catch (err) {
         console.warn("Offline addProduct:", err.message);
       }
       return newProduct;
     },
-    [createNextId, apiUrl],
+    [apiUrl],
   );
 
   const updateProduct = useCallback(

@@ -7,6 +7,7 @@ import checkoutRouter from "./checkout.routes.js";
 import regionsRouter from "./regions.routes.js";
 import reviewsRouter from "./reviews.routes.js";
 import ingredientsRouter from "./ingredients.routes.js";
+import adminRouter from "./admin.routes.js";
 
 export const router = Router();
 
@@ -33,5 +34,7 @@ router.use("/regions", regionsRouter);
 
 // 8. ข้อมูลรีวิวจากลูกค้า
 router.use("/reviews", reviewsRouter);
+
+router.use("/admin", adminRouter);
 
 export default router;
