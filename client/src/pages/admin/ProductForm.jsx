@@ -1,5 +1,7 @@
+
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+
 
 import {
   getTodayInputValue,
@@ -104,6 +106,13 @@ export default function ProductForm() {
     }
 
     setNotFound(false);
+    setComputed({
+      servings: product.servings,
+      recipe: product.recipe,
+      nutritionCache: product.nutritionCache,
+      dominantElement: product.dominantElement,
+      elementSuitability: product.elementSuitability,
+    });
     setFormData({
       name: product.name || product.nameTh || "",
       nameEn: product.nameEn || "",
@@ -306,6 +315,7 @@ export default function ProductForm() {
 
     const payload = {
       ...formData,
+      ...(computed || {}),
       name: formData.name.trim(),
       nameTh: formData.name.trim(),
       nameEn: formData.nameEn.trim(),

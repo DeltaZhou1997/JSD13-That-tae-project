@@ -197,6 +197,13 @@ const navigationByRole = {
   ],
 };
 
+const ADMIN_MENU_LINKS = [
+  { to: "/admin/products", label: "จัดการรายการสินค้า", shortLabel: "สินค้า", icon: PackageIcon },
+  { to: "/admin/products/new", label: "เพิ่มสินค้าใหม่", shortLabel: "เพิ่มสินค้า", icon: PlusCircleIcon },
+  { to: "/admin/ingredients", label: "คลังวัตถุดิบ", shortLabel: "วัตถุดิบ", icon: PackageIcon },
+  { to: "/admin/recipe-builder", label: "ออกแบบสูตรอาหาร", shortLabel: "ออกแบบสูตร", icon: AdminToolsIcon },
+];
+
 export default function Navbar({ cartCount = 0 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
