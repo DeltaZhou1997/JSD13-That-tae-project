@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 import {
   getTodayInputValue,
   regionMap,
   useProducts,
 } from "../../context/ProductsContext.js";
+import useToast from "../../hooks/useToast.js";
 
 const inputClass =
   "w-full rounded border border-[#f1ead7] p-2 focus:border-[#4c1f08] focus:outline-none focus:ring-2 focus:ring-[#f1ead7]";
@@ -14,10 +15,14 @@ const labelClass = "mb-1 block font-medium text-[#4c1f08]";
 function ProductForm() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const toast = useToast();
   const { getProductById, addProduct, updateProduct } = useProducts();
   const isEditMode = Boolean(id);
 
-  const [formData, setFormData] = useState({
+  const recipeDraft = location.state?.recipeDraft || null;
+
+  const [formData, setFormData] = useState(() => ({
     name: "",
     region: "northern",
     regionNameTh: regionMap.northern,
@@ -31,11 +36,30 @@ function ProductForm() {
     ingredients: "",
     cookingSteps: "",
     imageUrl: "",
-  });
+    ...(recipeDraft || {}),
+
+    ...(recipeDraft
+      ? {
+          price: String(recipeDraft.price ?? ""),
+          calories: String(recipeDraft.calories ?? ""),
+        }
+      : {}),
+  }));
+
+  const [computed, setComputed] = useState(() =>
+    recipeDraft
+      ? {
+          servings: recipeDraft.servings,
+          recipe: recipeDraft.recipe,
+          nutritionCache: recipeDraft.nutritionCache,
+          dominantElement: recipeDraft.dominantElement,
+          elementSuitability: recipeDraft.elementSuitability,
+        }
+      : null,
+  );
   const [errors, setErrors] = useState({});
   const [notFound, setNotFound] = useState(false);
 
-  // โหมดแก้ไข: ดึงค่าเดิมจาก state กลางมาเติมในฟอร์ม
   useEffect(() => {
     if (!isEditMode) return;
 
@@ -46,6 +70,13 @@ function ProductForm() {
     }
 
     setNotFound(false);
+    setComputed({
+      servings: product.servings,
+      recipe: product.recipe,
+      nutritionCache: product.nutritionCache,
+      dominantElement: product.dominantElement,
+      elementSuitability: product.elementSuitability,
+    });
     setFormData({
       ...product,
       price: String(product.price ?? ""),
@@ -132,10 +163,14 @@ function ProductForm() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      toast.error("กรุณาตรวจสอบข้อมูลในฟอร์มให้ถูกต้อง");
+      return;
+    }
 
     const payload = {
       ...formData,
+      ...(computed || {}),
       name: formData.name.trim(),
       price: Number(formData.price),
       quantity: Number(formData.quantity),
@@ -145,8 +180,10 @@ function ProductForm() {
 
     if (isEditMode) {
       updateProduct(id, payload);
+      toast.success("บันทึกการแก้ไขเมนูสำเร็จ");
     } else {
       addProduct(payload);
+      toast.success("เพิ่มเมนู Cooking Kit ใหม่สำเร็จ");
     }
 
     navigate("/admin/products");
@@ -172,6 +209,25 @@ function ProductForm() {
       <h1 className="mb-6 text-2xl font-bold text-[#4c1f08]">
         {isEditMode ? "แก้ไขข้อมูล Cooking Kit" : "เพิ่มเมนู Cooking Kit ใหม่"}
       </h1>
+
+      {recipeDraft && (
+        <div className="mb-6 rounded-lg border border-[#f1ead7] bg-[#fff8f5] p-4">
+          <p className="font-medium text-[#4c1f08]">
+            สูตรจาก Recipe Builder: ธาตุ{recipeDraft.dominantElement} ·{" "}
+            {recipeDraft.recipe?.length || 0} วัตถุดิบ ·{" "}
+            {recipeDraft.nutritionCache?.perServing?.calories ?? 0} kcal ต่อเสิร์ฟ
+          </p>
+          <p className="mt-1 text-sm text-[#6b3215]">
+            ข้อมูลโภชนาการและธาตุถูกเติมให้อัตโนมัติแล้ว ตรวจสอบราคาและจำนวนสต็อกก่อนบันทึก
+          </p>
+          <Link
+            to="/admin/recipe-builder"
+            className="mt-2 inline-block text-sm font-medium text-[#4c1f08] underline hover:text-[#6b3215]"
+          >
+            กลับไปแก้สูตร
+          </Link>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         {/* ชื่อเมนู */}
