@@ -133,9 +133,17 @@ const navigationByRole = {
     { label: "หน้าแรก", to: "/" },
     { label: "เมนูอาหาร", to: "/menus" },
     { label: "จัดการสินค้า", to: "/admin/products" },
-    { label: "เพิ่มสินค้าใหม่", to: "/admin/products/new" },
+    { label: "คลังวัตถุดิบ", to: "/admin/ingredients" },
+    { label: "ออกแบบสูตร", to: "/admin/recipe-builder" },
   ],
 };
+
+const ADMIN_MENU_LINKS = [
+  { to: "/admin/products", label: "จัดการรายการสินค้า", shortLabel: "สินค้า", icon: PackageIcon },
+  { to: "/admin/products/new", label: "เพิ่มสินค้าใหม่", shortLabel: "เพิ่มสินค้า", icon: PlusCircleIcon },
+  { to: "/admin/ingredients", label: "คลังวัตถุดิบ", shortLabel: "วัตถุดิบ", icon: PackageIcon },
+  { to: "/admin/recipe-builder", label: "ออกแบบสูตรอาหาร", shortLabel: "ออกแบบสูตร", icon: AdminToolsIcon },
+];
 
 export default function Navbar({ cartCount = 0 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -354,22 +362,20 @@ export default function Navbar({ cartCount = 0 }) {
                   </>
                 ) : (
                   <>
-                    <Link
-                      to="/admin/products"
-                      onClick={() => setIsProfileOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
-                    >
-                      <PackageIcon className="h-4 w-4 text-[#8d593a]" />
-                      จัดการรายการสินค้า
-                    </Link>
-                    <Link
-                      to="/admin/products/new"
-                      onClick={() => setIsProfileOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
-                    >
-                      <PlusCircleIcon className="h-4 w-4 text-[#8d593a]" />
-                      เพิ่มสินค้าใหม่
-                    </Link>
+                    {ADMIN_MENU_LINKS.map((link) => {
+                      const Icon = link.icon;
+                      return (
+                      <Link
+                        key={link.to}
+                        to={link.to}
+                        onClick={() => setIsProfileOpen(false)}
+                        className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
+                      >
+                        <Icon className="h-4 w-4 text-[#8d593a]" />
+                        {link.label}
+                      </Link>
+                      );
+                    })}
                   </>
                 )}
 
@@ -473,22 +479,20 @@ export default function Navbar({ cartCount = 0 }) {
                     </>
                   ) : (
                     <>
-                      <Link
-                        to="/admin/products"
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center justify-center gap-2 rounded-xl bg-white/80 p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-white shadow-xs"
-                      >
-                        <PackageIcon className="h-4 w-4" />
-                        สินค้า
-                      </Link>
-                      <Link
-                        to="/admin/products/new"
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center justify-center gap-2 rounded-xl bg-white/80 p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-white shadow-xs"
-                      >
-                        <PlusCircleIcon className="h-4 w-4" />
-                        เพิ่มสินค้า
-                      </Link>
+                      {ADMIN_MENU_LINKS.map((link) => {
+                        const Icon = link.icon;
+                        return (
+                        <Link
+                          key={link.to}
+                          to={link.to}
+                          onClick={() => setIsOpen(false)}
+                          className="flex items-center justify-center gap-2 rounded-xl bg-white/80 p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-white shadow-xs"
+                        >
+                          <Icon className="h-4 w-4" />
+                          {link.shortLabel}
+                        </Link>
+                        );
+                      })}
                     </>
                   )}
                 </div>
