@@ -37,7 +37,6 @@ export default function CartItem({ item, onUpdateQuantity, onRemove }) {
             type="button"
             onClick={() => onUpdateQuantity(itemId, -1)}
             className="px-2.5 py-1 text-slate-600 transition hover:bg-[#f6ede5] disabled:opacity-40 cursor-pointer"
-            disabled={quantity <= 1}
             aria-label="ลดจำนวน" 
           >
             -
