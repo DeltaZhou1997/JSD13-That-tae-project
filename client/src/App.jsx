@@ -9,7 +9,11 @@ import Login from "./pages/Login.jsx"
 import Register from "./pages/Register.jsx"
 import AdminProductList from './pages/admin/AdminProductList.jsx'
 import ProductForm from './pages/admin/ProductForm.jsx'
+import AdminIngredientList from './pages/admin/AdminIngredientList.jsx'
+import IngredientForm from './pages/admin/IngredientForm.jsx'
+import AdminRecipeBuilder from './pages/admin/AdminRecipeBuilder.jsx'
 import ProductsProvider from './context/ProductsProvider.jsx'
+import IngredientsProvider from './context/IngredientsProvider.jsx'
 import AuthProvider from './context/AuthProvider.jsx'
 
 import CheckoutPage from "./pages/CheckoutPage.jsx";
@@ -45,6 +49,22 @@ const router = createBrowserRouter([
       {
         path: "admin/products/edit/:id",
         element: <ProductForm />
+      },
+      {
+        path: "admin/ingredients",
+        element: <AdminIngredientList />
+      },
+      {
+        path: "admin/ingredients/new",
+        element: <IngredientForm />
+      },
+      {
+        path: "admin/ingredients/edit/:id",
+        element: <IngredientForm />
+      },
+      {
+        path: "admin/recipe-builder",
+        element: <AdminRecipeBuilder />
       },
       {
         path: "login",
@@ -105,9 +125,11 @@ function App() {
   return (
     <AuthProvider>
       <ProductsProvider>
-        <ToastProvider>
-          <RouterProvider router={router} />
-        </ToastProvider>
+        <IngredientsProvider>
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
+        </IngredientsProvider>
       </ProductsProvider>
     </AuthProvider>
   )
