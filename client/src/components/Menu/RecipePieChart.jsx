@@ -84,7 +84,8 @@ const buildElementSlices = (recipe) => {
       percentage: toPercent(scores[element], total),
       color: ELEMENT_COLORS[element],
     }))
-    .filter((item) => item.value > 0);
+    .filter((item) => item.value > 0)
+    .sort((a, b) => b.value - a.value);
 };
 
 function DonutChart({ title, subtitle, slices, centerLabel, centerCaption, showQuantity = false }) {
@@ -185,29 +186,28 @@ export default function RecipePieCharts({ recipe }) {
     <div className="mt-6">
       <div className="mb-3 flex items-center gap-2">
         <span className="h-2 w-2 rounded-full bg-[#8b5e34]" />
-        <h3 className="text-sm font-bold text-stone-800">สัดส่วนสูตรจาก Mock Data</h3>
+        <h3 className="text-sm font-bold text-stone-800">สัดส่วนทางโภชนาการ</h3>
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <DonutChart
           title="สัดส่วนวัตถุดิบ"
-          subtitle="คำนวณจาก quantity ใน recipe และรวมรายการลำดับรองไว้ใน “อื่น ๆ” เพื่อให้อ่านกราฟง่าย"
+          subtitle="คำนวณจากปริมาณวัตถุดิบ 1 หน่วยบริโภค ( 2 เสิร์ฟ )"
           slices={ingredientSlices}
-          centerLabel="100%"
-          centerCaption="INGREDIENTS"
+          centerLabel="วัตถุดิบ"
           showQuantity
         />
         <DonutChart
           title="สัดส่วนธาตุเจ้าเรือน"
-          subtitle="ถ้าวัตถุดิบหนึ่งรายการมีหลายธาตุ ระบบจะแบ่ง quantity เท่า ๆ กันระหว่างธาตุ เพื่อไม่ให้นับซ้ำ"
+          subtitle="ร้อยละของธาตุเจ้าเรือนในอาหารเมนูนี้ตามสัดส่วนวัตถุดิบ"
           slices={elementSlices}
-          centerLabel="100%"
-          centerCaption="ELEMENTS"
+          centerLabel={elementSlices[0].name}
+          centerCaption="ธาตุหลักของเมนู"
         />
       </div>
 
       <p className="mt-3 text-[11px] leading-relaxed text-stone-400">
-        * กราฟนี้ใช้ค่าปริมาณจาก mock recipe ตามที่ระบุไว้ (g/ml) เพื่อแสดงสัดส่วนเชิง UI ของสูตรอาหาร
+        * กราฟนี้ใช้ค่าปริมาณจาก recipe ตามที่ระบุไว้ (g/ml) เพื่อแสดงสัดส่วนในแต่ละด้านของสูตรอาหาร
       </p>
     </div>
   );
