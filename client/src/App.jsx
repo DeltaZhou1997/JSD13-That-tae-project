@@ -3,14 +3,18 @@ import { Layout } from "./components/index.js";
 
 import HomePage from "./pages/Home.jsx";
 
-import ToastProvider from "./context/ToastProvider.jsx";
-import { AppProvider } from "./context/AppContext.jsx";
-import Login from "./pages/Login.jsx";
-import Register from "./pages/Register.jsx";
-import AdminProductList from "./pages/admin/AdminProductList.jsx";
-import ProductForm from "./pages/admin/ProductForm.jsx";
-import ProductsProvider from "./context/ProductsProvider.jsx";
-import AuthProvider from "./context/AuthProvider.jsx";
+import ToastProvider from './context/ToastProvider.jsx'
+import { AppProvider } from './context/AppContext.jsx';
+import Login from "./pages/Login.jsx"
+import Register from "./pages/Register.jsx"
+import AdminProductList from './pages/admin/AdminProductList.jsx'
+import ProductForm from './pages/admin/ProductForm.jsx'
+import AdminIngredientList from './pages/admin/AdminIngredientList.jsx'
+import IngredientForm from './pages/admin/IngredientForm.jsx'
+import AdminRecipeBuilder from './pages/admin/AdminRecipeBuilder.jsx'
+import ProductsProvider from './context/ProductsProvider.jsx'
+import IngredientsProvider from './context/IngredientsProvider.jsx'
+import AuthProvider from './context/AuthProvider.jsx'
 
 import CheckoutPage from "./pages/CheckoutPage.jsx";
 import OrderSuccess from "./pages/OrderSuccess.jsx";
@@ -52,6 +56,22 @@ const router = createBrowserRouter([
       {
         path: "admin/products/edit/:id",
         element: <ProductForm />,
+      },
+      {
+        path: "admin/ingredients",
+        element: <AdminIngredientList />
+      },
+      {
+        path: "admin/ingredients/new",
+        element: <IngredientForm />
+      },
+      {
+        path: "admin/ingredients/edit/:id",
+        element: <IngredientForm />
+      },
+      {
+        path: "admin/recipe-builder",
+        element: <AdminRecipeBuilder />
       },
       {
         path: "login",
@@ -112,12 +132,13 @@ function App() {
   return (
     <AuthProvider>
       <ProductsProvider>
-        <ToastProvider>
-          {/* 🆕 ครอบ Elements ของ Stripe เพื่อให้ทุกหน้าเข้าถึง Stripe ได้ */}
-          <Elements stripe={stripePromise}>
+        <IngredientsProvider>
+          <ToastProvider>
+     <Elements stripe={stripePromise}>
             <RouterProvider router={router} />
-          </Elements>
-        </ToastProvider>
+              </Elements>
+          </ToastProvider>
+        </IngredientsProvider>
       </ProductsProvider>
     </AuthProvider>
   );

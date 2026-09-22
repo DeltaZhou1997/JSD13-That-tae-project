@@ -62,3 +62,152 @@ Content-Type: application/json
 ## ทดสอบกรณีเรียก Route ที่ไม่มีอยู่ (ทดสอบ 404 Handler)
 
 GET {{baseUrl}}/api/not-exist-route
+
+###
+### ============================================================
+### คลังวัตถุดิบ (Ingredients CRUD)
+### ============================================================
+
+## READ — รายการวัตถุดิบ
+GET {{baseUrl}}/api/v1/ingredients
+Accept: application/json
+
+###
+
+## READ — กรองตามหมวดหมู่
+GET {{baseUrl}}/api/v1/ingredients?category=herb_spice
+Accept: application/json
+
+###
+
+## READ — ค้นหาด้วยชื่อ
+GET {{baseUrl}}/api/v1/ingredients?search=กระเทียม
+Accept: application/json
+
+###
+
+## READ — รายชื่อหมวดหมู่ สำหรับ dropdown ในฟอร์ม
+GET {{baseUrl}}/api/v1/ingredients/categories
+Accept: application/json
+
+###
+
+## READ — วัตถุดิบที่เหลือถึงจุดเตือนแล้ว
+GET {{baseUrl}}/api/v1/ingredients/low-stock
+Accept: application/json
+
+###
+
+## READ — วัตถุดิบรายตัว
+GET {{baseUrl}}/api/v1/ingredients/ing_001
+Accept: application/json
+
+###
+
+## READ — id ที่ไม่มีอยู่ (คาดหวัง 404)
+GET {{baseUrl}}/api/v1/ingredients/ing_999
+Accept: application/json
+
+###
+
+## CREATE — ข้อมูลว่าง (คาดหวัง 400 พร้อม errors)
+POST {{baseUrl}}/api/v1/ingredients
+Content-Type: application/json
+
+{}
+
+###
+
+## CREATE — ข้อมูลครบถ้วน (คาดหวัง 201 และได้ _id)
+POST {{baseUrl}}/api/v1/ingredients
+Content-Type: application/json
+
+{
+  "nameTh": "ตะไคร้ซอย",
+  "nameEn": "Sliced Lemongrass",
+  "category": "herb_spice",
+  "medicinalTaste": "รสเผ็ดร้อน/หอมเย็น",
+  "elements": ["ลม"],
+  "nutrientsPer100g": {
+    "calories": 99,
+    "carbs": 25.3,
+    "sugar": 0,
+    "fiber": 2,
+    "protein": 1.8,
+    "fat": 0.5,
+    "sodium": 6
+  },
+  "currentStockGrams": 5000,
+  "lowStockThresholdGrams": 500
+}
+
+###
+
+## UPDATE — แก้ไขวัตถุดิบที่เพิ่งสร้าง (คาดหวัง 200)
+PUT {{baseUrl}}/api/v1/ingredients/ing_218
+Content-Type: application/json
+
+{
+  "nameTh": "ตะไคร้ซอย (แก้ไขแล้ว)",
+  "category": "herb_spice",
+  "medicinalTaste": "รสเผ็ดร้อน",
+  "elements": ["ลม", "ไฟ"],
+  "nutrientsPer100g": {
+    "calories": 99,
+    "carbs": 25.3,
+    "sugar": 0,
+    "fiber": 2,
+    "protein": 1.8,
+    "fat": 0.5,
+    "sodium": 6
+  },
+  "currentStockGrams": 4000,
+  "lowStockThresholdGrams": 500
+}
+
+###
+
+## UPDATE — อัปเดตเฉพาะสต็อก ให้ต่ำกว่าจุดเตือน (คาดหวัง 200 แล้วไปเช็ค low-stock)
+PATCH {{baseUrl}}/api/v1/ingredients/ing_218/stock
+Content-Type: application/json
+
+{ "currentStockGrams": 300 }
+
+###
+
+## UPDATE — สต็อกติดลบ (คาดหวัง 400)
+PATCH {{baseUrl}}/api/v1/ingredients/ing_218/stock
+Content-Type: application/json
+
+{ "currentStockGrams": -1 }
+
+###
+
+## DELETE — ลบวัตถุดิบ (คาดหวัง 200 แล้ว GET ซ้ำได้ 404)
+DELETE {{baseUrl}}/api/v1/ingredients/ing_218
+
+###
+### ============================================================
+### เครื่องมือ Admin — คำนวณสูตรอาหาร (Recipe Builder)
+### ============================================================
+
+## คำนวณธาตุและโภชนาการ โดยส่งแค่ ingredientId + กรัม
+POST {{baseUrl}}/api/v1/admin/calculate-recipe
+Content-Type: application/json
+
+{
+  "servings": 2,
+  "items": [
+    { "ingredientId": "ing_021", "quantity": 200 },
+    { "ingredientId": "ing_052", "quantity": 80 },
+    { "ingredientId": "ing_053", "quantity": 20 }
+  ]
+}
+
+###
+
+## คำนวณโดยไม่ส่ง items (คาดหวัง 400)
+POST {{baseUrl}}/api/v1/admin/calculate-recipe
+Content-Type: application/json
+
+{ "items": [] }

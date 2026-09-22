@@ -1,4 +1,6 @@
+import mongoose from "mongoose";
 import dishes from "../mockDB/dishes.js";
+import Product from "../models/Product.model.js";
 
 const DEFAULT_QUANTITY = 20;
 const DEFAULT_CALORIES = 350;
@@ -11,8 +13,12 @@ export const regionMap = {
   fusion: "ไทยฟิวชั่น",
 };
 
-function getTodayInputValue() {
-  return new Date().toISOString().split("T")[0];
+const SEED_SHELF_LIFE_DAYS = 90;
+
+function getSeedExpiryInputValue() {
+  const date = new Date();
+  date.setDate(date.getDate() + SEED_SHELF_LIFE_DAYS);
+  return date.toISOString().split("T")[0];
 }
 
 function normalizeImageUrl(url) {
@@ -25,7 +31,7 @@ function normalizeImageUrl(url) {
   return url;
 }
 
-function mapDishToProduct(dish) {
+export function mapDishToProduct(dish) {
   const calories =
     dish.nutritionCache?.perServing?.calories ||
     dish.nutritionCache?.totals?.calories ||
@@ -54,7 +60,7 @@ function mapDishToProduct(dish) {
     servings: dish.servings || 2,
     dominantElement: dish.dominantElement || "ดิน",
     elementSuitability: dish.elementSuitability || ["ดิน"],
-    date: getTodayInputValue(),
+    date: getSeedExpiryInputValue(),
     tags: [dish.regionNameTh, dish.dominantElement ? `ธาตุ${dish.dominantElement}` : null].filter(Boolean),
     ingredients: ingredientsSummary,
     recipe: dish.recipe || [],
@@ -67,46 +73,71 @@ function mapDishToProduct(dish) {
   };
 }
 
-let products = Object.values(dishes).map(mapDishToProduct);
+let memoryProducts = Object.values(dishes).map(mapDishToProduct);
 
-export function getAllProducts() {
-  return products;
-}
-
-export function getProductById(id) {
-  return products.find((product) => product._id === id);
+function isDbReady() {
+  return mongoose.connection.readyState === 1;
 }
 
 function createNextId() {
-  const maxNumber = products.reduce((max, product) => {
-    const current = Number(String(product._id).replace(/\D/g, ""));
-    return Number.isNaN(current) ? max : Math.max(max, current);
-  }, 0);
-  return `dish_${String(maxNumber + 1).padStart(3, "0")}`;
+  return new mongoose.Types.ObjectId().toString();
 }
 
-export function createProduct(data) {
+function findMemoryProduct(id) {
+  return memoryProducts.find((product) => product._id === id);
+}
+
+export async function getAllProducts() {
+  if (isDbReady()) return Product.find({ isActive: true }).lean();
+  return memoryProducts;
+}
+
+export async function getProductById(id) {
+  if (isDbReady() && mongoose.Types.ObjectId.isValid(id)) {
+    return Product.findById(id).lean();
+  }
+  if (isDbReady()) return null;
+  return findMemoryProduct(id) || null;
+}
+
+export async function createProduct(data) {
+  if (isDbReady()) {
+    const created = await Product.create(data);
+    return created.toObject();
+  }
   const newProduct = { ...data, _id: createNextId() };
-  products = [...products, newProduct];
+  memoryProducts = [...memoryProducts, newProduct];
   return newProduct;
 }
 
-export function updateProduct(id, data) {
-  const exists = getProductById(id);
+export async function updateProduct(id, data) {
+  if (isDbReady()) {
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    const { _id, ...safeData } = data;
+    return Product.findByIdAndUpdate(id, safeData, {
+      new: true,
+      runValidators: true,
+    }).lean();
+  }
+  const exists = findMemoryProduct(id);
   if (!exists) return null;
   const updated = { ...exists, ...data, _id: id };
-  products = products.map((product) => (product._id === id ? updated : product));
+  memoryProducts = memoryProducts.map((product) => (product._id === id ? updated : product));
   return updated;
 }
 
-export function deleteProduct(id) {
-  const exists = getProductById(id);
+export async function deleteProduct(id) {
+  if (isDbReady()) {
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+    return Product.findByIdAndDelete(id).lean();
+  }
+  const exists = findMemoryProduct(id);
   if (!exists) return null;
-  products = products.filter((product) => product._id !== id);
+  memoryProducts = memoryProducts.filter((product) => product._id !== id);
   return exists;
 }
 
 export function resetProducts() {
-  products = Object.values(dishes).map(mapDishToProduct);
-  return products;
+  memoryProducts = Object.values(dishes).map(mapDishToProduct);
+  return memoryProducts;
 }

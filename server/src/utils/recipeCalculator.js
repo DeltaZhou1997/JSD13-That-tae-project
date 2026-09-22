@@ -1,0 +1,164 @@
+
+export const ELEMENTS = ["ดิน", "น้ำ", "ลม", "ไฟ"];
+
+export const NUTRIENT_KEYS = [
+  "calories",
+  "carbs",
+  "sugar",
+  "fiber",
+  "protein",
+  "fat",
+  "sodium",
+];
+
+export const MEDICINAL_TASTES = [
+  "รสฝาด",
+  "รสหวาน",
+  "รสมัน",
+  "รสเค็ม",
+  "รสเปรี้ยว",
+  "รสขม",
+  "รสเผ็ดร้อน",
+  "รสหอมเย็น",
+  "รสจืด",
+];
+
+export const TASTE_ELEMENT_WEIGHTS = {
+  ฝาด: { ดิน: 1.5 },
+  มัน: { ดิน: 1.5 },
+  เค็ม: { ดิน: 1.5 },
+  หวาน: { ดิน: 1.0, น้ำ: 0.8 },
+  เปรี้ยว: { น้ำ: 1.5 },
+  เผ็ด: { ลม: 1.8 },
+  หอมเย็น: { ลม: 1.2, ไฟ: 0.6 },
+  ขม: { ไฟ: 1.5, น้ำ: 0.5 },
+  จืด: { ไฟ: 1.5, น้ำ: 0.5 },
+};
+
+const DIRECT_ELEMENT_WEIGHT = 3;
+
+export const POTENCY_BY_CATEGORY = {
+  herb_spice: 3,
+  seasoning: 2,
+};
+const DEFAULT_POTENCY = 1;
+
+const INTENSITY_EXPONENT = 0.5;
+
+
+function emptyNutrients() {
+  return NUTRIENT_KEYS.reduce((acc, key) => ({ ...acc, [key]: 0 }), {});
+}
+
+function emptyElementScores() {
+  return ELEMENTS.reduce((acc, element) => ({ ...acc, [element]: 0 }), {});
+}
+
+function roundNutrients(nutrients, divisor = 1) {
+  return NUTRIENT_KEYS.reduce((acc, key) => {
+    const value = (nutrients[key] || 0) / divisor;
+    acc[key] =
+      key === "calories" || key === "sodium"
+        ? Math.round(value)
+        : Number(value.toFixed(1));
+    return acc;
+  }, {});
+}
+
+
+export function scoreIngredientElements(ingredient, grams) {
+  const scores = emptyElementScores();
+  const qty = Number(grams) || 0;
+  if (qty <= 0) return scores;
+
+  const potency = POTENCY_BY_CATEGORY[ingredient?.category] ?? DEFAULT_POTENCY;
+  const impact = Math.pow(qty, INTENSITY_EXPONENT) * potency;
+
+  const taste = String(ingredient?.medicinalTaste || "");
+  Object.entries(TASTE_ELEMENT_WEIGHTS).forEach(([keyword, elementWeights]) => {
+    if (!taste.includes(keyword)) return;
+    Object.entries(elementWeights).forEach(([element, weight]) => {
+      scores[element] += impact * weight;
+    });
+  });
+
+  const listed = Array.isArray(ingredient?.elements)
+    ? ingredient.elements.filter((element) => ELEMENTS.includes(element))
+    : [];
+  if (listed.length > 0) {
+    const share = (impact * DIRECT_ELEMENT_WEIGHT) / listed.length;
+    listed.forEach((element) => {
+      scores[element] += share;
+    });
+  }
+
+  return scores;
+}
+
+
+export function calculateRecipeMetrics(recipeItems, servings = 2) {
+  const items = Array.isArray(recipeItems) ? recipeItems : [];
+  const safeServings = Math.max(1, Number(servings) || 1);
+
+  let totalWeight = 0;
+  const totals = emptyNutrients();
+  const elementScores = emptyElementScores();
+
+  items.forEach((item) => {
+    const ingredient = item?.ingredient || item || {};
+    const qty = Number(item?.quantity) || 0;
+    if (qty <= 0) return;
+
+    totalWeight += qty;
+
+    const basis = Number(ingredient.basisWeightG) || 100;
+    const ratio = qty / basis;
+    const nutrients = ingredient.nutrientsPer100g || {};
+    NUTRIENT_KEYS.forEach((key) => {
+      totals[key] += (Number(nutrients[key]) || 0) * ratio;
+    });
+
+    const scores = scoreIngredientElements(ingredient, qty);
+    ELEMENTS.forEach((element) => {
+      elementScores[element] += scores[element];
+    });
+  });
+
+  const sorted = Object.entries(elementScores).sort((a, b) => b[1] - a[1]);
+  const hasScore = sorted.length > 0 && sorted[0][1] > 0;
+  const dominantElement = hasScore ? sorted[0][0] : "ดิน";
+  const suitability = sorted
+    .filter(([, score]) => score > 0)
+    .slice(0, 2)
+    .map(([element]) => element);
+
+  const roundedScores = ELEMENTS.reduce((acc, element) => {
+    acc[element] = Number(elementScores[element].toFixed(1));
+    return acc;
+  }, {});
+
+  return {
+    totalWeight: Number(totalWeight.toFixed(1)),
+    servings: safeServings,
+    totals: roundNutrients(totals),
+    perServing: roundNutrients(totals, safeServings),
+    dominantElement,
+    elementSuitability: suitability.length > 0 ? suitability : [dominantElement],
+    elementScores: roundedScores,
+  };
+}
+
+
+export function toElementPercentages(elementScores) {
+  const total = ELEMENTS.reduce(
+    (sum, element) => sum + (Number(elementScores?.[element]) || 0),
+    0,
+  );
+  return ELEMENTS.reduce((acc, element) => {
+    const score = Number(elementScores?.[element]) || 0;
+    acc[element] = total > 0 ? Math.round((score / total) * 100) : 0;
+    return acc;
+  }, {});
+}
+
+export default calculateRecipeMetrics;
