@@ -228,3 +228,89 @@ a {
 .animate-sparkle-3 {
   animation: sparkleTwinkle 1.9s ease-in-out infinite 1.2s;
 }
+/* Sleek custom scrollbars ที่เข้ากับธีม Earth tone */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbb49e #fdfbf7;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #fdfbf7;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbb49e;
+  border-radius: 9999px;
+  border: 2px solid #fdfbf7;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8b5e34;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #4c1f08;
+}
+
+/* Custom sleek scrollbar สำหรับตารางและกล่องเนื้อหา */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #c4a482 #fbf6ee;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #fbf6ee;
+  border-radius: 9999px;
+  margin: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #c4a482;
+  border-radius: 9999px;
+  border: 1.5px solid #fbf6ee;
+  transition: background-color 0.2s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #8b5e34;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+  background: #4c1f08;
+}
+
+/* Warm Skeleton Loading Shimmer สไตล์ Earth-tone */
+.skeleton-warm {
+  background: linear-gradient(
+    90deg,
+    #ede3d5 0%,
+    #faf6f0 50%,
+    #ede3d5 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-warm-shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton-warm-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+
+

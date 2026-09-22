@@ -33,7 +33,8 @@ function Login() {
         toast.success(
           `ยินดีต้อนรับคุณ ${data.user.firstName} (${data.user.role === "admin" ? "ผู้ดูแลระบบ" : "สมาชิก"})`,
         );
-        navigate(data.user.role === "admin" ? "/admin/products" : "/");
+        // หากเป็น Admin ให้นำทางตรงไปยังหน้าแผงควบคุม /admin/dashboard
+        navigate(data.user.role === "admin" ? "/admin/dashboard" : "/");
       } else {
         toast.error(data.message || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
       }
