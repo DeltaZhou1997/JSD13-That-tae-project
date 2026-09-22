@@ -1,4 +1,4 @@
-export const SHIPPING_FEE = 60;
+export const SHIPPING_FEE = 120;
 
 export const POINT_CALCULATION = {
   MIN_AMOUNT_TO_EARN: 1499,

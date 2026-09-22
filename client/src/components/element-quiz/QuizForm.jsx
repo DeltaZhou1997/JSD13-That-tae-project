@@ -1,162 +1,184 @@
-// client/src/components/element-quiz/QuizForm.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { QUIZ_QUESTIONS } from "../../data/quizData";
-import lotusOrnament from "../../assets/quiz/quiz_head.png";
+import gsap from "gsap";
 
-export default function QuizForm({ answers, onSelectAnswer, onSubmit }) {
+export default function QuizForm({
+  answers,
+  onSelectAnswer,
+  onSubmit,
+  onBackToIntro,
+}) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const currentQuestion = QUIZ_QUESTIONS[currentIndex];
+  const cardContainerRef = useRef(null);
+
+  const currentQuestion = QUIZ_QUESTIONS[currentIndex] || QUIZ_QUESTIONS[0];
   const totalQuestions = QUIZ_QUESTIONS.length;
+
+  // GSAP animation when question changes
+  useEffect(() => {
+    if (!cardContainerRef.current) return;
+    gsap.fromTo(
+      cardContainerRef.current,
+      { opacity: 0, y: 15, scale: 0.98 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: "power2.out" }
+    );
+  }, [currentIndex]);
 
   const handleOptionClick = (element) => {
     onSelectAnswer(currentQuestion.id, element);
 
+    // เลื่อนไปข้อถัดไปอัตโนมัติอย่างนุ่มนวล
     if (currentIndex < totalQuestions - 1) {
       setTimeout(() => {
         setCurrentIndex((prev) => prev + 1);
       }, 250);
+    } else {
+      // ถ้าเป็นข้อสุดท้ายแล้ว เมื่อเลือกข้อนี้ให้คำนวณผลลัพธ์เลย
+      setTimeout(() => {
+        onSubmit();
+      }, 300);
     }
   };
 
   const handlePrev = () => {
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
+    } else if (onBackToIntro) {
+      onBackToIntro();
     }
   };
 
-  const isLastQuestion = currentIndex === totalQuestions - 1;
-  const isAllAnswered = Object.keys(answers).length === totalQuestions;
   const progressPercent = Math.round(
-    ((currentIndex + 1) / totalQuestions) * 100,
+    ((currentIndex + 1) / totalQuestions) * 100
   );
 
   return (
-    <div className="max-w-3xl mx-auto">
-      {/* 1. Progress Bar & Step Indicator */}
-      <div className="mb-6 max-w-xl mx-auto">
-        <div className="flex justify-between items-center text-xs font-bold text-[#63534B] mb-2">
-          <span>
-            คำถามที่ {currentIndex + 1} จาก {totalQuestions}
+    <div className="max-w-4xl mx-auto py-1 sm:py-2 w-full">
+      {/* 1. Header: Stepper วงกลม 5 จุด + เปอร์เซ็นต์ */}
+      <div className="mb-3 sm:mb-4 max-w-xl mx-auto">
+        <div className="text-center mb-1.5">
+          <span className="text-xs font-bold text-[#7A6B63]">
+            คำถามที่ {currentIndex + 1} / {totalQuestions}
           </span>
-          <span>{progressPercent}%</span>
-        </div>
-        <div className="w-full h-2 bg-[#EFE9E1] rounded-full overflow-hidden">
-          <div
-            className="h-full bg-[#3D2E2B] transition-all duration-300 ease-out"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
-      </div>
-
-      {/* 2. Main Question Card */}
-      <div className="bg-[#FAF8F5] border border-[#EBE4D8] rounded-3xl p-6 sm:p-8 shadow-sm mb-6">
-        {/* ลวดลายประดับด้านบน: เส้น + ไอคอนลายกนก */}
-        <div className="flex justify-center items-center gap-3 mb-4">
-          <div className="h-[1px] w-12 sm:w-16 bg-[#D8CEBE]"></div>
-          <img
-            src={lotusOrnament}
-            alt="ประดับ"
-            className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
-          />
-          <div className="h-[1px] w-12 sm:w-16 bg-[#D8CEBE]"></div>
         </div>
 
-        {/* 🌟 หัวข้อคำถาม พร้อมประกายดาว ✦ ขนาบซ้าย-ขวา เหมือนหน้าสุ่มเมนู */}
-        <h3 className="text-xl sm:text-2xl font-bold text-[#3D2E2B] mb-7 text-center leading-relaxed flex items-center justify-center gap-2 flex-wrap">
-          <span className="text-[#C49758] animate-sparkle-1 text-base shrink-0">
-            ✦
-          </span>
-          <span>{currentQuestion.title}</span>
-          <span className="text-[#C49758] animate-sparkle-2 text-base shrink-0">
-            ✦
-          </span>
-        </h3>
+        <div className="flex items-center justify-between gap-4">
+          {/* Stepper เส้นเชื่อมพร้อมจุด */}
+          <div className="flex-1 flex items-center relative">
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-[#E8DFD1] rounded-full z-0" />
+            <div
+              className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-[#8D593A] rounded-full transition-all duration-300 z-0"
+              style={{
+                width: `${(currentIndex / (totalQuestions - 1)) * 100}%`,
+              }}
+            />
 
-        {/* 3. Grid 2 Columns ช้อยส์ 2x2 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {currentQuestion.options.map((opt, idx) => {
-            const isSelected = answers[currentQuestion.id] === opt.element;
-            const letter = String.fromCharCode(65 + idx); // A, B, C, D
-
-            return (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleOptionClick(opt.element)}
-                className={`relative p-3.5 sm:p-4 rounded-2xl text-left transition-all border flex items-center gap-3 sm:gap-4 cursor-pointer overflow-hidden min-h-[100px] ${
-                  isSelected
-                    ? "border-[#5A3E36] bg-[#F7F2EB] shadow-sm ring-1 ring-[#5A3E36]"
-                    : "border-[#E8DFD1] bg-white hover:border-[#8C7B73] hover:bg-[#FAF7F2]"
-                }`}
-              >
-                {/* เครื่องหมายถูกมุมขวาบนเมื่อถูกเลือก */}
-                {isSelected && (
-                  <div className="absolute top-2 right-2 w-5 h-5 bg-[#5A3E36] text-white rounded-full flex items-center justify-center text-[10px] shadow-sm">
-                    ✓
-                  </div>
-                )}
-
-                {/* รูปภาพประกอบแต่ละช้อยส์ */}
-                <div className="w-28 h-24 sm:w-32 sm:h-28 shrink-0 flex items-center justify-center overflow-hidden">
-                  <img
-                    src={opt.image}
-                    alt={opt.text}
-                    className="w-full h-full object-contain drop-shadow-sm transition-transform duration-200 hover:scale-105"
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
+            <div className="flex justify-between w-full relative z-10">
+              {QUIZ_QUESTIONS.map((_, idx) => {
+                const isPassed = idx <= currentIndex;
+                const isCurrent = idx === currentIndex;
+                return (
+                  <div
+                    key={idx}
+                    className={`w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full transition-all duration-300 flex items-center justify-center ${
+                      isCurrent
+                        ? "bg-[#8D593A] ring-4 ring-[#8D593A]/20 scale-110"
+                        : isPassed
+                          ? "bg-[#8D593A]"
+                          : "bg-[#E2D7C7]"
+                    }`}
                   />
-                </div>
+                );
+              })}
+            </div>
+          </div>
 
-                {/* ข้อความและตัวอักษร A, B, C, D */}
-                <div className="flex-1 min-w-0 pr-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 transition-colors ${
-                        isSelected
-                          ? "bg-[#8D593A] text-white"
-                          : "bg-[#A68A78] text-white"
-                      }`}
-                    >
-                      {letter}
-                    </span>
-                    <span className="font-bold text-sm text-[#3D2E2B] leading-snug">
-                      {opt.text}
-                    </span>
-                  </div>
-                  {opt.subtext && (
-                    <p className="text-[11px] text-[#7A6B63] leading-tight">
-                      {opt.subtext}
-                    </p>
-                  )}
-                </div>
-              </button>
-            );
-          })}
+          <span className="text-xs font-bold text-[#7A6B63] w-10 text-right">
+            {progressPercent}%
+          </span>
         </div>
       </div>
 
-      {/* 4. Navigation Buttons */}
-      <div className="flex justify-between items-center gap-4 max-w-xl mx-auto">
+      {/* 2. Question Title (พร้อมประกายดาว ✦ ซ้ายขวา) */}
+      <div className="text-center mb-3 sm:mb-4">
+        <h2 className="text-base sm:text-2xl font-bold text-[#3D2E2B] flex items-center justify-center gap-2 flex-wrap leading-snug">
+          <span className="text-[#C49758] text-xs sm:text-sm animate-sparkle-1">✦</span>
+          <span>{currentQuestion.title}</span>
+          <span className="text-[#C49758] text-xs sm:text-sm animate-sparkle-2">✦</span>
+        </h2>
+      </div>
+
+      {/* 3. ช้อยส์: ในมือถือเป็นแบบ List แนวนอน (รูปซ้าย ข้อความขวา) / ในคอมเป็น 2x2 Grid กว้างขึ้น สมดุลสวยงาม */}
+      <div
+        ref={cardContainerRef}
+        className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mb-3 sm:mb-4"
+      >
+        {currentQuestion.options.map((opt, idx) => {
+          const isSelected = answers[currentQuestion.id] === opt.element;
+
+          return (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => handleOptionClick(opt.element)}
+              className={`p-2.5 sm:p-3.5 lg:p-4 rounded-2xl sm:rounded-3xl text-left transition-all duration-200 border bg-white flex flex-row sm:flex-col items-center justify-between gap-3 sm:gap-1 cursor-pointer group shadow-2xs hover:shadow-md ${
+                isSelected
+                  ? "border-[#8D593A] ring-2 ring-[#8D593A] bg-[#FCFAF7]"
+                  : "border-[#E8DFD1] hover:border-[#C49758] hover:-translate-y-0.5"
+              }`}
+            >
+              {/* รูปภาพประกอบตัวเลือก (มือถือ: อยู่ซ้ายมือ / คอม: อยู่ด้านบน) */}
+              <div className="w-14 h-14 sm:w-full sm:h-24 lg:h-28 flex items-center justify-center shrink-0 sm:mb-1 bg-[#FAF7F2] sm:bg-transparent rounded-xl sm:rounded-none p-1 sm:p-0">
+                <img
+                  src={opt.image}
+                  alt={opt.text}
+                  className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-105 drop-shadow-2xs"
+                />
+              </div>
+
+              {/* บล็อกข้อความ (มือถือ: อยู่ขวา ไม่มีเส้นกั้นบน / คอม: มีเส้นกั้นบน) */}
+              <div className="w-full flex-1 sm:pt-2 sm:border-t sm:border-[#F2ECE4] min-w-0 text-left sm:text-center">
+                <h4 className="font-bold text-xs sm:text-sm lg:text-base text-[#3D2E2B] leading-snug truncate sm:whitespace-normal">
+                  {opt.text}
+                </h4>
+                {opt.subtext && (
+                  <p className="text-[11px] sm:text-xs text-[#7A6B63] mt-0.5 leading-tight line-clamp-1 sm:line-clamp-2">
+                    {opt.subtext}
+                  </p>
+                )}
+              </div>
+
+              {/* ไอคอน Checkmark วงกลมเมื่อเลือก บนมือถือ */}
+              <div className="sm:hidden shrink-0">
+                <div
+                  className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${
+                    isSelected
+                      ? "bg-[#8D593A] border-[#8D593A] text-white"
+                      : "border-[#D8C9B9] bg-stone-50 text-transparent"
+                  }`}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 4. ปุ่มย้อนกลับข้อก่อนหน้า */}
+      <div className="flex justify-start max-w-xl mx-auto">
         <button
           type="button"
           onClick={handlePrev}
-          disabled={currentIndex === 0}
-          className="px-5 py-2.5 rounded-xl text-xs font-semibold text-[#63534B] bg-[#EFE9E1] hover:bg-[#E5DDD0] disabled:opacity-0 disabled:cursor-default transition-all cursor-pointer"
+          className="px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs font-bold text-[#63534B] bg-[#EFE9E1] hover:bg-[#E2D8C9] transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-2xs"
         >
-          ← ข้อย้อนกลับ
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          <span>{currentIndex === 0 ? "กลับหน้าหลัก" : "ข้อย้อนกลับ"}</span>
         </button>
-
-        {isLastQuestion && (
-          <button
-            type="button"
-            onClick={onSubmit}
-            disabled={!isAllAnswered}
-            className="px-8 py-3 bg-[#3D2E2B] hover:bg-[#8D593A] text-white font-bold rounded-xl shadow-md transition-all text-xs disabled:opacity-50 cursor-pointer"
-          >
-            วิเคราะห์ผลลัพธ์ ✨
-          </button>
-        )}
       </div>
     </div>
   );

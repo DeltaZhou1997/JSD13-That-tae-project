@@ -184,6 +184,8 @@ router.post("/", async (req, res, next) => {
       biaPoints: 0,
       isSubscribed: false,
       conditions: req.body.conditions || [],
+      element: req.body.element || "",
+      bodyElement: req.body.bodyElement || "",
       lastActiveAt: now,
       createdAt: now,
       updatedAt: now,
@@ -274,6 +276,8 @@ router.put("/:id", async (req, res, next) => {
     if (tierStatus !== undefined) user.tierStatus = tierStatus;
     if (role !== undefined && (role === "admin" || role === "customer")) user.role = role;
     if (deliveryAddress !== undefined) user.deliveryAddress = deliveryAddress;
+    if (req.body.element !== undefined) user.element = req.body.element;
+    if (req.body.bodyElement !== undefined) user.bodyElement = req.body.bodyElement;
 
     user.updatedAt = new Date().toISOString();
 

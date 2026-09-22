@@ -20,16 +20,12 @@ export default function ToastProvider({ children }) {
 
       setToasts((current) => [
         ...current.slice(-3),
-        { id, message, type },
+        { id, message, type, duration },
       ]);
-
-      if (duration > 0) {
-        window.setTimeout(() => removeToast(id), duration);
-      }
 
       return id;
     },
-    [removeToast],
+    [],
   );
 
   const value = useMemo(

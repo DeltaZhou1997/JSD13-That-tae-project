@@ -12,6 +12,7 @@ import {
 import { users } from "../mock-data/users";
 import { useAuth } from "../context/AuthContext.js";
 import { PAYMENT_METHODS } from "../constants/checkout";
+import { useProducts } from "../context/ProductsContext.js";
 import {
   calculateEarnedPoints,
   calculateGrandTotal,
@@ -43,17 +44,27 @@ export default function CheckoutPage() {
   // State สลับระบบชำระเงิน ('v2' = Stripe Hosted | 'v1' = In-App UI)
   const [paymentVersion, setPaymentVersion] = useState("v2");
 
+  const { 
+    cartItems: outletCartItems = [], 
+    handleClearCart,
+    handleAddToCart,
+    selectedPlan: contextSelectedPlan = null,
+    setSelectedPlan: contextSetSelectedPlan = () => {},
+  } = useOutletContext() || {};
+  const cartItems = outletCartItems;
+  const { products = [] } = useProducts();
+
+  // ใช้ selectedPlan จาก context ถ้ามี ถ้าไม่มีใช้ local
+  const [localPlan, setLocalPlan] = useState(null);
+  const selectedPlan = contextSelectedPlan !== undefined ? contextSelectedPlan : localPlan;
+  const setSelectedPlan = contextSetSelectedPlan || setLocalPlan;
+
   // State ทั่วไป
-  const [selectedPlan, setSelectedPlan] = useState(null);
   const [errors, setErrors] = useState({});
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [promptPayModalState, setPromptPayModalState] = useState(null);
   const [countdown, setCountdown] = useState(300);
   const [pendingOrderPayload, setPendingOrderPayload] = useState(null);
-
-  const { cartItems: outletCartItems = [], handleClearCart } =
-    useOutletContext() || {};
-  const cartItems = outletCartItems;
 
   const [formData, setFormData] = useState({
     fullName: `${currentUser.firstName} ${currentUser.lastName}`,
@@ -81,9 +92,28 @@ export default function CheckoutPage() {
   );
   const requiredKits = selectedPlan ? selectedPlan.kitsPerWeek : 0;
   const kitsDifference = selectedPlan ? totalKitsCount - requiredKits : 0;
+
+  // คำนวณค่าเมนูเสริม A La Carte ในกรณีที่มีเมนูเกินจากโควตาแพ็กเกจ
+  let extraSubtotal = 0;
+  if (selectedPlan && kitsDifference > 0) {
+    let countedInBox = 0;
+    cartItems.forEach((item) => {
+      const q = Number(item.quantity) || 1;
+      const space = requiredKits - countedInBox;
+      if (space <= 0) {
+        extraSubtotal += (Number(item.price) || 0) * q;
+      } else if (q > space) {
+        extraSubtotal += (Number(item.price) || 0) * (q - space);
+        countedInBox += space;
+      } else {
+        countedInBox += q;
+      }
+    });
+  }
+
   const itemsSubtotal = selectedPlan
-    ? selectedPlan.price
-    : cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    ? selectedPlan.price + extraSubtotal
+    : cartItems.reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 1), 0);
 
   const earnedPoints = calculateEarnedPoints(itemsSubtotal);
   const grandTotal = calculateGrandTotal(itemsSubtotal);
@@ -122,11 +152,24 @@ export default function CheckoutPage() {
       });
       if (handleClearCart) handleClearCart();
       const result = response.ok ? await response.json() : null;
+      const finalOrder = result?.order || orderPayload;
+      try {
+        const saved = JSON.parse(localStorage.getItem("recent_orders") || "[]");
+        localStorage.setItem("recent_orders", JSON.stringify([finalOrder, ...saved.slice(0, 49)]));
+      } catch {
+        // ignore localStorage error
+      }
       navigate("/order-success", {
-        state: { order: result?.order || orderPayload },
+        state: { order: finalOrder },
       });
     } catch (err) {
       if (handleClearCart) handleClearCart();
+      try {
+        const saved = JSON.parse(localStorage.getItem("recent_orders") || "[]");
+        localStorage.setItem("recent_orders", JSON.stringify([orderPayload, ...saved.slice(0, 49)]));
+      } catch {
+        // ignore localStorage error
+      }
       navigate("/order-success", { state: { order: orderPayload } });
     } finally {
       setIsProcessingPayment(false);
@@ -167,6 +210,14 @@ export default function CheckoutPage() {
       orderId: `ORD-${Math.floor(100000 + Math.random() * 900000)}`,
       userId: currentUserId,
       planType: selectedPlan ? selectedPlan.id : "SINGLE_KIT",
+      planDetails: selectedPlan
+        ? {
+            planId: selectedPlan.id,
+            planName: selectedPlan.name,
+            kitsPerWeek: selectedPlan.kitsPerWeek,
+            planPrice: selectedPlan.price,
+          }
+        : null,
       items: cartItems.map((item) => ({
         productId: item.productId || item.id || item._id,
         productName: item.name || item.nameTh || "ชุด Cooking Kit",
@@ -385,11 +436,61 @@ export default function CheckoutPage() {
         {/* ข้อมูลสมาชิก */}
         <CheckoutUserStatus currentUser={currentUser} />
 
-        {/* เลือกแพ็กเกจ A La Carte / Subscription */}
-        <PlanSelector
-          selectedPlan={selectedPlan}
-          onSelectPlan={setSelectedPlan}
-        />
+        {/* ข้อมูลแพ็กเกจที่เลือกมาจากหน้าตะกร้า */}
+        {selectedPlan ? (
+          <div className="mb-6 bg-[#fcf8f2] border border-[#e8dfd1] rounded-3xl p-4 sm:p-5 flex items-center justify-between shadow-2xs">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-[#f6ede5] flex items-center justify-center text-[#8d593a] border border-[#e8dfd1] shrink-0">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                  <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                  <line x1="12" y1="22.08" x2="12" y2="12" />
+                </svg>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-[#3d2c2e]">
+                    กล่อง Cooking Kit ประจำสัปดาห์: {selectedPlan.name}
+                  </h3>
+                  <span className="text-[10px] bg-[#8d593a] text-white px-2.5 py-0.5 rounded-full font-bold">
+                    {selectedPlan.kitsPerWeek} Kits
+                  </span>
+                </div>
+                <p className="text-xs text-[#6f675f] mt-0.5">
+                  {selectedPlan.description} • ราคาเหมาจ่าย ฿{selectedPlan.price.toLocaleString()} / สัปดาห์
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/cart"
+              className="text-xs text-[#8d593a] font-bold hover:underline shrink-0 ml-2"
+            >
+              แก้ไขในตะกร้า →
+            </Link>
+          </div>
+        ) : (
+          <div className="mb-6 bg-[#fcf8f2] border border-[#e8dfd1] rounded-3xl p-4 flex items-center justify-between shadow-2xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-[#f6ede5] flex items-center justify-center text-[#8d593a] border border-[#e8dfd1] shrink-0">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+                  <circle cx="9" cy="21" r="1" />
+                  <circle cx="20" cy="21" r="1" />
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-[#3d2c2e]">รูปแบบการสั่งซื้อ: A La Carte (ซื้อแยกตามชุด)</h3>
+                <p className="text-xs text-[#6f675f]">คิดราคาตามรายการอาหารที่เลือก</p>
+              </div>
+            </div>
+            <Link
+              to="/cart"
+              className="text-xs text-[#8d593a] font-bold hover:underline shrink-0 ml-2"
+            >
+              เลือกแบบแพ็กเกจกล่องในตะกร้า →
+            </Link>
+          </div>
+        )}
 
         {/* ฟอร์มจัดส่งและสรุปราคา */}
         <form

@@ -1,0 +1,324 @@
+// client/src/components/ai/AIAdvisorWidget.jsx
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { Link, useLocation } from "react-router-dom";
+import gsap from "gsap";
+import { useAuth } from "../../context/AuthContext.js";
+import { useProducts } from "../../context/ProductsContext.js";
+import { getUserElement } from "../../utils/quizHelpers.js";
+import {
+  queryThatTaeAI,
+  AI_QUICK_QUESTIONS,
+  ELEMENT_KNOWLEDGE_BASE,
+} from "../../utils/aiAdvisorEngine.js";
+
+export default function AIAdvisorWidget({ cartItems = [] }) {
+  const location = useLocation();
+  const { currentUser } = useAuth();
+  const { products } = useProducts();
+
+  const isAdmin =
+    currentUser?.role === "admin" || location.pathname.startsWith("/admin");
+  if (isAdmin) return null;
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [inputText, setInputText] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+
+  const containerRef = useRef(null);
+  const chatWindowRef = useRef(null);
+  const messagesEndRef = useRef(null);
+  const fabRef = useRef(null);
+
+  const userElement = useMemo(() => getUserElement(currentUser), [currentUser]);
+
+  // Initial welcome message
+  useEffect(() => {
+    const greeting = userElement
+      ? `สวัสดีครับคุณ${currentUser?.name || "ผู้รักสุขภาพ"}! ✨\nผมตรวจพบว่าคุณมีธาตุเจ้าเรือนคือ **ธาตุ${userElement}** มีอะไรให้ผมช่วยแนะนำเรื่องเมนูปรับสมดุลวันนี้ไหมครับ?`
+      : `สวัสดีครับ! ยินดีต้อนรับสู่ **ธาตุแท้ That-Tae** 🌿\nผมเป็น AI ผู้ช่วยแนะนำอาหารและการปรับสมดุลธาตุตามศาสตร์แพทย์แผนไทย สามารถสอบถามเมนู อาการ หรือคำแนะนำได้ตลอดเวลาครับ!`;
+
+    setMessages([
+      {
+        id: 1,
+        sender: "ai",
+        text: greeting,
+        time: new Date().toLocaleTimeString("th-TH", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      },
+    ]);
+  }, [userElement, currentUser]);
+
+  // Scroll to bottom of chat
+  useEffect(() => {
+    if (isOpen) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, isTyping, isOpen]);
+
+  // GSAP animation on toggle
+  useEffect(() => {
+    if (isOpen && chatWindowRef.current) {
+      gsap.fromTo(
+        chatWindowRef.current,
+        { scale: 0.85, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: "back.out(1.4)" }
+      );
+    }
+  }, [isOpen]);
+
+  const handleSend = (textToSend) => {
+    const text = (textToSend || inputText).trim();
+    if (!text) return;
+
+    const userMsg = {
+      id: Date.now(),
+      sender: "user",
+      text,
+      time: new Date().toLocaleTimeString("th-TH", {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    if (!textToSend) setInputText("");
+    setIsTyping(true);
+
+    // Simulate RAG reasoning & retrieval
+    setTimeout(() => {
+      const response = queryThatTaeAI({
+        question: text,
+        userElement,
+        cartItems,
+        allProducts: products || [],
+      });
+
+      const aiMsg = {
+        id: Date.now() + 1,
+        sender: "ai",
+        text: response.reply,
+        highlightElement: response.highlightElement,
+        time: new Date().toLocaleTimeString("th-TH", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      };
+
+      setMessages((prev) => [...prev, aiMsg]);
+      setIsTyping(false);
+    }, 450);
+  };
+
+  return (
+    <aside
+      ref={containerRef}
+      aria-label="That-Tae AI Advisor"
+      className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-[99] flex flex-col items-end select-none pointer-events-auto"
+    >
+      {/* ------------------------------------------------------------- */}
+      {/* 1. Chat Window Dialog (ลอยขึ้นมาเมื่อกดปุ่ม)                     */}
+      {/* ------------------------------------------------------------- */}
+      {isOpen && (
+        <div
+          ref={chatWindowRef}
+          className="mb-3.5 w-[92vw] sm:w-[380px] max-h-[78vh] h-[520px] bg-white rounded-3xl border border-[#e8dfd1] shadow-2xl flex flex-col overflow-hidden text-[#2f2119] transition-all"
+        >
+          {/* Header */}
+          <div className="p-4 bg-gradient-to-r from-[#4a3228] to-[#6e432a] text-white flex items-center justify-between shadow-xs shrink-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative">
+                <div className="w-9 h-9 rounded-2xl bg-white/15 backdrop-blur-xs flex items-center justify-center border border-white/20 text-amber-300 shadow-inner">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-5 h-5 animate-pulse"
+                  >
+                    <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
+                  </svg>
+                </div>
+                {/* Active Indicator dot */}
+                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 border-2 border-[#4a3228] rounded-full"></span>
+              </div>
+
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <h3 className="font-bold text-sm tracking-tight truncate">
+                    That-Tae Advisor
+                  </h3>
+                </div>
+                <p className="text-[11px] text-stone-300 truncate">
+                  {userElement
+                    ? `วิเคราะห์ตามธาตุ${userElement}`
+                    : "ผู้ช่วยโภชนาการแพทย์แผนไทย"}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+              title="ย่อหน้าต่าง"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-4 h-4"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Quick Context Pill (แจ้งเตือนสถานะธาตุ) */}
+          {userElement ? (
+            <div className="px-3.5 py-1.5 bg-[#fbf6ee] border-b border-[#ebdccf] flex items-center justify-between text-[11px] text-[#785b4b] shrink-0">
+              <span className="truncate">
+                ธาตุเจ้าเรือนของคุณ: <strong>ธาตุ{userElement}</strong>
+              </span>
+              <Link
+                to="/element-quiz"
+                className="text-[10px] font-bold text-[#8d593a] hover:underline"
+              >
+                ดูผลวิเคราะห์ &rarr;
+              </Link>
+            </div>
+          ) : (
+            <div className="px-3.5 py-1.5 bg-amber-50/80 border-b border-amber-200/60 flex items-center justify-between text-[11px] text-amber-900 shrink-0">
+              <span>ยังไม่ได้ตรวจธาตุเจ้าเรือน</span>
+              <Link
+                to="/element-quiz"
+                className="text-[10px] font-bold text-amber-800 underline"
+              >
+                ตรวจเลย &rarr;
+              </Link>
+            </div>
+          )}
+
+          {/* Message List */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#fdfbf7] text-xs">
+            {messages.map((m) => (
+              <div
+                key={m.id}
+                className={`flex flex-col ${m.sender === "user" ? "items-end" : "items-start"
+                  }`}
+              >
+                <div
+                  className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 shadow-2xs leading-relaxed ${m.sender === "user"
+                    ? "bg-[#8d593a] text-white rounded-br-xs"
+                    : "bg-white border border-[#e8dfd1] text-[#33221b] rounded-bl-xs"
+                    }`}
+                >
+                  <div className="whitespace-pre-line break-words">
+                    {m.text}
+                  </div>
+                </div>
+                <span className="text-[9px] text-stone-400 mt-1 px-1">
+                  {m.time}
+                </span>
+              </div>
+            ))}
+
+            {isTyping && (
+              <div className="flex items-center gap-1.5 px-3 py-2 bg-white border border-[#e8dfd1] rounded-2xl w-fit text-stone-400">
+                <span className="w-1.5 h-1.5 bg-[#8d593a] rounded-full animate-bounce"></span>
+                <span className="w-1.5 h-1.5 bg-[#8d593a] rounded-full animate-bounce [animation-delay:0.15s]"></span>
+                <span className="w-1.5 h-1.5 bg-[#8d593a] rounded-full animate-bounce [animation-delay:0.3s]"></span>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Quick Questions Tag Carousel */}
+          <div className="px-3 py-2 bg-[#f8f3eb] border-t border-[#ede3d6] flex gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+            {AI_QUICK_QUESTIONS.map((q, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handleSend(q)}
+                className="shrink-0 text-[10px] bg-white hover:bg-[#ede1d3] text-[#6b4e3d] border border-[#dfd2c4] rounded-full px-2.5 py-1 font-medium transition cursor-pointer"
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+
+          {/* Input Box */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSend();
+            }}
+            className="p-2.5 bg-white border-t border-[#e8dfd1] flex items-center gap-2 shrink-0"
+          >
+            <input
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="ถามอาการ หรือเมนูแนะนำ..."
+              className="flex-1 bg-[#FAF7F2] border border-[#d8c8b8] rounded-xl px-3 py-2 text-xs text-[#2f2119] placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#8d593a]/30 focus:border-[#8d593a]"
+            />
+            <button
+              type="submit"
+              disabled={!inputText.trim()}
+              className="w-9 h-9 rounded-xl bg-[#8d593a] hover:bg-[#73472c] disabled:opacity-40 text-white flex items-center justify-center transition shadow-xs cursor-pointer shrink-0 active:scale-95"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-4 h-4"
+              >
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------- */}
+      {/* 2. Floating Action Button (FAB) AI Advisor                    */}
+      {/* ------------------------------------------------------------- */}
+      <button
+        ref={fabRef}
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="group relative flex items-center gap-2.5 px-4 py-3 rounded-full 
+        bg-gradient-to-r from-[#4a3228] to-[#754a32] hover:from-[#3b271f] hover:to-[#613c28] 
+        text-white shadow-2xl transition-all duration-300 hover:scale-105 hover:-translate-y-0.5 
+        active:scale-95 border-white/25 cursor-pointer"
+        title="เปิด AI Advisor ผู้ช่วยแนะนำสุขภาพตามธาตุ"
+      >
+        <div className="relative flex items-center justify-center">
+          <div className="w-6 h-6 rounded-full text-amber-300 flex items-center justify-center">
+            <svg
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="w-5 h-5 transition-transform duration-300 group-hover:rotate-45"
+            >
+              <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z" />
+            </svg>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-start text-left leading-none pr-1">
+          <span className="text-sm font-extrabold tracking-tight flex items-center gap-1 text-white">
+            <span>That-Tae Advisor</span>
+          </span>
+        </div>
+      </button>
+    </aside>
+  );
+}

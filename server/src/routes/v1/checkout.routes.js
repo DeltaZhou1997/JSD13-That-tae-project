@@ -68,6 +68,7 @@ const handleCheckout = async (req, res) => {
       userId = "USR-001",
       items,
       planType = "SINGLE_KIT",
+      planDetails = null,
       shippingAddress,
       paymentMethod = "PROMPTPAY",
       itemsSubtotal,
@@ -139,6 +140,7 @@ const handleCheckout = async (req, res) => {
       userId,
       items: formattedItems,
       planType,
+      planDetails,
       shippingAddress: {
         fullName:
           shippingAddress.fullName || shippingAddress.recipientName || "",

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.js";
 import useToast from "../hooks/useToast.js";
 
 function Register() {
@@ -13,6 +14,7 @@ function Register() {
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
   const toast = useToast();
 
   const handleChange = (event) => {
@@ -63,8 +65,13 @@ function Register() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success("สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบด้วยบัญชีของคุณ");
-        navigate("/login");
+        if (data.user && data.token) {
+          login(data.user, data.token);
+        }
+        toast.success(
+          "สมัครสมาชิกสำเร็จ! กรุณาทำแบบทดสอบเพื่อค้นหาธาตุเจ้าเรือนของคุณ ✨"
+        );
+        navigate("/element-quiz", { state: { autoStart: true, fromRegister: true } });
       } else {
         setErrorMsg(data.message || "เกิดข้อผิดพลาดในการสมัครสมาชิก");
       }

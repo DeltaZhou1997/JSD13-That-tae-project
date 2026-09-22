@@ -1,438 +1,332 @@
-# 🛒 Cooking Kit E-Commerce — "ธาตุแท้" (That Tae)
-### JSD13 Group 4 — Sprint 2 Central Documentation & Project Hub
+# 🌿 "ธาตุแท้" (That Tae) — Thai 4-Element Cooking Kit & Health Cuisine Platform
+### JSD13 Group 4 — Full Stack Web Application (MERN + MongoDB Atlas + GridFS + RAG AI)
 
-ระบบ E-Commerce สำหรับสั่งซื้อ **Cooking Kit (ชุดวัตถุดิบพร้อมปรุง)** ที่คัดสรรตามภูมิภาคและธาตุเจ้าเรือน เน้นโภชนาการเฉพาะบุคคล ภายใต้ธีมเอิร์ธโทน-ใบลาน พัฒนาด้วยสถาปัตยกรรม **MERN Stack (Monorepo)**
+> **"ธาตุแท้" (That Tae)** คือแพลตฟอร์ม E-Commerce อาหารสุขภาพและชุดวัตถุดิบพร้อมปรุง (**Cooking Kit**) สไตล์ไทยดั้งเดิมและฟิวชั่น ผสานองค์ความรู้ **ศาสตร์การแพทย์แผนไทยเรื่อง 4 ธาตุเจ้าเรือน (ดิน, น้ำ, ลม, ไฟ)** และโภชนาการรายบุคคล ช่วยให้ผู้ใช้ประเมินธาตุเจ้าเรือน เลือกเมนูอาหารที่ปรับสมดุลร่างกาย สั่งซื้อ Cooking Kit ที่ชั่งตวงวัดวัตถุดิบพอดีมื้อพร้อมปรุงได้เองที่บ้าน พร้อมระบบ **RAG AI Advisor** ช่วยให้คำปรึกษาด้านโภชนาการแบบเฉพาะเจาะจง
 
 ---
 
 ## 📌 สารบัญ (Table of Contents)
-1. [ภาพรวมสถาปัตยกรรมระบบ (Architecture & Flow)](#-ภาพรวมสถาปัตยกรรมระบบ-architecture--flow)
-2. [มาตรฐาน Port & Base URL (Network Standards)](#-มาตรฐาน-port--base-url-network-standards)
-3. [โครงสร้างไดเรกทอรี (Project Directory Structure)](#-โครงสร้างไดเรกทอรี-project-directory-structure)
-4. [ระบบ Mock Database ฉบับสมบูรณ์จากฐานข้อมูลจริง (MockDB & Excel Integration Guide)](#-ระบบ-mock-database-ฉบับสมบูรณ์จากฐานข้อมูลจริง-mockdb--excel-integration-guide)
-   * [4.1 แค็ตตาล็อกวัตถุดิบหลัก (Master Ingredients 217 รายการ)](#41-แค็ตตาล็อกวัตถุดิบหลัก-master-ingredients-217-รายการ)
-   * [4.2 เมนู Cooking Kit และสูตรแยกย่อย (Dishes 30 เมนู 6 หมวด)](#42-เมนู-cooking-kit-และสูตรแยกย่อย-dishes-30-เมนู-6-หมวด)
-   * [4.3 วิธีการ Import และเรียกใช้งาน Mock Data ในระบบ](#43-วิธีการ-import-และเรียกใช้งาน-mock-data-ในระบบ)
-5. [สรุปความรับผิดชอบและหน้าที่ที่เหลือของแต่ละคน (Roles & Remaining Tasks for v1)](#-สรุปความรับผิดชอบและหน้าที่ที่เหลือของแต่ละคน-roles--remaining-tasks-for-v1)
-   * [Nate & Nut: สานต่อ Admin Dashboard & Back-office ให้เต็มรูปแบบ](#-nate--nut-admin-dashboard--back-office-management)
-   * [Delta: Storefront, Element Filter & Quiz Integration](#-delta-storefront-element-filter--quiz-integration)
-   * [Cream: Cart Page & Refactored Cart Module](#-cream-cart-page--refactored-cart-module)
-   * [Rin: Checkout, Order History & Profile](#-rin-checkout-order-history--profile)
-6. [แผนงานและการเตรียมตัวสู่ Sprint 3 (Sprint 3 Roadmap: From Mock Local to MongoDB)](#-แผนงานและการเตรียมตัวสู่-sprint-3-sprint-3-roadmap-from-mock-local-to-mongodb)
-   * [ทำไมต้องทดสอบกับ v1 Mock Local ให้สมบูรณ์ก่อน?](#ทำไมต้องทดสอบกับ-v1-mock-local-ให้สมบูรณ์ก่อน)
-   * [Checklist สำหรับการเชื่อมต่อ MongoDB ใน Sprint 3](#checklist-สำหรับการเชื่อมต่อ-mongodb-ใน-sprint-3)
-7. [สารบัญ API กลางฉบับสมบูรณ์ (Complete API Endpoints Reference)](#-สารบัญ-api-กลางฉบับสมบูรณ์-complete-api-endpoints-reference)
-8. [คู่มือการทดสอบระบบด้วย Master Test Suite (testv1.rest)](#-คู่มือการทดสอบระบบด้วย-master-test-suite-testv1rest)
-9. [ขั้นตอนการติดตั้งและเริ่มรันโปรเจกต์ (Quick Start Guide)](#-ขั้นตอนการติดตั้งและเริ่มรันโปรเจกต์-quick-start-guide)
-10. [ข้อตกลงในการร่วมพัฒนา (Team Git Workflow)](#-ข้อตกลงในการร่วมพัฒนา-team-git-workflow)
+1. [จุดเด่นและฟีเจอร์หลักของระบบ (Key Features)](#-จุดเด่นและฟีเจอร์หลักของระบบ-key-features)
+2. [สถาปัตยกรรมระบบภาพรวม (System Architecture)](#-สถาปัตยกรรมระบบภาพรวม-system-architecture)
+3. [สมาชิกในทีมและบทบาทหน้าที่ความรับผิดชอบ (Team Roles & Responsibilities)](#-สมาชิกในทีมและบทบาทหน้าที่ความรับผิดชอบ-team-roles--responsibilities)
+4. [โครงสร้างโฟลเดอร์ของโปรเจกต์ (Project Directory Structure)](#-โครงสร้างโฟลเดอร์ของโปรเจกต์-project-directory-structure)
+5. [เทคโนโลยีที่เลือกใช้และเหตุผล (Tech Stack & Rationale)](#-เทคโนโลยีที่เลือกใช้และเหตุผล-tech-stack--rationale)
+6. [การทำงานของระบบ V2 (MongoDB Atlas + GridFS + RAG AI)](#-การทำงานของระบบ-v2-mongodb-atlas--gridfs--rag-ai)
+7. [ขั้นตอนการติดตั้งและเริ่มรันโปรเจกต์ (Installation & Quick Start)](#-ขั้นตอนการติดตั้งและเริ่มรันโปรเจกต์-installation--quick-start)
+8. [เอกสารประกอบเฉพาะทาง (Specialized Documentations)](#-เอกสารประกอบเฉพาะทาง-specialized-documentations)
 
 ---
 
-## 🏗 ภาพรวมสถาปัตยกรรมระบบ (Architecture & Flow)
+## 🌟 จุดเด่นและฟีเจอร์หลักของระบบ (Key Features)
 
-โปรเจกต์ถูกจัดแบบ **Monorepo** โดยแบ่งฝั่งหน้าบ้าน (`client`) และหลังบ้าน (`server`) ไว้อย่างชัดเจน:
+### 1. ระบบประเมินธาตุเจ้าเรือน (Element Quiz & Health Profiling)
+- แบบประเมินทางสุขภาพ 5 ข้อ อ้างอิงตามลักษณะสรีรวิทยาและอารมณ์ตามศาสตร์การแพทย์แผนไทย
+- วิเคราะห์คำนวณธาตุเด่นของผู้ใช้ (**ธาตุดิน, ธาตุน้ำ, ธาตุลม, ธาตุไฟ**) พร้อมคะแนนแจกแจง
+- บันทึกธาตุเจ้าเรือนลงในโปรไฟล์ผู้ใช้โดยอัตโนมัติ และเชื่อมโยงกับการกรองเมนูอาหารที่แนะนำ
+
+### 2. แค็ตตาล็อกเมนู Cooking Kit และระบบกรองอัจฉริยะ (Smart Menu Catalog)
+- รายการเมนูอาหารไทยแท้ 4 ภาค และไทยฟิวชั่น 30 เมนู (เหนือ, กลาง, อีสาน, ใต้, ฟิวชั่น, ขนมหวาน)
+- กรองตาม **ธาตุเจ้าเรือน** (ดิน, น้ำ, ลม, ไฟ), **ภูมิภาค**, และ **แท็กสุขภาพ** (เช่น GERD Friendly, Keto Flex)
+- หน้ารายละเอียดเมนูแสดง **ตารางวัตถุดิบ (Recipe)**, **รสยาแผนไทย**, **คุณค่าโภชนาการต่อมื้อ/ต่อ 100g**, และขั้นตอนการปรุง
+
+### 3. ระบบสุ่มเมนูอาหารเพื่อสุขภาพ (Menu Randomizer & Bento UI)
+- วงล้อสล็อตหมุนสุ่มเมนูประจำวัน แก้ปัญหา "วันนี้กินอะไรดี"
+- ปรับแต่งเงื่อนไขการสุ่มได้: ล็อกธาตุประจำตัว, เลือกภูมิภาค, จำกัดงบประมาณ
+- แสดงผลลัพธ์แบบ **Compact Bento Card** สวยงาม รองรับทั้งมือถือและเดสก์ท็อป
+
+### 4. ระบบตะกร้าสินค้าและคำนวณโภชนาการ (Cart & Real-time Balance)
+- ตะกร้าสินค้าแบบเชื่อมโยงกับบัญชีผู้ใช้ใน MongoDB (User-based Cart)
+- คำนวณยอดรวมค่าสินค้า, สรุปพลังงานแคลอรีรวม, และสิทธิประโยชน์จัดส่งฟรี (เมื่อยอดครบ 500 บาท)
+
+### 5. ระบบชำระเงินและตัดสต็อกสินค้า (Checkout, Payments & Stock Deduction)
+- รองรับการสั่งซื้อแบบ **Single Kit** หรือแพ็กเกจสมาชิกรายสัปดาห์
+- ช่องทางการชำระเงินหลากหลาย: **PromptPay QR Code**, **บัตรเครดิต/เดบิตผ่าน Stripe**, และ **เก็บเงินปลายทาง (COD)**
+- ระบบหักสต็อกสินค้าทันทีเมื่อยืนยันคำสั่งซื้อ พร้อมคำนวณแต้มสะสม Loyalty Points (10 บาท = 1 แต้ม)
+
+### 6. ระบบสตรีมมิ่งรูปภาพด้วย MongoDB GridFS (Native Database File Storage)
+- อัปโหลดรูปภาพเมนูอาหารและรูปโปรไฟล์ผู้ใช้เข้าสู่ **MongoDB GridFS** โดยตรง
+- ไม่ต้องพึ่งพา Local Disk หรือ Cloud Storage เสริม ลดความซับซ้อนในการ Deploy
+- มี Endpoint สตรีมภาพแบบ High-performance Caching (`/api/v2/upload/image/:id`)
+
+### 7. ปัญญาประดิษฐ์ให้คำปรึกษาโภชนาการ (Server-Side RAG AI Advisor)
+- วิดเจ็ตแชท AI ลอยตัว (Floating Widget) แนะนำการทานอาหารปรับสมดุลธาตุ
+- ทำงานด้วยสถาปัตยกรรม **RAG (Retrieval-Augmented Generation)**:
+  - ดึงข้อมูลเมนูอาหารจริงในร้านจาก MongoDB มาเป็นความรู้ (Context)
+  - ส่งต่อไปยัง **Google Gemini 1.5 Flash API** เพื่อตอบคำถามอย่างถูกต้องและแม่นยำ
+
+### 8. ระบบบริหารจัดการหลังบ้าน (Admin Back-Office Dashboard)
+- แดชบอร์ดสรุปยอดขายรวม, จำนวนคำสั่งซื้อ, สินค้าขายดี, และสินค้าที่ใกล้หมดสต็อก (Low Stock Alert)
+- ระบบจัดการสินค้า CRUD (เพิ่ม, แก้ไข, ลบเมนูอาหาร Cooking Kit)
+- ระบบจัดการคำสั่งซื้อ (ปรับสถานะ: PENDING -> PAID -> PREPARING -> SHIPPED -> DELIVERED)
+- ระบบจัดการสมาชิกและกำหนดบทบาท (User / Admin Role)
+
+---
+
+## 🏗 สถาปัตยกรรมระบบภาพรวม (System Architecture)
 
 ```mermaid
 flowchart TB
-    subgraph Client ["Frontend (React 19 + Vite @ Port 5173)"]
-        UI["UI Storefront & Pages\n(Home, MenuOverview, MenuDetail, Quiz)"]
-        Admin["Admin Management\n(ProductList, ProductForm, OrderManager)"]
-        CartCheckout["Cart & Checkout Flow\n(Cart Page, CheckoutPage, OrderSuccess, OrdersPage)"]
-        AuthContext["Context Layer\n(Auth, Products, Toast, App)"]
+    subgraph ClientLayer ["💻 Client Layer (React 19 + Vite @ Port 5173)"]
+        UI["Storefront Pages\n(Home, Menus, Detail, Quiz, Randomizer)"]
+        CartCheckout["Cart & Checkout Flow\n(Cart, Checkout, Orders, Success)"]
+        AdminUI["Admin Dashboard & Management\n(Products, Orders, Users, RecipeBuilder)"]
+        AIWidget["AI Advisor Floating Widget\n(RAG Chat & Recommendations)"]
+        ClientContext["Context Providers\n(AuthContext, ProductsContext, ToastContext)"]
     end
 
-    subgraph Server ["Backend (Express 5.x @ Port 3001)"]
-        API["Express App Router\n(/api/v1 & /api)"]
-        UsersRoute["users.routes.js\n(Login, Register, JWT, /me)"]
-        ProductsRoute["products.routes.js\n(Catalog, Search, Region & Element Filter)"]
-        IngredientsRoute["ingredients.routes.js\n(Ingredients Catalog & Nutrients/100g)"]
-        CartRoute["cart.routes.js\n(Cart CRUD & Memory Fallback)"]
-        CheckoutRoute["checkout.routes.js\n(Stock Cut, Orders, History)"]
-        RegionsRoute["regions.routes.js\n(4 Regions + Elements)"]
-        ReviewsRoute["reviews.routes.js\n(Customer Reviews)"]
-        Validation["Server-side Validation\n(validateProduct.js)"]
+    subgraph NetworkLayer ["🌐 Network & Routing Layer"]
+        CORS["CORS & Cookie Parser"]
+        MainRouter["routes/index.js (Version Switcher)"]
+        V2Router["routes/v2/index.js (Master V2 Router)"]
     end
 
-    subgraph DataStore ["Database & Storage"]
-        MockStore["In-Memory Store / Mock DB\n(dishes, ingredients, users, carts, orders)"]
-        ExcelData["data-source/*.xlsx\n(Nutrients, Elements, Regional Recipes)"]
-        MongoDB["MongoDB Atlas (Sprint 3)\n(Mongoose: Product, Ingredient, Cart, Order)"]
+    subgraph ServerLayer ["⚙️ Backend API Layer (Express 5.x @ Port 3001)"]
+        AuthRoute["/api/v2/auth (Register, Login, Me)"]
+        ProductRoute["/api/v2/products (Catalog & Filters)"]
+        CartRoute["/api/v2/cart (User-based Cart)"]
+        CheckoutRoute["/api/v2/checkout (Stock Cut & Orders)"]
+        OrderRoute["/api/v2/orders (Order History & Status)"]
+        UploadRoute["/api/v2/upload (GridFS Upload & Stream)"]
+        AdvisorRoute["/api/v2/advisor (RAG + Gemini AI)"]
+        UserRoute["/api/v2/users (Profile & Health)"]
+        AdminRoute["/api/v2/admin (Stats & Controls)"]
     end
 
-    UI --> AuthContext
-    Admin --> AuthContext
-    CartCheckout --> AuthContext
+    subgraph DatabaseLayer ["🍃 Database & Storage (MongoDB Atlas)"]
+        MongoUsers[("users")]
+        MongoProducts[("products")]
+        MongoCarts[("carts")]
+        MongoOrders[("orders")]
+        MongoGridFS[("GridFS: uploads.files & chunks")]
+    end
 
-    AuthContext -->|"HTTP Fetch / REST API"| API
-    API --> UsersRoute
-    API --> ProductsRoute
-    API --> IngredientsRoute
-    API --> CartRoute
-    API --> CheckoutRoute
-    API --> RegionsRoute
-    API --> ReviewsRoute
-    ProductsRoute --> Validation
+    subgraph ExternalServices ["☁️ External Cloud Services"]
+        GeminiAPI["Google Gemini 1.5 Flash API"]
+        StripeAPI["Stripe Payment Gateway"]
+    end
 
-    ExcelData -->|"Generator Script"| MockStore
-    UsersRoute -.-> MockStore
-    ProductsRoute -.-> MockStore
-    IngredientsRoute -.-> MockStore
-    CartRoute -.-> MockStore
-    CheckoutRoute -.-> MockStore
+    UI --> ClientContext
+    CartCheckout --> ClientContext
+    AdminUI --> ClientContext
+    AIWidget --> ClientContext
 
-    MockStore -.->|"Sprint 3 Migration"| MongoDB
+    ClientContext -->|"HTTP REST API (Fetch / Axios)"| CORS
+    CORS --> MainRouter
+    MainRouter --> V2Router
+
+    V2Router --> AuthRoute & ProductRoute & CartRoute & CheckoutRoute & OrderRoute & UploadRoute & AdvisorRoute & UserRoute & AdminRoute
+
+    AuthRoute --> MongoUsers
+    ProductRoute --> MongoProducts
+    CartRoute --> MongoCarts
+    CheckoutRoute --> MongoOrders & MongoProducts & MongoUsers & MongoCarts
+    OrderRoute --> MongoOrders
+    UploadRoute --> MongoGridFS
+    AdvisorRoute --> MongoProducts
+    AdvisorRoute -->|"Retrieval Context"| GeminiAPI
+    CheckoutRoute -.->|"Card Verification"| StripeAPI
 ```
 
 ---
 
-## 🌐 มาตรฐาน Port & Base URL (Network Standards)
+## 👥 สมาชิกในทีมและบทบาทหน้าที่ความรับผิดชอบ (Team Roles & Responsibilities)
 
-เพื่อไม่ให้เกิดความสับสนในการทดสอบและการเชื่อมต่อ API ระหว่างเครื่องของสมาชิกในทีม:
+### 👑 Nate & Nut — Admin Dashboard & Back-office Architecture
+- **ขอบเขตงาน:** ระบบจัดการหลังบ้าน, สถาปัตยกรรม Database, และการเชื่อมโยงระบบ V2
+- **หน้าที่และความสำเร็จ:**
+  - พัฒนาหน้า **Admin Overview Dashboard** (`AdminDashboard.jsx`) สรุปยอดขายรวม, รายการออเดอร์, สินค้าขายดี และแจ้งเตือนสต็อกใกล้หมด
+  - พัฒนาระบบ **Product Management CRUD** (`AdminProductList.jsx`, `ProductForm.jsx`) ให้แอดมินเพิ่ม/แก้ไขเมนู และกำหนดธาตุเจ้าเรือน
+  - พัฒนาระบบ **Order Management** สำหรับแอดมินเพื่ออัปเดตสถานะการเตรียมและจัดส่งสินค้า
+  - ออกแบบสถาปัตยกรรม **V2 MongoDB Atlas Integration** ย้ายระบบจาก In-memory สู่ Database จริง
+  - วางระบบ **GridFS** สำหรับจัดเก็บรูปภาพใน MongoDB และระบบ **Server-Side RAG AI Advisor**
 
-| Service | Port | Local URL | หน้าที่ |
-| :--- | :--- | :--- | :--- |
-| **Frontend (Client)** | `5173` | `http://localhost:5173` | เว็บไซต์ React + Vite |
-| **Backend (Server)** | `3001` | `http://localhost:3001` | Node.js Express REST API |
-| **API Base URL** | - | `http://localhost:3001/api/v1` | Prefix หลักของ Endpoint ทั้งหมด (รองรับ `/api` และ `/v1` ด้วย) |
+### 🎨 Delta — Storefront, Element Filter & Quiz Integration
+- **ขอบเขตงาน:** หน้าบ้านส่วนแค็ตตาล็อก, แบบประเมินธาตุเจ้าเรือน, และตัวช่วยสุ่มเมนู
+- **หน้าที่และความสำเร็จ:**
+  - พัฒนาหน้า **Element Quiz** (`ElementQuizPage.jsx`, `QuizForm.jsx`, `QuizResult.jsx`) คำนวณผลลัพธ์ธาตุเจ้าเรือน 4 ธาตุ
+  - พัฒนาระบบ **Element Filtering** ในหน้า `MenuOverview.jsx` ให้ผู้ใช้กรองอาหารตามธาตุ (ดิน, น้ำ, ลม, ไฟ) ทั้งภาษาไทยและอังกฤษ
+  - พัฒนาหน้า **Menu Randomizer** (`MenuRandomizerPage.jsx`) วงล้อสุ่มเมนูอาหารสุขภาพพร้อมกรองตามงบประมาณ
+  - ออกแบบและปรับปรุง Bento Grid Layout ให้แสดงผลสวยงาม กระชับ ไม่เลื่อนลอยบนมือถือและเดสก์ท็อป
+
+### 🛒 Cream — Cart Architecture & Nutrition Integration
+- **ขอบเขตงาน:** ระบบตะกร้าสินค้า โครงสร้าง Component และการเชื่อมโยงข้อมูลโภชนาการ
+- **หน้าที่และความสำเร็จ:**
+  - ปรับโครงสร้างโฟลเดอร์โมดูลตะกร้าสินค้า (`components/cart/Cart.jsx`, `CartItem.jsx`, `cartItems.jsx`)
+  - พัฒนาระบบเพิ่ม ลด ปรับจำนวนสินค้าในตะกร้าแบบ Real-time เชื่อมต่อกับ Backend V2
+  - พัฒนาส่วน **Cart Nutrition Summary** คำนวณผลรวมแคลอรี (Total kcal) และโปรตีนของอาหารทั้งหมดในตะกร้า
+  - สร้างแถบคำแนะนำนำทางแบบลอยตัว (**Cart Floating Guide**) เพิ่มความสะดวกให้ผู้ใช้งาน
+
+### 💳 Rin — Checkout, Order History, Payment & Profile
+- **ขอบเขตงาน:** ขั้นตอนการสั่งซื้อ, ชำระเงิน, ประวัติออเดอร์, และโปรไฟล์ผู้ใช้
+- **หน้าที่และความสำเร็จ:**
+  - พัฒนาหน้า **Checkout Page** (`CheckoutPage.jsx`) พร้อมตัวเลือกที่อยู่จัดส่ง และการเลือกแพ็กเกจสมาชิก (`PlanSelector.jsx`)
+  - เชื่อมต่อระบบชำระเงินครอบคลุมทั้ง **PromptPay**, **บัตรเครดิตผ่าน Stripe SDK**, และ **เก็บเงินปลายทาง (COD)**
+  - พัฒนาหน้า **Orders Page** (`OrdersPage.jsx`) แสดงประวัติการสั่งซื้อ รายละเอียดเมนู และสถานะการจัดส่ง
+  - พัฒนาหน้า **Profile Page** (`ProfilePage.jsx`) จัดการข้อมูลส่วนตัว ธาตุประจำตัว และแต้มสะสม Loyalty Points
 
 ---
 
-## 📁 โครงสร้างไดเรกทอรี (Project Directory Structure)
+## 📁 โครงสร้างโฟลเดอร์ของโปรเจกต์ (Project Directory Structure)
 
 ```text
 PJ-G4-SP2/
-├── Docs/                           # เอกสารออกแบบระบบและฐานข้อมูล (ER Diagrams)
-│   ├── ER-Diagram-MongoDB.md       # แบบจำลอง Collections MongoDB ตามมาตรฐาน
-│   └── er-diagram-mongodb.excalidraw
-├── data-source/                    # ฐานข้อมูล Excel ดั้งเดิม (Nutrients, Elements, Recipes)
-│   ├── northern.xlsx               # ภาคเหนือ + ธาตุ (น้ำพริกอ่อง, ข้าวซอย, ลาบเหนือ, แกงฮังเล, แกงขนุน)
-│   ├── isan.xlsx                   # ภาคอีสาน + ธาตุ (ส้มตำไทย, แกงอ่อม, แกงหน่อไม้, ต้มแซ่บ, ข้าวปุ้นซาว)
-│   ├── central.xlsx                # ภาคกลาง + ธาตุ (แกงรัญจวน, แกงเทโพ, มัสมั่นไก่, แกงโสฬส, หมูชะมวง)
-│   ├── southern.xlsx               # ภาคใต้ + ธาตุ (หน่อไม้ต้มกะทิ, แกงระแวง, ผัดสะตอ, ยำไตปลา, ไก่กอแระ)
-│   ├── fusion.xlsx                 # ไทยฟิวชั่น + ธาตุ (สปาเกตตี, เปาะเปี๊ยะชาร์โคล, มักกะโรนี, เกี๊ยวซ่า, ข้าวมันไก่)
-│   ├── desserts.xlsx               # ขนมหวาน + ธาตุ (ข้าวแต๋น, ทับทิมกรอบ, ข้าวเหนียวมะม่วง, สาคูต้น, ขนมถ้วย)
-│   └── nutrients_elements.xlsx     # รวมโภชนาการต่อ 100g, รสยา และธาตุของวัตถุดิบทั้งหมด
-├── scripts/                        # สคริปต์ช่วยประมวลผลข้อมูล (Data Tooling)
-│   └── generate-mock-from-excel.js # แปลง Excel 8 ไฟล์เป็น Mock DB (dishes & ingredients)
-├── client/                         # ส่วน Frontend (React 19 + Tailwind v4 + Vite)
+├── README.md                       # 📄 เอกสารภาพรวมโปรเจกต์ฉบับสมบูรณ์ (ไฟล์นี้)
+├── README_Client.md                # 📄 คู่มือเจาะลึกสถาปัตยกรรมและโค้ดฝั่ง Client
+├── README_Server.md                # 📄 คู่มือเจาะลึกสถาปัตยกรรมและโค้ดฝั่ง Server
+│
+├── client/                         # 💻 ส่วน Frontend (React 19 + Tailwind CSS + Vite)
 │   ├── src/
-│   │   ├── components/             # Reusable UI Components
-│   │   │   ├── cart/               # ตะกร้าสินค้า (Cart, cartItems, CartItem) [Refactored]
-│   │   │   ├── Menu/               # ส่วน Catalog (MenuCard, MenuFilters)
-│   │   │   ├── checkout/           # ส่วนสั่งซื้อ (ShippingForm, PaymentMethodSelector)
-│   │   │   ├── element-quiz/       # แบบทดสอบธาตุเจ้าเรือน
-│   │   │   ├── home/               # Landing Page Sections
-│   │   │   ├── Layout.jsx          # โครงร่างหน้าเว็บหลัก + Cart State กลาง
-│   │   │   └── Navbar.jsx          # Header นำทาง + โปรไฟล์ + ตะกร้า (ใช้ SVG Icons)
-│   │   ├── mock-data/              # Mock Data สำหรับหน้าบ้าน (dishes, ingredients, users, regions)
+│   │   ├── components/             # Reusable UI Components แยกตามโมดูล
+│   │   │   ├── ai/                 # วิดเจ็ต AI Advisor (AIAdvisorWidget.jsx)
+│   │   │   ├── cart/               # ตะกร้าสินค้า (Cart, CartItem, CartFloatingGuide)
+│   │   │   ├── checkout/           # ส่วนชำระเงิน (PlanSelector, CheckoutSummary)
+│   │   │   ├── element-quiz/       # แบบประเมินธาตุ (QuizForm, QuizResult)
+│   │   │   ├── home/               # Section ต่างๆ บนหน้าหลัก
+│   │   │   ├── Menu/               # การ์ดและตัวกรองเมนู (MenuCard, MenuFilters)
+│   │   │   ├── menu-randomizer/    # วงล้อและ Bento Card สุ่มเมนู
+│   │   │   ├── Navbar.jsx          # เมนูนำทางแบบ Dynamic Role (Guest, User, Admin)
+│   │   │   └── Layout.jsx          # โครงร่างหน้าเว็บหลักพร้อม Footer
+│   │   ├── context/                # Context Layer (Auth, Products, Toast, App)
 │   │   ├── pages/                  # หน้า Route หลักของแอปพลิเคชัน
-│   │   │   ├── admin/              # Admin ProductList & Form
-│   │   │   ├── CheckoutPage.jsx    # หน้าสั่งซื้อและชำระเงิน
-│   │   │   ├── Home.jsx            # หน้าหลัก (Landing Page)
-│   │   │   ├── MenuDetail.jsx      # หน้ารายละเอียดเมนู + ตารางวัตถุดิบ/รสยา/สารอาหาร 100g
-│   │   │   ├── MenuOverview.jsx    # หน้าร้านค้า / แค็ตตาล็อกเมนู
-│   │   │   └── OrdersPage.jsx      # หน้ารายการคำสั่งซื้อและสถานะจัดส่ง
-├── server/                         # ส่วน Backend (Node.js + Express 5.x)
-│   ├── src/
-│   │   ├── config/db.js            # จัดการเชื่อมต่อ MongoDB พร้อม Auto Offline Fallback
-│   │   ├── data/products.js        # Data Access Layer สำหรับ Products (เชื่อม recipe & nutrition)
-│   │   ├── mockDB/                 # Master Mock Database (dishes, ingredients, users, regions, reviews)
-│   │   ├── routes/v1/              # API Endpoints เวอร์ชัน 1 ครบทุกโมดูล
-│   │   │   ├── users.routes.js
-│   │   │   ├── products.routes.js
-│   │   │   ├── ingredients.routes.js # [NEW] API แค็ตตาล็อกวัตถุดิบและโภชนาการ
-│   │   │   ├── cart.routes.js
-│   │   │   ├── checkout.routes.js
-│   │   │   ├── regions.routes.js
-│   │   │   └── reviews.routes.js
-│   │   └── testapi/testv1.rest     # Master API Test Suite ทดสอบได้ในคลิกเดียว
+│   │   │   ├── admin/              # แดชบอร์ดและเครื่องมือแอดมิน
+│   │   │   ├── Home.jsx            # หน้าแรกของเว็บไซต์
+│   │   │   ├── MenuOverview.jsx    # หน้ารวมเมนูอาหารและตัวกรอง
+│   │   │   ├── MenuDetail.jsx      # หน้ารายละเอียดสูตรและโภชนาการ
+│   │   │   ├── ElementQuizPage.jsx # หน้าทำแบบทดสอบธาตุเจ้าเรือน
+│   │   │   ├── MenuRandomizerPage.jsx # หน้าสุ่มเมนูอาหาร
+│   │   │   ├── CheckoutPage.jsx    # หน้ากรอกที่อยู่และชำระเงิน
+│   │   │   ├── OrderSuccess.jsx    # หน้ายืนยันคำสั่งซื้อสำเร็จ
+│   │   │   ├── OrdersPage.jsx      # หน้าประวัติการสั่งซื้อ
+│   │   │   ├── ProfilePage.jsx     # หน้าโปรไฟล์ผู้ใช้
+│   │   │   └── NotFoundPage.jsx    # หน้า 404 รองรับ URL ที่ไม่ถูกต้อง
+│   │   └── utils/                  # เครื่องมือคำนวณ (aiAdvisorEngine, quizHelpers)
+│   └── package.json
+│
+└── server/                         # ⚙️ ส่วน Backend (Node.js + Express 5.x + MongoDB Atlas)
+    ├── src/
+    │   ├── config/
+    │   │   ├── db.js               # เชื่อมต่อ MongoDB Atlas พร้อม Graceful Shutdown
+    │   │   └── gridfs.js           # จัดเตรียม GridFSBucket สำหรับสตรีมรูปภาพ
+    │   ├── middleware/
+    │   │   ├── auth.js             # ตรวจสอบสิทธิ์ (JWT, requireAuth, requireAdmin)
+    │   │   └── upload.js           # Multer Storage รับรูปภาพเข้า MongoDB GridFS
+    │   ├── models/                 # Mongoose Schemas & Models
+    │   │   ├── User.model.js       # ข้อมูลสมาชิก, ธาตุเจ้าเรือน, ที่อยู่, แต้มสะสม
+    │   │   ├── Product.model.js    # ข้อมูลเมนู Cooking Kit, ธาตุ, สารอาหาร, ราคา
+    │   │   ├── Cart.js             # ตะกร้าสินค้าแยกตามรายบุคคล
+    │   │   ├── Order.js            # คำสั่งซื้อ, รายการสินค้า, การชำระเงิน, สถานะจัดส่ง
+    │   │   └── Review.model.js     # รีวิวสินค้าพร้อมเช็ค Verified Purchase
+    │   ├── routes/
+    │   │   ├── index.js            # Main Switcher (เลือกเปิดใช้งาน v1 หรือ v2)
+    │   │   └── v2/                 # API Version 2 (เชื่อมต่อ MongoDB เต็มรูปแบบ)
+    │   │       ├── auth.routes.js
+    │   │       ├── products.routes.js
+    │   │       ├── cart.routes.js
+    │   │       ├── checkout.routes.js
+    │   │       ├── orders.routes.js
+    │   │       ├── upload.routes.js
+    │   │       ├── advisor.routes.js
+    │   │       ├── users.routes.js
+    │   │       ├── reviews.routes.js
+    │   │       └── admin.routes.js
+    │   ├── scripts/
+    │   │   └── seedProducts.js     # สคริปต์โหลด 30 เมนูเข้าสู่ MongoDB Atlas อัตโนมัติ
+    │   └── server.js               # Express Server Entry Point
+    └── package.json
 ```
 
 ---
 
-## 📦 ระบบ Mock Database ฉบับสมบูรณ์จากฐานข้อมูลจริง (MockDB & Excel Integration Guide)
+## 🛠 เทคโนโลยีที่เลือกใช้และเหตุผล (Tech Stack & Rationale)
 
-ระบบ Mock DB ของเราถูกสกัดและประมวลผลมาจากไฟล์ข้อมูลมาตรฐานของทีม (`data-source/*.xlsx`) เพื่อให้ข้อมูลมีความสมจริงและตรงตาม **ER Diagram (`Docs/ER-Diagram-MongoDB.md`)** ทุกประการ
-
-### 4.1 แค็ตตาล็อกวัตถุดิบหลัก (Master Ingredients 217 รายการ)
-เก็บอยู่ที่ `server/src/mockDB/ingredients.js` และ `client/src/mock-data/ingredients.js`
-* **หน่วยมาตรฐาน:** บันทึกสารอาหารหลักที่ **100 กรัม (`basisWeightG: 100`)**
-* **ข้อมูลในแต่ละ Record:**
-  ```javascript
-  {
-    _id: "ing_021",
-    nameTh: "หมูสดบด",
-    category: "meat",                    // meat, poultry, seafood, vegetable, herb_spice, carb, coconut, seasoning, dessert
-    categoryTh: "เนื้อสัตว์ & โปรตีน",
-    medicinalTaste: "รสมัน",             // รสยาแพทย์แผนไทย: รสมัน, รสเปรี้ยว, รสเผ็ดร้อน, รสเค็ม, รสขม, รสหวาน, รสฝาด
-    elements: ["ดิน"],                   // ธาตุเจ้าเรือนที่เหมาะแก่การกิน: ดิน, น้ำ, ลม, ไฟ
-    basisWeightG: 100,
-    nutrientsPer100g: {
-      calories: 330,                     // kcal
-      protein: 16.0,                     // กรัม
-      carbs: 0.0,                        // กรัม
-      sugar: 0.0,                        // กรัม
-      fat: 30.0,                         // กรัม
-      fiber: 0.0,                        // กรัม
-      sodium: 50                         // มิลลิกรัม
-    },
-    isActive: true
-  }
-  ```
-
-### 4.2 เมนู Cooking Kit และสูตรแยกย่อย (Dishes 30 เมนู 6 หมวด)
-เก็บอยู่ที่ `server/src/mockDB/dishes.js` และ `client/src/mock-data/dishes.js`
-* ครอบคลุม **30 เมนู** จาก 6 กลุ่มภูมิภาคและขนมหวาน (กลุ่มละ 5 เมนู):
-  * **ภาคเหนือ:** น้ำพริกอ่อง, ข้าวซอย, ลาบเหนือ, แกงฮังเล, แกงขนุน
-  * **ภาคอีสาน:** ข้าวปุ้นซาว, แกงอ่อม, แกงหน่อไม้ใบย่านาง, ส้มตำไทย, ต้มแซ่บกระดูกหมู
-  * **ภาคกลาง:** แกงรัญจวน, แกงเทโพ, แกงมัสมั่นไก่, แกงโสฬส (แกงสิบหก), หมูชะมวง
-  * **ภาคใต้:** หน่อไม้หวานต้มกะทิ, แกงระแวง, ผัดสะตอกับกะปิใส่กุ้ง, ยำไตปลา, ไก่กอแระ
-  * **ไทยฟิวชั่น:** สปาเกตตีผัดหอยลายน้ำพริกเผา, เปาะเปี๊ยะสดผัดไทยเส้นชาร์โคล, มักกะโรนีต้มยำไข่ชีสทอดกรอบ, เกี๊ยวซ่าราดหน้า, ข้าวมันไก่
-  * **ขนมหวาน:** ข้าวแต๋น, ทับทิมกรอบ, ข้าวเหนียวมะม่วง, สาคูน้ำกะทิ, ขนมถ้วยไข่หวาน
-* **สูตรแยกย่อยในแต่ละชุด (`recipe`):**
-  * ประกอบด้วย 8–19 วัตถุดิบจริงในชุด Cooking Kit พร้อมระบุปริมาณที่ต้องใช้สำหรับ 2 เสิร์ฟ (เช่น หมู 200g, กะทิ 200ml, พริกแกง 45g)
-  * แต่ละวัตถุดิบมีค่าสารอาหารต่อ 100g, รสยา, และธาตุที่ควรกินผูกไว้ครบถ้วน
-* **การคำนวณสารอาหารรวม (`nutritionCache`):**
-  * มีการคำนวณรวมทั้งเซ็ต (`totals`) และค่าเฉลี่ยต่อเสิร์ฟ (`perServing`)
-  * คำนวณธาตุหลักประจำเมนู (`dominantElement`) เช่น ธาตุดิน และระบุธาตุที่ได้ประโยชน์ (`elementSuitability`)
-
-### 4.3 วิธีการ Import และเรียกใช้งาน Mock Data ในระบบ
-
-#### ในฝั่ง Frontend (React):
-```javascript
-// 1. ดึงเมนูและวัตถุดิบโดยตรงจาก mock-data
-import { dishes, ingredients } from '../mock-data/index.js';
-
-// 2. ใช้งานผ่าน ProductsContext (แนะนำ: รองรับทั้ง API และ Mock Fallback)
-import { useProducts } from '../context/ProductsContext.js';
-
-const { products, getProductById } = useProducts();
-const currentDish = getProductById("dish_001");
-console.log(currentDish.recipe);        // วัตถุดิบแยกย่อย
-console.log(currentDish.nutritionCache); // สรุปสารอาหาร
-console.log(currentDish.dominantElement); // ธาตุเจ้าเรือนหลัก (ดิน/น้ำ/ลม/ไฟ)
-```
-
-#### ในฝั่ง Backend (Node.js Express):
-```javascript
-// 1. Import จาก mockDB
-import dishes from '../mockDB/dishes.js';
-import ingredients from '../mockDB/ingredients.js';
-
-// 2. เรียกใช้ผ่าน API Endpoint
-// GET /api/v1/ingredients       -> ดูวัตถุดิบทั้งหมด + สารอาหารต่อ 100g
-// GET /api/v1/ingredients/:id   -> ดูวัตถุดิบรายตัว
-// GET /api/v1/products          -> รายการสินค้าพร้อม recipe และ nutritionCache
-```
+| หมวดหมู่ | เทคโนโลยี | เหตุผลที่เลือกใช้ |
+|---|---|---|
+| **Frontend Framework** | **React 19 + Vite** | ทำงานรวดเร็ว รองรับ Component-based UI และมี Hot Module Replacement (HMR) ลื่นไหล |
+| **Styling** | **Tailwind CSS v4 + Vanilla CSS** | ปรับแต่งธีม Earth Tone สีใบลาน-ช็อกโกแลตได้แม่นยำ รองรับ Responsive & Bento Design |
+| **Backend Runtime** | **Node.js (Express 5.x)** | รองรับ Async/Await อย่างสมบูรณ์ มี Middleware Ecosystem ที่แข็งแกร่งและคล่องตัว |
+| **Database** | **MongoDB Atlas (Mongoose 8.x)** | ฐานข้อมูล NoSQL ที่ยืดหยุ่น เหมาะกับเอกสารอาหารที่มีสูตรและสารอาหารแบบ Nesting Array |
+| **File Storage** | **MongoDB GridFS** | เก็บไฟล์ภาพขนาดใหญ่ใน Database ได้โดยตรง ไม่ต้องเสียค่าบริการ S3 หรือตั้งโฟลเดอร์ในเซิร์ฟเวอร์ |
+| **Authentication** | **JWT (JSON Web Token)** | ตรวจสอบตัวตนแบบ Stateless ประหยัดทรัพยากรเซิร์ฟเวอร์ และเก็บใน HttpOnly Cookie ได้ปลอดภัย |
+| **AI Integration** | **Google Gemini 1.5 Flash** | ประมวลผลคำตอบรวดเร็ว รองรับภาษาไทยได้เป็นธรรมชาติ และรองรับ Context ขนาดยาวสำหรับ RAG |
+| **Payment Gateway** | **Stripe SDK + PromptPay QR** | รองรับการชำระเงินที่ปลอดภัยตามมาตรฐานสากล และตรงกับพฤติกรรมผู้บริโภคชาวไทย |
 
 ---
 
-## 👥 สรุปความรับผิดชอบและหน้าที่ที่เหลือของแต่ละคน (Roles & Remaining Tasks for v1)
+## 🚀 การทำงานของระบบ V2 (MongoDB Atlas + GridFS + RAG AI)
 
-เพื่อความต่อเนื่องในการทำงาน ขอแจกแจง Action Items ที่เหลือของสมาชิกแต่ละคนเพื่อปิด Sprint 2 ให้สมบูรณ์ 100%:
+ระบบ V2 ได้รับการออกแบบให้แก้ปัญหาสำคัญ 3 ประการจาก V1:
 
-### 👑 Nate & Nut: Admin Dashboard & Back-office Management
-**เน็ท และ นัท** รับผิดชอบส่วนแอดมินและการจัดการระบบหลังบ้าน:
-* **เป้าหมาย:** ทำหน้า Dashboard สรุปภาพรวม และระบบจัดการสินค้า/ออเดอร์ให้สมบูรณ์
-* **งานที่ต้องทำต่อ (Action Items):**
-  1. **หน้า Overview Dashboard (`client/src/pages/admin/AdminDashboard.jsx`):**
-     * การ์ดสรุปยอดขายรวม (Total Revenue), จำนวนออเดอร์ทั้งหมด, สินค้าที่ขายดีที่สุด 5 อันดับแรก
-     * กราฟหรือสัดส่วนยอดขายแยกตามภูมิภาคและธาตุเจ้าเรือน (ดิน, น้ำ, ลม, ไฟ)
-  2. **ระบบจัดการเมนู Cooking Kit (`client/src/pages/admin/AdminProductList.jsx` & `ProductForm.jsx`):**
-     * เพิ่มการแสดงผลตารางสูตรวัตถุดิบแยกย่อย (`recipe`) และสารอาหารต่อ 100g ในหน้าดูรายละเอียดของแอดมิน
-     * รองรับการเลือกธาตุเจ้าเรือน (`dominantElement`) ในฟอร์มเพิ่ม/แก้ไขเมนู
-  3. **ระบบจัดการคำสั่งซื้อ (`client/src/pages/admin/AdminOrders.jsx`):**
-     * ตารางดูคำสั่งซื้อทั้งหมดที่ส่งเข้ามาผ่าน `GET /api/v1/orders`
-     * ปุ่มสำหรับ Admin อัปเดตสถานะออเดอร์ (เช่น `PENDING` -> `PREPARING` -> `SHIPPED` -> `COMPLETED`) ผ่าน `PATCH /api/v1/orders/:orderId/status`
+1. **จาก In-memory สู่ Persistent Database:** ข้อมูลผู้ใช้, ตะกร้าสินค้า, และออเดอร์ จะถูกบันทึกถาวรใน MongoDB Atlas ทำให้ข้อมูลไม่สูญหายเมื่อรีสตาร์ทเซิร์ฟเวอร์
+2. **Simple & Robust `async/await` Checkout:** การสั่งซื้อถูกออกแบบให้ตรวจสอบและหักสต็อกสินค้าด้วยคำสั่ง `$inc: { quantity: -qty }` ตรงไปตรงมา ทำให้ทำงานได้อย่างเสถียรบน MongoDB Atlas ทุกประเภทโดยไม่ติดข้อจำกัดของ Replica Set Transactions
+3. **Database-Native Asset Management (GridFS):** รูปภาพเมนูอาหารและรูปโปรไฟล์จะถูกแปลงเป็น Chunks เก็บใน MongoDB และให้บริการผ่าน Endpoint `/api/v2/upload/image/:id` พร้อมระบบ Browser Caching สูงสุด 1 ปี
 
 ---
 
-### 🎨 Delta: Storefront, Element Filter & Quiz Integration
-* **เป้าหมาย:** หน้าร้านค้าที่ค้นหาและกรองอาหารตามธาตุเจ้าเรือนได้สมบูรณ์
-* **งานที่ต้องทำต่อ (Action Items):**
-  1. **Element Filter ใน `MenuOverview.jsx`:**
-     * เพิ่มตัวกรอง "ธาตุเจ้าเรือน" (ดิน, น้ำ, ลม, ไฟ) ข้างๆ ตัวกรองภูมิภาค โดยเชื่อมกับฟิลด์ `dominantElement` ของสินค้า
-  2. **เชื่อม Quiz เข้ากับ Storefront:**
-     * เมื่อลูกค้าทำแบบทดสอบธาตุใน `ElementQuizPage.jsx` จบและได้ผลลัพธ์ธาตุ ให้มีปุ่ม "ดูชุดเมนูที่เหมาะกับธาตุของคุณ" นำทางไปยัง `MenuOverview.jsx?element=ไฟ` พร้อมเปิดฟิลเตอร์ธาตุให้อัตโนมัติ
+## ⚡ ขั้นตอนการติดตั้งและเริ่มรันโปรเจกต์ (Installation & Quick Start)
 
----
+### ข้อกำหนดเบื้องต้น (Prerequisites)
+- **Node.js**: เวอร์ชัน 18.x หรือ 20.x ขึ้นไป
+- **MongoDB Atlas**: มี Connection String ที่พร้อมใช้งาน
 
-### 🛒 Cream: Cart Page & Refactored Cart Module
-* **เป้าหมาย:** ตรวจสอบระบบตะกร้าสินค้าหลังปรับโครงสร้างโฟลเดอร์เป็น `components/cart/`
-* **งานที่ต้องทำต่อ (Action Items):**
-  1. **ตรวจสอบความถูกต้องของการ Import ในโปรเจกต์:**
-     * ตรวจทานไฟล์ `components/cart/Cart.jsx`, `cartItems.jsx`, `CartItem.jsx` ว่าเชื่อมต่อกับ `useOutletContext()` ได้ราบรื่น
-  2. **เพิ่มส่วนสรุปโภชนาการรวมในตะกร้า (Cart Nutrition Summary):**
-     * คำนวณผลรวมแคลอรี (Total kcal) และโปรตีนของอาหารทั้งหมดที่อยู่ในตะกร้า เพื่อให้ลูกค้าเห็นก่อนกดสั่งซื้อ
-
----
-
-### 💳 Rin: Checkout, Order History & Profile
-* **เป้าหมาย:** กระบวนการสั่งซื้อ ชำระเงิน และการดูประวัติคำสั่งซื้อ
-* **งานที่ต้องทำต่อ (Action Items):**
-  1. **Checkout Flow Testing (`CheckoutPage.jsx`):**
-     * ทดสอบขั้นตอนการสั่งซื้อเมื่อล็อกอินด้วยบัญชีจริง (เช่น `kan@example.com` / `12345678`)
-     * ตรวจสอบว่า `POST /api/v1/checkout` บันทึกคำสั่งซื้อและตัดสต็อกสำเร็จ
-  2. **หน้าประวัติคำสั่งซื้อ (`OrdersPage.jsx`):**
-     * ดึงข้อมูลออเดอร์จาก `GET /api/v1/orders/user/:userId` มาแสดงรายละเอียดสินค้า ที่อยู่จัดส่ง และสถานะจัดส่ง
-
----
-
-## 🚀 แผนงานและการเตรียมตัวสู่ Sprint 3 (Sprint 3 Roadmap: From Mock Local to MongoDB)
-
-### ทำไมต้องทดสอบกับ v1 Mock Local ให้สมบูรณ์ก่อน?
-1. **ลด Dependency ในการพัฒนา:** สมาชิกในทีมทุกคนสามารถรันโค้ดและพัฒนาฟีเจอร์หน้าบ้านของตัวเองได้ทันทีในเครื่อง โดยไม่ต้องกังวลเรื่องการเชื่อมต่ออินเทอร์เน็ต, MongoDB Atlas Timeout, หรือปัญหา IP Whitelist
-2. **มั่นใจใน Business Logic:** เมื่อฟังก์ชันหน้าบ้านเชื่อมต่อกับ REST API v1 ในรูปแบบ In-Memory / Mock DB ได้อย่างไร้รอยต่อแล้ว การย้ายไปต่อ Database จริงจะทำเพียงแค่เปลี่ยน Data Access Layer (DAL) หลังบ้านเท่านั้น โค้ดหน้าบ้านจะไม่ต้องแก้อีกเลย!
-
-### Checklist สำหรับการเชื่อมต่อ MongoDB ใน Sprint 3
-เมื่อเพื่อนๆ ทดสอบ v1 Mock Local จนครบสมบูรณ์แล้ว ใน Sprint 3 เราจะดำเนินการดังนี้:
-1. **Mongoose Schemas:** แปลงโครงสร้าง `ingredients` (217 รายการ) และ `dishes` (30 รายการ) เป็น Mongoose Models ตาม `Docs/ER-Diagram-MongoDB.md`
-2. **Database Seed Command (`npm run seed`):**
-   * จัดเตรียมสคริปต์ `server/src/scripts/seed.js` ที่ดึงข้อมูลจาก `data-source/*.xlsx` ยิงเข้าสู่ MongoDB Atlas คอลเลกชันจริงในคลิกเดียว
-3. **Data Access Layer Refactor:**
-   * ปรับแก้ `server/src/data/products.js` และ `server/src/routes/v1/*.routes.js` ให้เรียก `Product.find()`, `Ingredient.find()`, `Order.create()` จาก Mongoose แทน In-Memory Object
-4. **JWT & Security Hardening:**
-   * เข้ารหัสรหัสผ่านด้วย `bcryptjs` และจัดเก็บ Access Token ใน Secure Cookie
-5. **Production Deployment:**
-   * Frontend: Deploy สู่ **Vercel**
-   * Backend: Deploy สู่ **Render / Railway** พร้อมต่อ MongoDB Atlas
-
----
-
-## 📡 สารบัญ API กลางฉบับสมบูรณ์ (Complete API Endpoints Reference)
-
-Base URL: `http://localhost:3001/api/v1` (หรือเรียกผ่าน `http://localhost:3001/api`)
-
-### 👤 1. หมวดหมู่ผู้ใช้งานและการยืนยันตัวตน (Users & Authentication)
-| Method | Endpoint | คำอธิบาย | ข้อมูลที่ต้องส่ง (Body / Headers) |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/users` | ดึงรายชื่อผู้ใช้ทั้งหมด (ซ่อนรหัสผ่าน) | - |
-| `GET` | `/users/me` | ดึงข้อมูลผู้ใช้ปัจจุบันจาก Token | Header: `Authorization: Bearer <token>` |
-| `GET` | `/users/:id` | ดึงข้อมูลผู้ใช้ตาม ID (เช่น `USR-001`) | - |
-| `POST` | `/users/login` | เข้าสู่ระบบ (รับ JWT Token + User Data) | `{ email, password }` |
-| `POST` | `/users` | สมัครสมาชิกใหม่ (Hash รหัสผ่าน + รับ Token) | `{ firstName, lastName, email, password, phone, ... }` |
-| `PUT` | `/users/:id` | อัปเดตข้อมูลผู้ใช้ / เงื่อนไขสุขภาพ | `{ firstName, phone, conditions, ... }` |
-| `DELETE`| `/users/:id` | ลบบัญชีผู้ใช้ | - |
-
----
-
-### 🍲 2. หมวดหมู่สินค้า Cooking Kit (Products & Catalog)
-| Method | Endpoint | คำอธิบาย | Query Parameters / Body |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/products` | ดึงรายการ Cooking Kit ทั้งหมด พร้อมสูตรและสารอาหาร | `?search=...`, `?region=...`, `?element=...`, `?tag=...`, `?sort=...` |
-| `GET` | `/products/:id` | ดึงรายละเอียด Cooking Kit รายเมนู (มี recipe & nutritionCache) | - |
-| `POST` | `/products` | เพิ่มเมนู Cooking Kit ใหม่ (ผ่านการตรวจ Validation) | `{ name, region, price, quantity, date, tags, ... }` |
-| `PUT` | `/products/:id` | แก้ไขข้อมูล Cooking Kit | `{ name, price, quantity, description, ... }` |
-| `DELETE`| `/products/:id` | ลบ Cooking Kit ออกจากคลัง | - |
-
----
-
-### 🌿 3. หมวดหมู่วัตถุดิบและโภชนาการ (Ingredients & Nutrition)
-| Method | Endpoint | คำอธิบาย | Query Parameters |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/ingredients` | ดึงรายการวัตถุดิบทั้งหมด 217 รายการ พร้อมสารอาหารต่อ 100g, รสยา, และธาตุ | `?category=meat\|vegetable\|carb...` |
-| `GET` | `/ingredients/:id`| ดึงข้อมูลวัตถุดิบเดี่ยวตาม ID (เช่น `ing_021`) | - |
-
----
-
-### 🛒 4. หมวดหมู่ตะกร้าสินค้า (Cart Management)
-| Method | Endpoint | คำอธิบาย | ข้อมูลที่ต้องส่ง (Body) |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/cart/:userId` | ดึงสินค้าในตะกร้า (พร้อม Subtotal และ Total Items) | - |
-| `POST` | `/cart/items` | เพิ่มสินค้าลงตะกร้า (เพิ่ม `quantity` ถ้ามีอยู่แล้ว) | `{ userId, productId, quantity }` |
-| `PUT` | `/cart/items/:itemId` | ปรับจำนวนชุดสินค้าในตะกร้า | `{ userId, quantity }` หรือ `{ userId, delta }` |
-| `DELETE`| `/cart/items/:itemId` | ลบสินค้า 1 รายการออกจากตะกร้า | `{ userId }` |
-| `DELETE`| `/cart/:userId/clear` | ล้างตะกร้าสินค้าทั้งหมด | - |
-
----
-
-### 💳 5. หมวดหมู่สั่งซื้อและคำสั่งซื้อ (Checkout & Orders)
-| Method | Endpoint | คำอธิบาย | ข้อมูลที่ต้องส่ง (Body) |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/checkout` | สร้างคำสั่งซื้อ ตัดสต็อกสินค้า และล้างตะกร้า | `{ userId, items, planType, shippingAddress, paymentMethod, ... }` |
-| `GET` | `/orders/user/:userId`| **ดึงประวัติคำสั่งซื้อทั้งหมดของลูกค้า** (Order History) | - |
-| `GET` | `/orders/:orderId` | ดูรายละเอียดคำสั่งซื้อรายบิล (ใบเสร็จ) | - |
-| `PATCH`| `/orders/:orderId/status`| [Admin] อัปเดตสถานะคำสั่งซื้อ | `{ status: "PREPARING" \| "SHIPPED" \| ... }` |
-| `GET` | `/orders` | [Admin] ดูคำสั่งซื้อทั้งหมดในระบบ | - |
-
----
-
-### 🌏 6. หมวดหมู่ข้อมูลสนับสนุนเว็บไซต์ (Regions, Reviews & Health)
-| Method | Endpoint | คำอธิบาย |
-| :--- | :--- | :--- |
-| `GET` | `/regions` | ดึงข้อมูล 4 ภูมิภาค ธาตุเจ้าเรือน และรสชาติอาหาร |
-| `GET` | `/regions/:id` | ดึงข้อมูลภูมิภาคเดี่ยว (เช่น `north`, `central`) |
-| `GET` | `/reviews` | ดึงรายการรีวิวจากลูกค้าทั้งหมด |
-| `GET` | `/api/health` | ตรวจสอบสถานะการทำงานและความพร้อมของเซิร์ฟเวอร์ |
-
----
-
-## 🧪 คู่มือการทดสอบระบบด้วย Master Test Suite (`testv1.rest`)
-
-ไฟล์ [server/src/testapi/testv1.rest](file:///e:/PJ-G4-SP2/server/src/testapi/testv1.rest) คือชุดทดสอบรวมที่ออกแบบมาให้คลิกส่ง Request ผ่านส่วนขยาย **REST Client** ใน VS Code ได้ทันที โดยประกอบด้วย:
-
-1. **บัญชีทดสอบที่ล็อกอินได้ทันที (รหัสผ่านคือ `12345678` ทุกบัญชี):**
-   * แอดมิน: `test@example.com` / `12345678` หรือ `admin@example.com` / `12345678`
-   * ลูกค้า: `kan@example.com` / `12345678` หรือ `chonthicha@example.com` / `12345678`
-2. **ระบบดึง Token อัตโนมัติ:** เมื่อกด Send Request ที่ `1.3 Login` ตัวแปร `@authToken` จะถูกนำไปใช้ใน `1.4 GET /users/me` ต่อให้อัตโนมัติ
-3. **ระบบดึง Order ID อัตโนมัติ:** เมื่อกด Send Request ที่ `4.1 POST /checkout` รหัส Order ใหม่จะถูกนำไปใช้ทดสอบใน `4.2 ดูรายละเอียดบิล` และ `4.4 อัปเดตสถานะ` ทันที
-
----
-
-## 🚀 ขั้นตอนการติดตั้งและเริ่มรันโปรเจกต์ (Quick Start Guide)
-
-### 📋 สิ่งที่ต้องมีในเครื่อง (Prerequisites)
-* **Node.js** เวอร์ชัน 20.x ขึ้นไป
-* **Git** สำหรับการจัดการ Branch
-
----
-
-### 1. ติดตั้งและรันฝั่ง Backend (Server)
-เปิด Terminal ที่ 1:
+### 1. โคลนโปรเจกต์และติดตั้ง Dependencies
 ```bash
-# 1. เข้าไปที่โฟลเดอร์ server
-cd server
+# Clone repository
+git clone https://github.com/ctrlaltnate/JSD13-Group4-Project-Sprint-2.git
+cd PJ-G4-SP2
 
-# 2. ติดตั้ง Dependencies
-npm install
-
-# 3. รันเซิร์ฟเวอร์สำหรับ Development (Port 3001)
-npm run dev
-```
-> เซิร์ฟเวอร์จะเริ่มทำงานที่: `http://localhost:3001` (Base URL: `http://localhost:3001/api/v1`)
-
----
-
-### 2. ติดตั้งและรันฝั่ง Frontend (Client)
-เปิด Terminal ที่ 2:
-```bash
-# 1. เข้าไปที่โฟลเดอร์ client
+# ติดตั้ง Dependencies ฝั่ง Client
 cd client
-
-# 2. ติดตั้ง Dependencies
 npm install
 
-# 3. รันเซิร์ฟเวอร์หน้าบ้านด้วย Vite (Port 5173)
+# ติดตั้ง Dependencies ฝั่ง Server
+cd ../server
+npm install
+```
+
+### 2. ตั้งค่าไฟล์สภาพแวดล้อม (Environment Variables)
+
+**ฝั่ง Server (`server/.env`):**
+```env
+PORT=3001
+MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/that-tae?retryWrites=true&w=majority
+CLIENT_URL=http://localhost:5173
+JWT_SECRET=that-tae-super-secret-key-2026
+GRIDFS_BUCKET=uploads
+GEMINI_API_KEY=AIzaSyYourGeminiApiKeyHere
+STRIPE_SECRET_KEY=sk_test_51UHJNTBjQBqcLrb8...
+```
+
+**ฝั่ง Client (`client/.env`):**
+```env
+VITE_API_URL=http://localhost:3001
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_51UHJNTBjQBqcLrb8...
+```
+
+### 3. โหลดข้อมูลเมนูอาหารตั้งต้นเข้า MongoDB (Database Seeding)
+```bash
+cd server
+node src/scripts/seedProducts.js
+```
+*(ระบบจะนำเข้า 30 เมนูอาหาร Cooking Kit และสูตรแยกย่อยเข้าสู่คอลเลกชัน `products` ทันที)*
+
+### 4. รันโปรเจกต์พร้อมกันทั้งหน้าบ้านและหลังบ้าน
+```bash
+# Terminal 1: รัน Backend Server (Port 3001)
+cd server
+npm run dev
+
+# Terminal 2: รัน Frontend Client (Port 5173)
+cd client
 npm run dev
 ```
-> เปิด Browser ไปที่: `http://localhost:5173`
+
+เปิด Browser ไปที่: **`http://localhost:5173`** เพื่อเริ่มใช้งานเว็บไซต์ "ธาตุแท้"
 
 ---
 
-## 🤝 ข้อตกลงในการร่วมพัฒนา (Team Git Workflow)
+## 📚 เอกสารประกอบเฉพาะทาง (Specialized Documentations)
 
-1. **Branch Naming**:
-   * แตก Branch จาก `main` เสมอ เช่น:
-     * `feature/nate-admin-dashboard`
-     * `feature/nut-admin-products`
-     * `feature/delta-element-filters`
-     * `feature/cream-cart-summary`
-     * `feature/rin-checkout-orders`
-2. **Pull Request Rules**:
-   * ทดสอบรัน `npm run dev` หรือ `npm run build` ในเครื่องตัวเองก่อนเปิด PR
-   * ตรวจสอบว่าไม่มีไฟล์ `.env` ที่มีข้อมูลลับหลุดขึ้น Git
-   * ขออนุมัติ (Review) จากเพื่อนร่วมทีมอย่างน้อย 1 คนก่อน Merge เข้า `main`
+เพื่อความเข้าใจเชิงลึกในรายละเอียดของแต่ละฝั่ง โปรดศึกษาเอกสารเฉพาะทางเพิ่มเติมได้ที่:
 
----
-
-**พัฒนาด้วยความมุ่งมั่นโดย ทีมงาน JSD13 Group 4 (Sprint 2)** 🌿🍲✨
+- 💻 **[README_Client.md](file:///e:/PJ-G4-SP2/README_Client.md)**: สถาปัตยกรรมฝั่งหน้าบ้าน, State Management, แผนผัง Navigation, การออกแบบ Bento Grid, และคู่มือ Component
+- ⚙️ **[README_Server.md](file:///e:/PJ-G4-SP2/README_Server.md)**: สถาปัตยกรรมฝั่งหลังบ้าน, ตาราง API Endpoints V2, การทำงานของ GridFS Streaming, RAG AI Pipeline, และ Mongoose Data Models

@@ -30,6 +30,7 @@ import MenuDetail from "./pages/MenuDetail";
 import Cart from "./components/cart/Cart.jsx";
 import OrdersPage from "./pages/OrdersPage.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
+import NotFoundPage from "./pages/NotFoundPage.jsx";
 
 // 🆕 Stripe — โหลด Stripe SDK ด้วย Publishable Key จาก .env
 import { loadStripe } from "@stripe/stripe-js";
@@ -112,6 +113,10 @@ const router = createBrowserRouter([
         path: "element-quiz",
         element: <ElementQuizPage />,
       },
+      {
+        path: "quiz",
+        element: <Navigate to="/element-quiz" replace />,
+      },
 
       {
         path: "menu-randomizer",
@@ -142,6 +147,10 @@ const router = createBrowserRouter([
       {
         path: "profile/edit",
         element: <ProfilePage />,
+      },
+      {
+        path: "*",
+        element: <NotFoundPage />,
       },
     ],
   },

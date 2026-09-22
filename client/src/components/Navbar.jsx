@@ -5,6 +5,39 @@ import logo from "../assets/logo_brown_choc.png";
 import customerAvatar from "../mock-data/assets/reviews/praew.jpg";
 import { useAuth } from "../context/AuthContext.js";
 import useToast from "../hooks/useToast.js";
+import { getUserElement } from "../utils/quizHelpers.js";
+
+function ElementMiniIcon({ element, className = "h-3 w-3" }) {
+  if (element === "ดิน" || element === "earth") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+        <path d="m8 3 4 8 5-5 5 15H2L8 3z" />
+      </svg>
+    );
+  }
+  if (element === "น้ำ" || element === "water") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+      </svg>
+    );
+  }
+  if (element === "ลม" || element === "air" || element === "wind") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+        <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
+      </svg>
+    );
+  }
+  if (element === "ไฟ" || element === "fire") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+      </svg>
+    );
+  }
+  return null;
+}
 
 function BasketIcon({ className = "h-7 w-7" }) {
   return (
@@ -171,28 +204,65 @@ function UsersGroupIcon({ className = "h-4 w-4" }) {
   );
 }
 
+function HomeNavIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+      <polyline points="9 22 9 12 15 12 15 22" />
+    </svg>
+  );
+}
+
+function MenuNavIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M12 2v3M8 3.5v2M16 3.5v2M3 11h18c0 4.97-4.03 9-9 9s-9-4.03-9-9z" />
+      <line x1="3" y1="11" x2="21" y2="11" />
+    </svg>
+  );
+}
+
+function QuizNavIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+      <path d="M2 12h20" />
+    </svg>
+  );
+}
+
+function RandomizerNavIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <rect width="18" height="18" x="3" y="3" rx="4" />
+      <circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" />
+      <circle cx="15.5" cy="8.5" r="1.2" fill="currentColor" />
+      <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+      <circle cx="8.5" cy="15.5" r="1.2" fill="currentColor" />
+      <circle cx="15.5" cy="15.5" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
+
 const navigationByRole = {
   guest: [
-    { label: "หน้าแรก", to: "/" },
-    { label: "เมนูอาหาร", to: "/menus" },
-    { label: "ทดสอบธาตุ", to: "/element-quiz" },
-    { label: "สุ่มเมนู", to: "/menu-randomizer" },
+    { label: "หน้าแรก", to: "/", icon: HomeNavIcon },
+    { label: "เมนูอาหาร", to: "/menus", icon: MenuNavIcon },
+    { label: "ทดสอบธาตุ", to: "/element-quiz", icon: QuizNavIcon },
+    { label: "สุ่มเมนู", to: "/menu-randomizer", icon: RandomizerNavIcon },
   ],
   customer: [
-    { label: "หน้าแรก", to: "/" },
-    { label: "เมนูอาหาร", to: "/menus" },
-    { label: "ทดสอบธาตุ", to: "/element-quiz" },
-    { label: "สุ่มเมนู", to: "/menu-randomizer" },
+    { label: "หน้าแรก", to: "/", icon: HomeNavIcon },
+    { label: "เมนูอาหาร", to: "/menus", icon: MenuNavIcon },
+    { label: "ทดสอบธาตุ", to: "/element-quiz", icon: QuizNavIcon },
+    { label: "สุ่มเมนู", to: "/menu-randomizer", icon: RandomizerNavIcon },
   ],
   admin: [
     { label: "แดชบอร์ด", to: "/admin/dashboard", icon: DashboardGridIcon },
     { label: "ออเดอร์", to: "/admin/orders", icon: ClipboardListIcon },
     { label: "สินค้า", to: "/admin/products", icon: PackageIcon },
-    // =========================================================================
-    // [มาร์กจุดเชื่อมต่อ: เมนูวัตถุดิบ - รอเพื่อนร่วมทีมพัฒนาหน้าเสร็จ]
-    // TODO: เมื่อเพื่อนทำหน้าเสร็จแล้ว ให้ลบ isPending: true ออก เพื่อให้ลิงก์ไป /admin/ingredients ได้ทันที
-    // =========================================================================
-    { label: "วัตถุดิบ", to: "/admin/ingredients", icon: LeafIngredientIcon, isPending: true },
+    { label: "วัตถุดิบ", to: "/admin/ingredients", icon: LeafIngredientIcon },
     { label: "ผู้ใช้", to: "/admin/users", icon: UsersGroupIcon },
   ],
 };
@@ -223,6 +293,7 @@ export default function Navbar({ cartCount = 0 }) {
   const { currentUser, logout } = useAuth();
   const currentRole = currentUser?.role || "guest";
   const isAdmin = currentRole === "admin" || location.pathname.startsWith("/admin");
+  const userElement = getUserElement(currentUser);
 
   const links = navigationByRole[currentRole] ?? navigationByRole.guest;
 
@@ -332,7 +403,7 @@ export default function Navbar({ cartCount = 0 }) {
           </div>
         </div>
 
-        {/* Desktop Navigation Links พร้อมไอคอน */}
+        {/* Desktop Navigation Links พร้อมไอคอนขยาย Smooth */}
         <div className="hidden items-center justify-center gap-1 lg:flex">
           {links.map((link) => {
             const Icon = link.icon;
@@ -350,10 +421,12 @@ export default function Navbar({ cartCount = 0 }) {
                     /* TODO: navigate(link.to); เมื่อเพื่อนทำหน้าเสร็จ */
                     alert("เมนูวัตถุดิบ: อยู่ระหว่างการพัฒนาโดยเพื่อนในทีม (รอเชื่อมต่อไปยังหน้า /admin/ingredients)");
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold text-[#3b2a1a] hover:bg-[#8d593a]/15 hover:text-[#201a1a] cursor-pointer transition-colors"
+                  className="group inline-flex items-center rounded-full px-3.5 py-2 text-sm font-semibold text-[#3b2a1a] hover:bg-[#8d593a]/15 hover:text-[#201a1a] cursor-pointer transition-all duration-300 ease-out"
                   title="รอเชื่อมต่อกับหน้าจัดการวัตถุดิบของเพื่อนร่วมทีม"
                 >
-                  {Icon && <Icon className="h-4 w-4 shrink-0 text-[#3d7a36]" />}
+                  <span className="inline-flex items-center overflow-hidden transition-all duration-300 ease-out max-w-0 opacity-0 mr-0 scale-75 group-hover:max-w-6 group-hover:opacity-100 group-hover:mr-1.5 group-hover:scale-100">
+                    {Icon && <Icon className="h-4 w-4 shrink-0 text-[#3d7a36]" />}
+                  </span>
                   <span>{link.label}</span>
                 </button>
               );
@@ -365,17 +438,27 @@ export default function Navbar({ cartCount = 0 }) {
                 key={link.to}
                 to={link.to}
                 onClick={() => window.scrollTo({ top: 0, left: 0, behavior: "smooth" })}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition-all duration-200 ${isActive
+                className={`group inline-flex items-center rounded-full px-3.5 py-2 text-sm font-semibold transition-all duration-300 ease-out select-none ${
+                  isActive
                     ? "bg-[#8b5e34] text-white shadow-sm"
                     : "text-[#3b2a1a] hover:bg-[#8d593a]/15 hover:text-[#201a1a]"
-                  }`}
+                }`}
               >
-                {Icon && (
-                  <Icon
-                    className={`h-4 w-4 shrink-0 ${isActive ? "text-white" : "text-[#8b5e34]"
+                <span
+                  className={`inline-flex items-center overflow-hidden transition-all duration-300 ease-out ${
+                    isActive
+                      ? "max-w-6 opacity-100 mr-1.5 scale-100"
+                      : "max-w-0 opacity-0 mr-0 scale-75 group-hover:max-w-6 group-hover:opacity-100 group-hover:mr-1.5 group-hover:scale-100"
+                  }`}
+                >
+                  {Icon && (
+                    <Icon
+                      className={`h-4 w-4 shrink-0 transition-transform duration-300 ${
+                        isActive ? "text-white" : "text-[#8d593a]"
                       }`}
-                  />
-                )}
+                    />
+                  )}
+                </span>
                 <span>{link.label}</span>
               </Link>
             );
@@ -423,7 +506,23 @@ export default function Navbar({ cartCount = 0 }) {
                 )}
                 <div className="flex flex-col text-left">
                   <span className="text-sm leading-tight font-bold">{displayName}</span>
-                  <span className="text-[10px] font-normal text-[#e7d8cb] leading-none">{displayRole}</span>
+                  <div className="flex items-center gap-1.5 mt-0.5 leading-none">
+                    {userElement ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#f5d08e]" title={`ธาตุประจำตัว: ธาตุ${userElement}`}>
+                        <ElementMiniIcon element={userElement} className="w-3 h-3 text-[#f5d08e] shrink-0" />
+                        <span>ธาตุ{userElement}</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-normal text-[#e7d8cb]/80" title="ยังไม่ได้ทำแบบทดสอบธาตุเจ้าเรือน">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-2.5 h-2.5 opacity-70">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="16" x2="12" y2="12" />
+                          <line x1="12" y1="8" x2="12.01" y2="8" />
+                        </svg>
+                        <span>ไม่ทราบธาตุ</span>
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <svg
                   viewBox="0 0 20 20"
@@ -521,9 +620,11 @@ export default function Navbar({ cartCount = 0 }) {
                       /* TODO: navigate(link.to); เมื่อเพื่อนทำหน้าเสร็จ */
                       alert("เมนูวัตถุดิบ: อยู่ระหว่างการพัฒนาโดยเพื่อนในทีม (รอเชื่อมต่อไปยังหน้า /admin/ingredients)");
                     }}
-                    className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-base font-semibold text-[#3b2a1a] hover:bg-[#8d593a]/15 text-left cursor-pointer"
+                    className="group flex w-full items-center rounded-xl px-3 py-2.5 text-base font-semibold text-[#3b2a1a] hover:bg-[#8d593a]/15 text-left cursor-pointer transition-all duration-300 ease-out"
                   >
-                    {Icon && <Icon className="h-5 w-5 shrink-0 text-[#3d7a36]" />}
+                    <span className="inline-flex items-center overflow-hidden transition-all duration-300 ease-out max-w-0 opacity-0 mr-0 scale-75 group-hover:max-w-7 group-hover:opacity-100 group-hover:mr-2.5 group-hover:scale-100">
+                      {Icon && <Icon className="h-5 w-5 shrink-0 text-[#3d7a36]" />}
+                    </span>
                     <span>{link.label}</span>
                   </button>
                 );
@@ -538,12 +639,27 @@ export default function Navbar({ cartCount = 0 }) {
                     setIsOpen(false);
                     window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
                   }}
-                  className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-base font-semibold transition-colors ${isActive
+                  className={`group flex items-center rounded-xl px-3 py-2.5 text-base font-semibold transition-all duration-300 ease-out ${
+                    isActive
                       ? "bg-[#8b5e34] text-white"
                       : "text-[#3b2a1a] hover:bg-[#8d593a]/15"
-                    }`}
+                  }`}
                 >
-                  {Icon && <Icon className="h-5 w-5 shrink-0" />}
+                  <span
+                    className={`inline-flex items-center overflow-hidden transition-all duration-300 ease-out ${
+                      isActive
+                        ? "max-w-7 opacity-100 mr-2.5 scale-100"
+                        : "max-w-0 opacity-0 mr-0 scale-75 group-hover:max-w-7 group-hover:opacity-100 group-hover:mr-2.5 group-hover:scale-100"
+                    }`}
+                  >
+                    {Icon && (
+                      <Icon
+                        className={`h-5 w-5 shrink-0 transition-transform duration-300 ${
+                          isActive ? "text-white" : "text-[#8d593a]"
+                        }`}
+                      />
+                    )}
+                  </span>
                   <span>{link.label}</span>
                 </Link>
               );
@@ -579,10 +695,23 @@ export default function Navbar({ cartCount = 0 }) {
                       <div className="flex items-center gap-1.5">
                         <strong className="text-sm leading-tight font-bold truncate">{displayName}</strong>
                         <span className="inline-flex items-center gap-0.5 rounded-md bg-white/20 px-1.5 py-0.5 text-[10px] font-medium text-white group-hover:bg-white/30 transition-colors">
-                          โปรไฟล์ของฉัน &rarr;
+                          โปรไฟล์ &rarr;
                         </span>
                       </div>
-                      <span className="block text-[11px] text-[#e7d8cb] truncate">{displayRole}</span>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {userElement ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-[#f5d08e]">
+                            <ElementMiniIcon element={userElement} className="w-3 h-3 text-[#f5d08e] shrink-0" />
+                            <span>ธาตุ{userElement}</span>
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-[#e7d8cb]/80">
+                            ไม่ทราบธาตุ
+                          </span>
+                        )}
+                        <span className="text-[10px] text-[#e7d8cb]/50">•</span>
+                        <span className="text-[10px] text-[#e7d8cb] truncate">{displayRole}</span>
+                      </div>
                     </div>
                   </Link>
 

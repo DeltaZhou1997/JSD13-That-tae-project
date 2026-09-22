@@ -3,24 +3,57 @@ import { useSearchParams } from 'react-router-dom'
 import MenuCard from '../components/Menu/MenuCard'
 import MenuFilters from '../components/Menu/MenuFilters'
 import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext.js'
 import { useProducts } from '../context/ProductsContext.js'
 import { dishes } from '../mock-data/index.js'
+import { getUserElement, ELEMENT_EN_TO_TH } from '../utils/quizHelpers.js'
 
 export default function MenuOverview() {
   const { language } = useApp() || { language: 'th' };
+  const { currentUser } = useAuth();
   const { products } = useProducts();
   const [searchParams] = useSearchParams();
   const [menus, setMenus] = useState([])
   const [status, setStatus] = useState('loading')
 
   const initialRegion = searchParams.get('region');
-  const initialElement = searchParams.get('element');
-  const [filters, setFilters] = useState({
-    search: '',
-    region: initialRegion ? [initialRegion] : [],
-    health: [],
-    element: initialElement || ''
-  })
+  // normalize URL element param: EN ("fire") → TH ("ไฟ") ให้ตรงกับข้อมูลและ MenuFilters
+  const rawInitialElement = searchParams.get('element');
+  const initialElement = rawInitialElement
+    ? (ELEMENT_EN_TO_TH[rawInitialElement] || rawInitialElement)
+    : null;
+
+  const userElement = useMemo(() => getUserElement(currentUser), [currentUser]);
+
+  const [filters, setFilters] = useState(() => {
+    const defaultElements = initialElement
+      ? [initialElement]
+      : (currentUser && userElement ? [userElement] : []);
+    return {
+      search: '',
+      region: initialRegion ? [initialRegion] : [],
+      health: [],
+      element: defaultElements,
+    };
+  });
+
+  // อัปเดตธาตุ auto เมื่อผู้ใช้เข้าสู่ระบบหรือเปลี่ยนบัญชี
+  useEffect(() => {
+    if (currentUser && userElement && !initialElement) {
+      setFilters((prev) => {
+        const currentElements = Array.isArray(prev.element)
+          ? prev.element
+          : prev.element
+            ? [prev.element]
+            : [];
+        // ถ้ายังไม่ได้เลือกธาตุอะไรเลย ให้ auto เลือกธาตุประจำตัวของผู้ใช้
+        if (currentElements.length === 0) {
+          return { ...prev, element: [userElement] };
+        }
+        return prev;
+      });
+    }
+  }, [currentUser, userElement, initialElement]);
 
   useEffect(() => {
     setStatus('loading');
@@ -53,10 +86,22 @@ export default function MenuOverview() {
         }
       }
 
-      if (filters.element) {
-        const target = filters.element;
-        const matchesDominant = menu.dominantElement === target;
-        const matchesSuitability = Array.isArray(menu.elementSuitability) && menu.elementSuitability.includes(target);
+      const rawSelected = Array.isArray(filters.element)
+        ? filters.element
+        : filters.element
+          ? [filters.element]
+          : [];
+
+      // normalize เผื่อกรณีค่าที่ยังเป็น EN ผ่านมา (safety net)
+      const selectedElements = rawSelected.map(e => ELEMENT_EN_TO_TH[e] || e);
+
+      if (selectedElements.length > 0) {
+        // normalize dominantElement ในเมนูด้วยเผื่อ data บางส่วนเก็บเป็น EN
+        const menuElem = ELEMENT_EN_TO_TH[menu.dominantElement] || menu.dominantElement;
+        const matchesDominant = selectedElements.includes(menuElem);
+        const matchesSuitability =
+          Array.isArray(menu.elementSuitability) &&
+          menu.elementSuitability.some((el) => selectedElements.includes(ELEMENT_EN_TO_TH[el] || el));
         if (!matchesDominant && !matchesSuitability) {
           return false;
         }
@@ -79,7 +124,7 @@ export default function MenuOverview() {
         </p>
       </section>
 
-      <section className="mx-auto grid max-w-7xl gap-7 px-5 py-10 lg:grid-cols-[280px_1fr]">
+      <section className="mx-auto grid max-w-7xl items-start gap-6 px-4 sm:px-6 py-8 lg:grid-cols-[295px_1fr]">
         <MenuFilters filters={filters} setFilters={setFilters} />
 
         <div>
@@ -96,9 +141,17 @@ export default function MenuOverview() {
               </div>
 
               {filteredMenus.length > 0 ? (
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                  {filteredMenus.map((menu) => (
-                    <MenuCard key={menu._id} menu={menu} />
+                <div className="grid grid-cols-2 gap-3 sm:gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                  {filteredMenus.map((menu, index) => (
+                    <div 
+                      key={menu._id}
+                      className={
+                        /* ให้เกิดจังหวะเหลื่อมแบบ Bento บนมือถือ (สลับ card ที่ 1 และ 4 ให้มีระยะ offset เบาๆ) */
+                        index % 4 === 1 ? "sm:mt-0 mt-3" : index % 4 === 2 ? "sm:mt-0 -mt-1" : ""
+                      }
+                    >
+                      <MenuCard menu={menu} index={index} />
+                    </div>
                   ))}
                 </div>
               ) : (

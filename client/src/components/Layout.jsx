@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Navbar from './Navbar.jsx'
 import Footer from './Footer.jsx'
+import AIAdvisorWidget from './ai/AIAdvisorWidget.jsx'
 import useToast from '../hooks/useToast.js'
 
 function Layout({ context }) {
   const [cartItems, setCartItems] = useState([])
   const location = useLocation()
   const toast = useToast()
+
+  const [selectedPlan, setSelectedPlan] = useState(null)
 
   // เลื่อนกลับขึ้นด้านบนสุดแบบ Smooth ทุกครั้งที่เปลี่ยนหน้า/เปลี่ยนแท็บ
   useEffect(() => {
@@ -83,6 +86,8 @@ function Layout({ context }) {
     handleUpdateQuantity: context?.handleUpdateQuantity ?? handleUpdateQuantity,
     handleRemoveItem: context?.handleRemoveItem ?? handleRemoveItem,
     handleClearCart: context?.handleClearCart ?? handleClearCart,
+    selectedPlan,
+    setSelectedPlan,
   };
 
   return (
@@ -92,6 +97,9 @@ function Layout({ context }) {
       <main className="w-full flex-1 bg-[#fff8f5] pt-20 sm:pt-24">
         <Outlet context={outletContext} />
       </main>
+
+      {/* 🌟 That-Tae RAG AI Health & Nutrition Advisor */}
+      <AIAdvisorWidget cartItems={currentCartItems} />
 
       <Footer />
     </div>

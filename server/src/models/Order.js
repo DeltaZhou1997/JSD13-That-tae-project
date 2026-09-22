@@ -28,6 +28,12 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: "SINGLE_KIT",
     },
+    planDetails: {
+      planId: String,
+      planName: String,
+      kitsPerWeek: Number,
+      planPrice: Number,
+    },
     shippingAddress: {
       fullName: { type: String, required: true },
       phone: { type: String, required: true },
