@@ -1,3 +1,4 @@
+/*// server/src/server.js หลังแก้ ให้เข้ากับ mongodb  ที่คิดว่าใช่ ให้เอไอช่วย
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -22,7 +23,15 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json());
+
+//  เก็บ Buffer ดิบของ Body ไว้ที่ req.rawBody เพื่อให้ Stripe Webhook ตรวจสอบลายเซ็นได้
+app.use(
+  express.json({
+    verify: (req, res, buf) => {
+      req.rawBody = buf;
+    },
+  }),
+);
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static images for cooking kit dishes
@@ -33,8 +42,8 @@ app.get("/", (req, res) => {
   res.status(200).json({
     status: "ok",
     service: "Cooking Kit 'That Tae' API Server",
-    version: "1.0.0",
-    docs: "/api/v1",
+    version: "2.0.0",
+    docs: "/api/v2",
     timestamp: new Date().toISOString(),
   });
 });
@@ -47,7 +56,7 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Mount Routes (รองรับทั้ง /api/v1, /api, และ /v1 ผ่าน mainRouter)
+// Mount Routes (รองรับทั้ง /api/v1 และ /api/v2)
 app.use("/api/v1", v1Router);
 app.use("/api/v2", v2Router);
 app.use("/api", v1Router);
@@ -66,7 +75,7 @@ async function startServer() {
     await connectDB();
     app.listen(port, () => {
       console.log(`🚀 Server is running on port ${port}`);
-      console.log(`🌐 Base URL: http://localhost:${port}/api/v1`);
+      console.log(`🌐 v2 Base URL: http://localhost:${port}/api/v2`);
     });
   } catch (err) {
     console.error("❌ Failed to start server:", err.message);
@@ -75,3 +84,4 @@ async function startServer() {
 }
 
 startServer();
+*/

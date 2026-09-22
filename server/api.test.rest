@@ -1,4 +1,4 @@
-@baseUrl = http://localhost:5000
+@baseUrl = http://localhost:3001
 
 ## Health Check (ตรวจว่า Server รันติดหรือไม่)
 GET {{baseUrl}}/

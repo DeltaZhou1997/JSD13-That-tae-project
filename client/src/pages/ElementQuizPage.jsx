@@ -1,3 +1,4 @@
+// client/src/pages/ElementQuizPage.jsx
 import React, { useState } from "react";
 import QuizForm from "../components/element-quiz/QuizForm";
 import QuizResult from "../components/element-quiz/QuizResult";
@@ -22,20 +23,29 @@ export default function ElementQuizPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFBF7] py-10 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-          <span className="text-xs font-bold text-[#8C7B73] tracking-widest uppercase block mb-1">
-            ELEMENT ANALYSIS
-          </span>
-          <h1 className="text-3xl font-black text-[#3D2E2B] tracking-tight mb-2">
-            วิเคราะห์ธาตุเจ้าเรือน
-          </h1>
-          <p className="text-xs text-[#63534B]">
-            ค้นหาธาตุประจำตัวผ่านคำถาม 5 ข้อ เพื่อปรับสมดุลการรับประทานอาหาร
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#fdfbf7] dark:bg-[#2c1e16]">
+      {/* 🌟 แถบสีครีมส่วนหัวข้อ พร้อมประกายดาววิบวับ */}
+      <section className="w-full px-5 py-10 text-center sm:py-12 bg-[#f4ebd9] dark:bg-[#3b2a1a] relative overflow-hidden">
+        {/* ป้ายหัวเล็ก ELEMENT ANALYSIS */}
+        <p className="text-xs tracking-[0.25em] opacity-60 text-[#8b5e34] dark:text-[#dcb37b] font-bold uppercase mb-2">
+          ELEMENT ANALYSIS
+        </p>
 
+        {/* ชื่อหัวข้อหลัก + ประกายดาวข้างซ้าย-ขวาใกล้ๆ ชื่อ */}
+        <h1 className="mt-1 text-3xl font-bold sm:text-4xl text-[#3b2a1a] dark:text-[#f0e6d8] flex items-center justify-center gap-3">
+          <span className="text-[#C49758] animate-sparkle-1 text-2xl">✦</span>
+          วิเคราะห์ธาตุเจ้าเรือน
+          <span className="text-[#C49758] animate-sparkle-2 text-2xl">✦</span>
+        </h1>
+
+        {/* คำอธิบาย */}
+        <p className="mx-auto mt-3 max-w-2xl text-sm sm:text-base opacity-70 text-[#3b2a1a] dark:text-[#f0e6d8]">
+          ค้นหาธาตุประจำตัวผ่านคำถาม 5 ข้อ เพื่อปรับสมดุลการรับประทานอาหาร
+        </p>
+      </section>
+
+      {/* กล่องเนื้อหาแบบทดสอบ / ผลลัพธ์ */}
+      <main className="max-w-3xl mx-auto px-4 py-8 sm:py-10">
         {!resultElement ? (
           <QuizForm
             answers={answers}
@@ -45,7 +55,7 @@ export default function ElementQuizPage() {
         ) : (
           <QuizResult resultElement={resultElement} onReset={handleReset} />
         )}
-      </div>
+      </main>
     </div>
   );
 }

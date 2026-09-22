@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { SHIPPING_FEE } from "../../constants/checkout";
+import { SHIPPING_FEE, PAYMENT_METHODS } from "../../constants/checkout";
 
 export default function CheckoutSummary({
   cartItems = [],
@@ -11,8 +11,28 @@ export default function CheckoutSummary({
   totalKitsCount = 0,
   requiredKits = 0,
   kitsDifference = 0,
+  isProcessingPayment = false,
+  paymentMethod = "PROMPTPAY",
 }) {
   const navigate = useNavigate();
+
+  // 🆕 กำหนดข้อความปุ่มตาม paymentMethod
+  const getSubmitButtonText = () => {
+    if (isProcessingPayment) return "กำลังดำเนินการ...";
+    if (selectedPlan && kitsDifference < 0) {
+      return `เลือกเมนูให้ครบ ${requiredKits} ชุดก่อนชำระเงิน`;
+    }
+    switch (paymentMethod) {
+      case PAYMENT_METHODS.COD:
+        return "ยืนยันสั่งซื้อ (เก็บเงินปลายทาง)";
+      case PAYMENT_METHODS.CREDIT_CARD:
+        return "ชำระเงินด้วยบัตรเครดิต";
+      case PAYMENT_METHODS.PROMPTPAY:
+        return "ยืนยันชำระเงินผ่าน PromptPay";
+      default:
+        return "ชำระเงิน";
+    }
+  };
 
   return (
     <div className="bg-[#fcf8f2] border border-[#e8dfd1] rounded-3xl p-6 shadow-sm sticky top-6">
@@ -32,7 +52,6 @@ export default function CheckoutSummary({
       {/* แจ้งเตือนสิทธิ์โควต้าเมนูอาหารเฉพาะกรณีเลือก Subscription Plan */}
       {selectedPlan && (
         <div className="mb-5">
-          {/* 🟢 กรณีที่ 1: เลือกเมนูครบโควต้าพอดี */}
           {kitsDifference === 0 && (
             <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3.5 rounded-2xl text-xs flex items-center gap-2">
               <span className="text-base">✅</span>
@@ -45,7 +64,6 @@ export default function CheckoutSummary({
             </div>
           )}
 
-          {/* 🟡 กรณีที่ 2: เลือกเมนูน้อยกว่าโควต้าแพ็กเกจ (ขาด) */}
           {kitsDifference < 0 && (
             <div className="bg-amber-50 border border-amber-200 text-amber-900 p-3.5 rounded-2xl text-xs space-y-2">
               <div className="flex items-center gap-2 font-bold text-amber-800">
@@ -69,7 +87,6 @@ export default function CheckoutSummary({
             </div>
           )}
 
-          {/* 🔵 กรณีที่ 3: เลือกเมนูเกินโควต้าแพ็กเกจ */}
           {kitsDifference > 0 && (
             <div className="bg-blue-50 border border-blue-200 text-blue-900 p-3.5 rounded-2xl text-xs space-y-1">
               <div className="flex items-center gap-1.5 font-bold text-blue-800">
@@ -149,20 +166,18 @@ export default function CheckoutSummary({
         </div>
       )}
 
-      {/* ปุ่มกดสั่งซื้อ */}
+      {/* 🆕 ปุ่มกดสั่งซื้อ — ข้อความเปลี่ยนตาม paymentMethod */}
       <button
         type="submit"
         disabled={
-          cartItems.length === 0 || (selectedPlan && kitsDifference < 0)
+          cartItems.length === 0 ||
+          (selectedPlan && kitsDifference < 0) ||
+          isProcessingPayment
         }
         className="w-full mt-6 bg-[#3d2c2e] text-white py-4 rounded-full font-bold hover:bg-[#8d593a] transition-colors shadow-lg flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
       >
-        <span>
-          {selectedPlan && kitsDifference < 0
-            ? `เลือกเมนูให้ครบ ${requiredKits} ชุดก่อนชำระเงิน`
-            : "ชำระเงิน"}
-        </span>
-        <span>→</span>
+        <span>{getSubmitButtonText()}</span>
+        {!isProcessingPayment && <span>→</span>}
       </button>
 
       <p className="text-[10px] text-center text-[#6f675f] mt-3">

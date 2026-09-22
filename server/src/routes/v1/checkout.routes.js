@@ -19,10 +19,21 @@ function deductMemoryStock(items) {
       const qty = Number(item.quantity) || 1;
       if (product.quantity < qty) {
         throw new Error(
-          `สินค้า "${product.name}" มีจำนวนไม่พอในคลัง (คงเหลือ ${product.quantity} ชิ้น)`
+          `สินค้า "${product.name}" มีจำนวนไม่พอในคลัง (คงเหลือ ${product.quantity} ชิ้น)`,
         );
       }
       product.quantity -= qty;
+    }
+  }
+}
+
+// Helper สำหรับคืนสต็อกสินค้า (ใช้ตอน COD ถูกปฏิเสธ)
+function restoreMemoryStock(items) {
+  for (const item of items) {
+    const targetId = item.productId || item.product || item._id;
+    const product = getProductById(targetId);
+    if (product) {
+      product.quantity += Number(item.quantity) || 1;
     }
   }
 }
@@ -36,7 +47,7 @@ router.get("/cart/:user_id", async (req, res) => {
       mongoose.Types.ObjectId.isValid(user_id)
     ) {
       const cart = await Cart.findOne({ userId: user_id }).populate(
-        "items.product"
+        "items.product",
       );
       if (cart) return res.status(200).json(cart);
     }
@@ -44,7 +55,9 @@ router.get("/cart/:user_id", async (req, res) => {
     const memoryCart = getMemoryCart(user_id);
     res.status(200).json(memoryCart);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching cart", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching cart", error: error.message });
   }
 });
 
@@ -61,6 +74,7 @@ const handleCheckout = async (req, res) => {
       shippingFee = 60,
       grandTotal,
       earnedPoints = 0,
+      stripePaymentIntentId = null,
     } = req.body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -70,7 +84,11 @@ const handleCheckout = async (req, res) => {
       });
     }
 
-    if (!shippingAddress || !shippingAddress.fullName || !shippingAddress.phone) {
+    if (
+      !shippingAddress ||
+      !shippingAddress.fullName ||
+      !shippingAddress.phone
+    ) {
       return res.status(400).json({
         success: false,
         message: "กรุณาระบุข้อมูลผู้รับและที่อยู่จัดส่งให้ครบถ้วน",
@@ -87,7 +105,11 @@ const handleCheckout = async (req, res) => {
       return {
         product: targetId,
         productId: targetId,
-        productName: item.productName || item.name || productInfo?.name || "ชุด Cooking Kit",
+        productName:
+          item.productName ||
+          item.name ||
+          productInfo?.name ||
+          "ชุด Cooking Kit",
         price: Number(item.price || item.unitPrice || productInfo?.price || 0),
         quantity: Number(item.quantity) || 1,
       };
@@ -100,6 +122,17 @@ const handleCheckout = async (req, res) => {
     const generatedOrderId =
       "ORD-" + Math.floor(100000 + Math.random() * 900000);
 
+    // ==========================================
+    // 🔑 จุดสำคัญ: กำหนด status ตาม paymentMethod
+    // ==========================================
+    // - COD → status: "PENDING", paymentStatus: "UNPAID"
+    //   (ยังไม่ได้ชำระ ต้องรอพนักงานเก็บเงินปลายทาง)
+    //
+    // - PROMPTPAY / CREDIT_CARD → status: "PAID", paymentStatus: "PAID"
+    //   (ชำระเงินเรียบร้อยแล้วผ่าน Stripe หรือ QR)
+    // ==========================================
+    const isCOD = paymentMethod.toUpperCase() === "COD";
+
     const orderData = {
       orderId: generatedOrderId,
       user: userId,
@@ -107,20 +140,32 @@ const handleCheckout = async (req, res) => {
       items: formattedItems,
       planType,
       shippingAddress: {
-        fullName: shippingAddress.fullName || shippingAddress.recipientName || "",
+        fullName:
+          shippingAddress.fullName || shippingAddress.recipientName || "",
         phone: shippingAddress.phone || "",
         address: shippingAddress.address || shippingAddress.fullAddress || "",
         district: shippingAddress.district || "",
         province: shippingAddress.province || "",
         zipcode: shippingAddress.zipcode || "",
-        deliveryDate: shippingAddress.deliveryDate || new Date().toISOString().split("T")[0],
+        deliveryDate:
+          shippingAddress.deliveryDate ||
+          new Date().toISOString().split("T")[0],
       },
       paymentMethod: paymentMethod.toUpperCase(),
+
+      // ===== ฟิลด์ใหม่ =====
+      paymentStatus: isCOD ? "UNPAID" : "PAID",
+      codAmount: isCOD ? calculatedGrandTotal : null,
+      stripePaymentIntentId: stripePaymentIntentId || null,
+
+      // ===== สถานะ Order =====
+      // COD → PENDING (รอเก็บเงิน) | Online → PAID (จ่ายแล้ว)
+      status: isCOD ? "PENDING" : "PAID",
+
       itemsSubtotal: calculatedSubtotal,
       shippingFee,
       grandTotal: calculatedGrandTotal,
       earnedPoints: earnedPoints || Math.floor(calculatedSubtotal * 0.1),
-      status: "PAID",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -161,19 +206,24 @@ const handleCheckout = async (req, res) => {
         await newMongoOrder.save();
 
         if (isUserValidObjectId) {
-          await Cart.findOneAndUpdate(
-            { userId },
-            { $set: { items: [] } }
-          );
+          await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } });
         }
       } catch (dbError) {
-        console.warn("⚠️ บันทึกลง MongoDB ไม่สำเร็จ แต่บันทึกลง In-memory สำเร็จ:", dbError.message);
+        console.warn(
+          "⚠️ บันทึกลง MongoDB ไม่สำเร็จ แต่บันทึกลง In-memory สำเร็จ:",
+          dbError.message,
+        );
       }
     }
 
+    // 6. ส่ง Response กลับพร้อมข้อความที่แตกต่างตาม paymentMethod
+    const successMessage = isCOD
+      ? "สร้างคำสั่งซื้อสำเร็จ — กรุณาเตรียมเงินสดให้พนักงานจัดส่ง"
+      : "สร้างคำสั่งซื้อสำเร็จและชำระเงินเรียบร้อยแล้ว";
+
     return res.status(201).json({
       success: true,
-      message: "สร้างคำสั่งซื้อสำเร็จและตัดสต็อกเรียบร้อยแล้ว",
+      message: successMessage,
       order: orderData,
     });
   } catch (error) {
@@ -193,16 +243,25 @@ router.get("/user/:userId", async (req, res) => {
       mongoose.connection.readyState === 1 &&
       mongoose.Types.ObjectId.isValid(userId)
     ) {
-      const dbOrders = await Order.find({ user: userId }).sort({ createdAt: -1 });
+      const dbOrders = await Order.find({ user: userId }).sort({
+        createdAt: -1,
+      });
       if (dbOrders && dbOrders.length > 0) {
         return res.status(200).json(dbOrders);
       }
     }
 
-    const userOrders = inMemoryOrders.filter((o) => o.userId === userId || o.user === userId);
+    const userOrders = inMemoryOrders.filter(
+      (o) => o.userId === userId || o.user === userId,
+    );
     return res.status(200).json(userOrders);
   } catch (error) {
-    res.status(500).json({ message: "เกิดข้อผิดพลาดในการดึงคำสั่งซื้อ", error: error.message });
+    res
+      .status(500)
+      .json({
+        message: "เกิดข้อผิดพลาดในการดึงคำสั่งซื้อ",
+        error: error.message,
+      });
   }
 });
 
@@ -212,7 +271,7 @@ router.get("/:orderId", async (req, res) => {
 
   try {
     const memoryOrder = inMemoryOrders.find(
-      (o) => o.orderId === orderId || String(o._id) === orderId
+      (o) => o.orderId === orderId || String(o._id) === orderId,
     );
     if (memoryOrder) {
       return res.status(200).json(memoryOrder);
@@ -220,14 +279,24 @@ router.get("/:orderId", async (req, res) => {
 
     if (mongoose.connection.readyState === 1) {
       const dbOrder = await Order.findOne({
-        $or: [{ orderId }, ...(mongoose.Types.ObjectId.isValid(orderId) ? [{ _id: orderId }] : [])],
+        $or: [
+          { orderId },
+          ...(mongoose.Types.ObjectId.isValid(orderId)
+            ? [{ _id: orderId }]
+            : []),
+        ],
       });
       if (dbOrder) return res.status(200).json(dbOrder);
     }
 
     return res.status(404).json({ message: `ไม่พบคำสั่งซื้อ "${orderId}"` });
   } catch (error) {
-    res.status(500).json({ message: "เกิดข้อผิดพลาดในการดึงคำสั่งซื้อ", error: error.message });
+    res
+      .status(500)
+      .json({
+        message: "เกิดข้อผิดพลาดในการดึงคำสั่งซื้อ",
+        error: error.message,
+      });
   }
 });
 
@@ -236,7 +305,14 @@ router.patch("/:orderId/status", async (req, res) => {
   const { orderId } = req.params;
   const { status } = req.body;
 
-  const validStatuses = ["PENDING", "PAID", "PREPARING", "SHIPPED", "DELIVERED", "CANCELLED"];
+  const validStatuses = [
+    "PENDING",
+    "PAID",
+    "PREPARING",
+    "SHIPPED",
+    "DELIVERED",
+    "CANCELLED",
+  ];
   if (!status || !validStatuses.includes(status.toUpperCase())) {
     return res.status(400).json({
       message: `สถานะไม่ถูกต้อง กรุณาเลือก: ${validStatuses.join(", ")}`,
@@ -244,7 +320,7 @@ router.patch("/:orderId/status", async (req, res) => {
   }
 
   const order = inMemoryOrders.find(
-    (o) => o.orderId === orderId || String(o._id) === orderId
+    (o) => o.orderId === orderId || String(o._id) === orderId,
   );
   if (order) {
     order.status = status.toUpperCase();
@@ -253,8 +329,15 @@ router.patch("/:orderId/status", async (req, res) => {
 
   if (mongoose.connection.readyState === 1) {
     await Order.findOneAndUpdate(
-      { $or: [{ orderId }, ...(mongoose.Types.ObjectId.isValid(orderId) ? [{ _id: orderId }] : [])] },
-      { $set: { status: status.toUpperCase() } }
+      {
+        $or: [
+          { orderId },
+          ...(mongoose.Types.ObjectId.isValid(orderId)
+            ? [{ _id: orderId }]
+            : []),
+        ],
+      },
+      { $set: { status: status.toUpperCase() } },
     );
   }
 
@@ -268,7 +351,185 @@ router.patch("/:orderId/status", async (req, res) => {
   });
 });
 
-// 6. GET /api/v1/orders — ดึงคำสั่งซื้อทั้งหมด (สำหรับ Admin)
+// ======================================================================
+// 6. PATCH /api/v1/orders/:orderId/confirm-cod — ยืนยันเก็บเงิน COD สำเร็จ
+// ======================================================================
+// อธิบาย: API นี้ใช้สำหรับพนักงานจัดส่ง หรือ Admin
+//   เพื่อยืนยันว่า "เก็บเงินสดจากลูกค้าเรียบร้อยแล้ว"
+//
+// การทำงาน:
+//   1. ตรวจสอบว่า Order นี้เป็น COD จริงหรือไม่
+//   2. เปลี่ยน status → "DELIVERED"
+//   3. เปลี่ยน paymentStatus → "PAID"
+//
+// Request: PATCH /api/v1/orders/ORD-123456/confirm-cod
+// Response: { message: "...", order: {...} }
+// ======================================================================
+router.patch("/:orderId/confirm-cod", async (req, res) => {
+  const { orderId } = req.params;
+
+  try {
+    // หาใน In-memory
+    const order = inMemoryOrders.find(
+      (o) => o.orderId === orderId || String(o._id) === orderId,
+    );
+
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: `ไม่พบคำสั่งซื้อ "${orderId}"` });
+    }
+
+    // ตรวจสอบว่าเป็น COD หรือไม่
+    if (order.paymentMethod !== "COD") {
+      return res.status(400).json({
+        success: false,
+        message: "คำสั่งซื้อนี้ไม่ใช่แบบเก็บเงินปลายทาง (COD)",
+      });
+    }
+
+    // ตรวจว่าเก็บเงินไปแล้วหรือยัง
+    if (order.paymentStatus === "PAID") {
+      return res.status(400).json({
+        success: false,
+        message: "คำสั่งซื้อนี้ได้รับการยืนยันการชำระเงินแล้ว",
+      });
+    }
+
+    // อัปเดตสถานะ
+    order.status = "DELIVERED";
+    order.paymentStatus = "PAID";
+    order.updatedAt = new Date().toISOString();
+
+    // Sync กับ MongoDB ถ้าเชื่อมต่ออยู่
+    if (mongoose.connection.readyState === 1) {
+      await Order.findOneAndUpdate(
+        {
+          $or: [
+            { orderId },
+            ...(mongoose.Types.ObjectId.isValid(orderId)
+              ? [{ _id: orderId }]
+              : []),
+          ],
+        },
+        {
+          $set: {
+            status: "DELIVERED",
+            paymentStatus: "PAID",
+            updatedAt: new Date().toISOString(),
+          },
+        },
+      );
+    }
+
+    console.log(
+      `✅ [COD] ยืนยันเก็บเงินสำเร็จ: ${orderId} | ฿${order.grandTotal}`,
+    );
+
+    res.status(200).json({
+      success: true,
+      message: `ยืนยันการเก็บเงินปลายทางสำเร็จ — ฿${order.grandTotal.toLocaleString()}`,
+      order,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "เกิดข้อผิดพลาดในการยืนยัน COD",
+      error: error.message,
+    });
+  }
+});
+
+// ======================================================================
+// 7. PATCH /api/v1/orders/:orderId/reject-cod — ปฏิเสธ/ยกเลิก COD + คืน Stock
+// ======================================================================
+// อธิบาย: ใช้เมื่อลูกค้าปฏิเสธรับของ หรือไม่มีผู้รับ หรือ Admin ต้องการยกเลิก
+//
+// การทำงาน:
+//   1. คืน Stock สินค้ากลับเข้าคลัง
+//   2. เปลี่ยน status → "CANCELLED"
+//   3. บันทึกเหตุผลการยกเลิก
+//
+// Request: PATCH /api/v1/orders/ORD-123456/reject-cod
+// Body: { "reason": "ลูกค้าไม่อยู่บ้าน" }
+// ======================================================================
+router.patch("/:orderId/reject-cod", async (req, res) => {
+  const { orderId } = req.params;
+  const { reason = "ลูกค้าปฏิเสธรับสินค้า" } = req.body;
+
+  try {
+    const order = inMemoryOrders.find(
+      (o) => o.orderId === orderId || String(o._id) === orderId,
+    );
+
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: `ไม่พบคำสั่งซื้อ "${orderId}"` });
+    }
+
+    if (order.paymentMethod !== "COD") {
+      return res.status(400).json({
+        success: false,
+        message: "คำสั่งซื้อนี้ไม่ใช่แบบเก็บเงินปลายทาง (COD)",
+      });
+    }
+
+    if (order.status === "CANCELLED") {
+      return res.status(400).json({
+        success: false,
+        message: "คำสั่งซื้อนี้ถูกยกเลิกไปแล้ว",
+      });
+    }
+
+    // คืน Stock สินค้ากลับเข้าคลัง
+    restoreMemoryStock(order.items);
+
+    // อัปเดตสถานะ
+    order.status = "CANCELLED";
+    order.paymentStatus = "UNPAID";
+    order.cancelReason = reason;
+    order.updatedAt = new Date().toISOString();
+
+    // Sync กับ MongoDB
+    if (mongoose.connection.readyState === 1) {
+      await Order.findOneAndUpdate(
+        {
+          $or: [
+            { orderId },
+            ...(mongoose.Types.ObjectId.isValid(orderId)
+              ? [{ _id: orderId }]
+              : []),
+          ],
+        },
+        {
+          $set: {
+            status: "CANCELLED",
+            paymentStatus: "UNPAID",
+            cancelReason: reason,
+            updatedAt: new Date().toISOString(),
+          },
+        },
+      );
+    }
+
+    console.log(`❌ [COD] ยกเลิก Order: ${orderId} | เหตุผล: ${reason}`);
+
+    res.status(200).json({
+      success: true,
+      message: `ยกเลิกคำสั่งซื้อและคืนสต็อกเรียบร้อย — เหตุผล: ${reason}`,
+      order,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "เกิดข้อผิดพลาดในการยกเลิก COD",
+      error: error.message,
+    });
+  }
+});
+
+// 8. GET /api/v1/orders — ดึงคำสั่งซื้อทั้งหมด (สำหรับ Admin)
 router.get("/", async (req, res) => {
   if (mongoose.connection.readyState === 1) {
     const dbOrders = await Order.find().sort({ createdAt: -1 });
