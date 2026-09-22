@@ -15,7 +15,7 @@ export default function HomePage() {
   const pageRef = useRef(null);
   const { currentUser } = useAuth();
 
-  // เริ่ม animation และจำกัดการทำงานให้อยู่ภายในหน้า Home เท่านั้น (เรียก Hook ก่อนเงื่อนไขเพื่อความถูกต้องตาม React Hook Rules)
+  // จัดการ Scroll animations เมื่อเลื่อนผ่านแต่ละ Section
   useHomeAnimations(pageRef);
 
   // หากเป็นผู้ดูแลระบบ (Admin) ไม่ต้องแสดง Landing Page ให้ข้ามไปที่ Admin Dashboard ทันที

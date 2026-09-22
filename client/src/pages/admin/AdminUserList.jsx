@@ -254,18 +254,18 @@ export default function AdminUserList() {
           <button
             type="button"
             onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#4c1f08] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#6b3215] cursor-pointer"
+            className="inline-flex items-center gap-2 rounded-full bg-[#4c1f08] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#6b3215] cursor-pointer"
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M12 4v16m8-8H4" />
             </svg>
-            + เพิ่มสมาชิกใหม่
+            เพิ่มสมาชิกใหม่
           </button>
           <button
             type="button"
             onClick={fetchUsers}
             disabled={loading}
-            className="rounded-xl border border-[#d9cbbd] bg-white p-2.5 text-[#4c1f08] hover:bg-[#f1ead7] transition-colors cursor-pointer"
+            className="rounded-full border border-[#d9cbbd] bg-white p-2.5 text-[#4c1f08] hover:bg-[#f1ead7] transition-colors cursor-pointer"
             title="รีเฟรชข้อมูล"
           >
             <svg className={`h-5 w-5 ${loading ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -331,7 +331,7 @@ export default function AdminUserList() {
           ตารางรายชื่อผู้ใช้ (Users Table)
       ────────────────────────────────────────────────────────────── */}
       <div className="overflow-hidden rounded-3xl border border-[#f1ead7] bg-white shadow-sm">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-[#f1ead7] bg-[#fdfbf7] text-xs font-bold uppercase text-[#8d593a]">
@@ -345,14 +345,38 @@ export default function AdminUserList() {
             </thead>
             <tbody className="divide-y divide-[#f8ede3]">
               {loading ? (
-                <tr>
-                  <td colSpan="6" className="p-8 text-center text-[#7a5c4d]">
-                    <div className="inline-flex items-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-[#4c1f08] border-t-transparent"></div>
-                      กำลังโหลดรายชื่อผู้ใช้...
-                    </div>
-                  </td>
-                </tr>
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="skeleton-warm h-10 w-10 rounded-full shrink-0" />
+                        <div className="space-y-1.5">
+                          <div className="skeleton-warm h-4 w-32 rounded" />
+                          <div className="skeleton-warm h-3 w-40 rounded" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="skeleton-warm h-3.5 w-24 rounded" />
+                      <div className="skeleton-warm mt-1.5 h-3 w-36 rounded" />
+                    </td>
+                    <td className="p-4">
+                      <div className="skeleton-warm h-6 w-20 rounded-full" />
+                    </td>
+                    <td className="p-4">
+                      <div className="skeleton-warm h-6 w-16 rounded-full" />
+                    </td>
+                    <td className="p-4">
+                      <div className="skeleton-warm h-5 w-24 rounded-md" />
+                    </td>
+                    <td className="p-4 text-center">
+                      <div className="flex justify-center gap-1.5">
+                        <div className="skeleton-warm h-7 w-12 rounded-full" />
+                        <div className="skeleton-warm h-7 w-12 rounded-full" />
+                      </div>
+                    </td>
+                  </tr>
+                ))
               ) : filteredUsers.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="p-8 text-center text-[#7a5c4d]">
@@ -370,11 +394,10 @@ export default function AdminUserList() {
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div
-                            className={`grid h-10 w-10 shrink-0 place-items-center rounded-full font-bold text-sm ${
-                              isAdmin
-                                ? "bg-[#4c1f08] text-white"
-                                : "bg-[#f1ead7] text-[#4c1f08]"
-                            }`}
+                            className={`grid h-10 w-10 shrink-0 place-items-center rounded-full font-bold text-sm ${isAdmin
+                              ? "bg-[#4c1f08] text-white"
+                              : "bg-[#f1ead7] text-[#4c1f08]"
+                              }`}
                           >
                             {u.firstName ? u.firstName.charAt(0).toUpperCase() : "U"}
                           </div>
@@ -398,11 +421,10 @@ export default function AdminUserList() {
                       {/* สิทธิ์ */}
                       <td className="p-4">
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${
-                            isAdmin
-                              ? "bg-purple-100 text-purple-800 border border-purple-200"
-                              : "bg-[#eaf4eb] text-emerald-800 border border-emerald-200"
-                          }`}
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${isAdmin
+                            ? "bg-purple-100 text-purple-800 border border-purple-200"
+                            : "bg-[#eaf4eb] text-emerald-800 border border-emerald-200"
+                            }`}
                         >
                           {isAdmin ? "👑 ผู้ดูแลระบบ" : "👤 ลูกค้าสมาชิก"}
                         </span>
@@ -637,11 +659,10 @@ export default function AdminUserList() {
                     return (
                       <label
                         key={cond.id}
-                        className={`flex items-center gap-2 rounded-xl border p-2 text-xs cursor-pointer transition-colors ${
-                          isChecked
-                            ? "border-[#4c1f08] bg-[#f8ede3] text-[#4c1f08] font-bold"
-                            : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                        }`}
+                        className={`flex items-center gap-2 rounded-xl border p-2 text-xs cursor-pointer transition-colors ${isChecked
+                          ? "border-[#4c1f08] bg-[#f8ede3] text-[#4c1f08] font-bold"
+                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                          }`}
                       >
                         <input
                           type="checkbox"

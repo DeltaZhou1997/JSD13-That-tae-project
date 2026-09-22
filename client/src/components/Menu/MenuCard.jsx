@@ -1,9 +1,12 @@
 import { useApp } from '../../context/AppContext';
+import { useAuth } from '../../context/AuthContext.js';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 
 export default function MenuCard({ menu }) {
   const { language } = useApp() || { language: 'th' };
   const { handleAddToCart } = useOutletContext() || {};
+  const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'admin';
   const navigate = useNavigate();
 
   const title = (language === 'th' ? (menu.nameTh || menu.name) : (menu.nameEn || menu.name)) || menu.name || '';
@@ -46,20 +49,26 @@ export default function MenuCard({ menu }) {
           <div className="text-[1.2rem] font-semibold text-[#8b5e34] dark:text-[#dcb37b]">
             ฿{menu.price}
           </div>
-          <button 
-            className="bg-[#dcb37b] hover:bg-[#c99c60] text-[#3b2a1a] px-3.5 py-1.5 rounded-lg flex justify-center items-center gap-1.5 text-sm font-semibold transition-colors cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (handleAddToCart) {
-                handleAddToCart(menu, 1);
-              }
-            }}
-          >
-            <svg className="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <span>{language === 'th' ? 'เพิ่ม' : 'Add'}</span>
-          </button>
+          {isAdmin ? (
+            <span className="text-xs font-bold text-[#8b5e34] dark:text-[#dcb37b] hover:underline">
+              ดูเมนู &rarr;
+            </span>
+          ) : (
+            <button 
+              className="bg-[#dcb37b] hover:bg-[#c99c60] text-[#3b2a1a] px-3.5 py-1.5 rounded-lg flex justify-center items-center gap-1.5 text-sm font-semibold transition-colors cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (handleAddToCart) {
+                  handleAddToCart(menu, 1);
+                }
+              }}
+            >
+              <svg className="w-4 h-4 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              <span>{language === 'th' ? 'เพิ่ม' : 'Add'}</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

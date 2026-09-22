@@ -60,24 +60,6 @@ function PackageIcon({ className = "h-5 w-5" }) {
   );
 }
 
-function PlusCircleIcon({ className = "h-5 w-5" }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <line x1="12" y1="8" x2="12" y2="16" />
-      <line x1="8" y1="12" x2="16" y2="12" />
-    </svg>
-  );
-}
 
 function ProfileMenuIcon({ type }) {
   const paths = {
@@ -153,6 +135,25 @@ function LeafIngredientIcon({ className = "h-4 w-4" }) {
   );
 }
 
+function ClipboardListIcon({ className = "h-4 w-4" }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+      <rect x="9" y="3" width="6" height="4" rx="1" />
+      <path d="M9 12h6M9 16h6" />
+    </svg>
+  );
+}
+
 function UsersGroupIcon({ className = "h-4 w-4" }) {
   return (
     <svg
@@ -185,13 +186,14 @@ const navigationByRole = {
   ],
   admin: [
     { label: "แดชบอร์ด", to: "/admin/dashboard", icon: DashboardGridIcon },
-    { label: "จัดการสินค้า", to: "/admin/products", icon: PackageIcon },
+    { label: "ออเดอร์", to: "/admin/orders", icon: ClipboardListIcon },
+    { label: "สินค้า", to: "/admin/products", icon: PackageIcon },
     // =========================================================================
-    // [มาร์กจุดเชื่อมต่อ: เมนูจัดการวัตถุดิบ - รอเพื่อนร่วมทีมพัฒนาหน้าเสร็จ]
-    // TODO: เมื่อเพื่อนทำหน้าจัดการวัตถุดิบเสร็จแล้ว ให้ลบ isPending: true ออก เพื่อให้ลิงก์ไป /admin/ingredients ได้ทันที
+    // [มาร์กจุดเชื่อมต่อ: เมนูวัตถุดิบ - รอเพื่อนร่วมทีมพัฒนาหน้าเสร็จ]
+    // TODO: เมื่อเพื่อนทำหน้าเสร็จแล้ว ให้ลบ isPending: true ออก เพื่อให้ลิงก์ไป /admin/ingredients ได้ทันที
     // =========================================================================
-    { label: "จัดการวัตถุดิบ", to: "/admin/ingredients", icon: LeafIngredientIcon, isPending: true },
-    { label: "จัดการผู้ใช้", to: "/admin/users", icon: UsersGroupIcon },
+    { label: "วัตถุดิบ", to: "/admin/ingredients", icon: LeafIngredientIcon, isPending: true },
+    { label: "ผู้ใช้", to: "/admin/users", icon: UsersGroupIcon },
   ],
 };
 
@@ -205,6 +207,7 @@ export default function Navbar({ cartCount = 0 }) {
 
   const { currentUser, logout } = useAuth();
   const currentRole = currentUser?.role || "guest";
+  const isAdmin = currentRole === "admin" || location.pathname.startsWith("/admin");
 
   const links = navigationByRole[currentRole] ?? navigationByRole.guest;
 
@@ -267,6 +270,7 @@ export default function Navbar({ cartCount = 0 }) {
           <Link
             to={currentRole === "admin" ? "/admin/dashboard" : "/"}
             aria-label={currentRole === "admin" ? "แดชบอร์ดผู้ดูแลระบบ" : "หน้าหลัก"}
+            onClick={() => window.scrollTo({ top: 0, left: 0, behavior: "smooth" })}
             className="inline-flex shrink-0 items-center transition-transform hover:scale-105"
           >
             <img
@@ -278,18 +282,20 @@ export default function Navbar({ cartCount = 0 }) {
 
           {/* Mobile Right Icons (Cart & Hamburger) */}
           <div className="flex items-center gap-2 lg:hidden">
-            <Link
-              to="/cart"
-              aria-label={`ตะกร้า มีสินค้า ${cartCount} รายการ`}
-              className="relative grid h-10 w-10 place-items-center rounded-full text-[#4c1f08] transition-colors hover:bg-[#8d593a]/15"
-            >
-              <BasketIcon className="h-6 w-6" />
-              {cartCount > 0 && (
-                <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[#8b5e34] px-1 text-[10px] font-bold text-white shadow-sm">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
+            {!isAdmin && (
+              <Link
+                to="/cart"
+                aria-label={`ตะกร้า มีสินค้า ${cartCount} รายการ`}
+                className="relative grid h-10 w-10 place-items-center rounded-full text-[#4c1f08] transition-colors hover:bg-[#8d593a]/15"
+              >
+                <BasketIcon className="h-6 w-6" />
+                {cartCount > 0 && (
+                  <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-[#8b5e34] px-1 text-[10px] font-bold text-white shadow-sm">
+                    {cartCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
             <button
               type="button"
@@ -319,7 +325,7 @@ export default function Navbar({ cartCount = 0 }) {
             if (link.isPending) {
               return (
                 /* =========================================================================
-                   [มาร์กจุดเชื่อมต่อ: เมนูจัดการวัตถุดิบ Navbar - รอเพื่อนพัฒนาเสร็จ]
+                   [มาร์กจุดเชื่อมต่อ: เมนูวัตถุดิบ Navbar - รอเพื่อนพัฒนาเสร็จ]
                    TODO: เมื่อเพื่อนทำหน้าเสร็จแล้ว ให้เปลี่ยนเป็น <Link to="/admin/ingredients">
                    ========================================================================= */
                 <button
@@ -327,7 +333,7 @@ export default function Navbar({ cartCount = 0 }) {
                   type="button"
                   onClick={() => {
                     /* TODO: navigate(link.to); เมื่อเพื่อนทำหน้าเสร็จ */
-                    alert("เมนูจัดการวัตถุดิบ: อยู่ระหว่างการพัฒนาโดยเพื่อนในทีม (รอเชื่อมต่อไปยังหน้า /admin/ingredients)");
+                    alert("เมนูวัตถุดิบ: อยู่ระหว่างการพัฒนาโดยเพื่อนในทีม (รอเชื่อมต่อไปยังหน้า /admin/ingredients)");
                   }}
                   className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold text-[#3b2a1a] hover:bg-[#8d593a]/15 hover:text-[#201a1a] cursor-pointer transition-colors"
                   title="รอเชื่อมต่อกับหน้าจัดการวัตถุดิบของเพื่อนร่วมทีม"
@@ -343,17 +349,16 @@ export default function Navbar({ cartCount = 0 }) {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition-all duration-200 ${
-                  isActive
+                onClick={() => window.scrollTo({ top: 0, left: 0, behavior: "smooth" })}
+                className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition-all duration-200 ${isActive
                     ? "bg-[#8b5e34] text-white shadow-sm"
                     : "text-[#3b2a1a] hover:bg-[#8d593a]/15 hover:text-[#201a1a]"
-                }`}
+                  }`}
               >
                 {Icon && (
                   <Icon
-                    className={`h-4 w-4 shrink-0 ${
-                      isActive ? "text-white" : "text-[#8b5e34]"
-                    }`}
+                    className={`h-4 w-4 shrink-0 ${isActive ? "text-white" : "text-[#8b5e34]"
+                      }`}
                   />
                 )}
                 <span>{link.label}</span>
@@ -364,19 +369,21 @@ export default function Navbar({ cartCount = 0 }) {
 
         {/* Desktop Right Actions (Cart & Profile/Login) */}
         <div className="hidden items-center gap-3 lg:flex">
-          {/* Cart Icon */}
-          <Link
-            to="/cart"
-            aria-label={`ตะกร้า มีสินค้า ${cartCount} รายการ`}
-            className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full text-[#4c1f08] transition-colors duration-200 hover:bg-[#8d593a]/15 cursor-pointer"
-          >
-            <BasketIcon className="h-6 w-6" />
-            {cartCount > 0 && (
-              <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full border-2 border-[#f4ebd9] bg-[#8b5e34] px-1 text-xs font-bold text-white shadow-sm">
-                {cartCount}
-              </span>
-            )}
-          </Link>
+          {/* Cart Icon (เฉพาะลูกค้า ไม่แสดงสำหรับ Admin และหน้าจัดการ/Dashboard) */}
+          {!isAdmin && (
+            <Link
+              to="/cart"
+              aria-label={`ตะกร้า มีสินค้า ${cartCount} รายการ`}
+              className="relative grid h-11 w-11 shrink-0 place-items-center rounded-full text-[#4c1f08] transition-colors duration-200 hover:bg-[#8d593a]/15 cursor-pointer"
+            >
+              <BasketIcon className="h-6 w-6" />
+              {cartCount > 0 && (
+                <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full border-2 border-[#f4ebd9] bg-[#8b5e34] px-1 text-xs font-bold text-white shadow-sm">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+          )}
 
           {/* User Profile Dropdown or Login Button */}
           {currentUser ? (
@@ -415,11 +422,10 @@ export default function Navbar({ cartCount = 0 }) {
 
               {/* Profile Dropdown Menu */}
               <div
-                className={`absolute right-0 top-[calc(100%+8px)] w-60 origin-top-right overflow-hidden rounded-2xl border border-[#dfd1c1] bg-[#fdfbf7] p-2 text-[#3d2c2e] shadow-xl transition-all duration-200 z-50 ${
-                  isProfileOpen
+                className={`absolute right-0 top-[calc(100%+8px)] w-60 origin-top-right overflow-hidden rounded-2xl border border-[#dfd1c1] bg-[#fdfbf7] p-2 text-[#3d2c2e] shadow-xl transition-all duration-200 z-50 ${isProfileOpen
                     ? "opacity-100 scale-100 pointer-events-auto visible"
                     : "opacity-0 scale-95 pointer-events-none invisible"
-                }`}
+                  }`}
                 role="menu"
               >
                 {currentRole === "customer" ? (
@@ -442,66 +448,15 @@ export default function Navbar({ cartCount = 0 }) {
                     </Link>
                   </>
                 ) : (
-                  <>
-                    <Link
-                      to="/profile"
-                      onClick={() => setIsProfileOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
-                    >
-                      <ProfileMenuIcon type="profile" />
-                      โปรไฟล์ของฉัน (แก้ไขข้อมูลส่วนตัว)
-                    </Link>
-                    <Link
-                      to="/admin/dashboard"
-                      onClick={() => setIsProfileOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
-                    >
-                      <AdminToolsIcon className="h-4 w-4 text-[#8d593a]" />
-                      แดชบอร์ดภาพรวม
-                    </Link>
-                    <Link
-                      to="/admin/products"
-                      onClick={() => setIsProfileOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
-                    >
-                      <PackageIcon className="h-4 w-4 text-[#8d593a]" />
-                      จัดการรายการสินค้า
-                    </Link>
-                    {/* =========================================================================
-                        [มาร์กจุดเชื่อมต่อ: เมนูจัดการวัตถุดิบใน Dropdown - รอเพื่อนพัฒนาเสร็จ]
-                        TODO: เมื่อเพื่อนทำหน้าเสร็จแล้ว ให้เปลี่ยนเป็น:
-                        <Link to="/admin/ingredients" ...>🥬 จัดการวัตถุดิบในสต็อก</Link>
-                       ========================================================================= */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsProfileOpen(false);
-                        /* TODO: เมื่อเพื่อนทำหน้าเสร็จ ให้เปิดใช้: navigate("/admin/ingredients"); */
-                        alert("เมนูจัดการวัตถุดิบ: อยู่ระหว่างการพัฒนาโดยเพื่อนในทีม (รอเชื่อมต่อไปยังหน้า /admin/ingredients)");
-                      }}
-                      className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9] text-left cursor-pointer text-[#3d2c2e]"
-                      title="รอเชื่อมต่อกับหน้าจัดการวัตถุดิบของเพื่อนร่วมทีม"
-                    >
-                      <span className="text-base leading-none">🥬</span>
-                      จัดการวัตถุดิบในสต็อก
-                    </button>
-                    <Link
-                      to="/admin/users"
-                      onClick={() => setIsProfileOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
-                    >
-                      <span className="text-base leading-none">👥</span>
-                      จัดการสมาชิก / ลูกค้า
-                    </Link>
-                    <Link
-                      to="/admin/products/new"
-                      onClick={() => setIsProfileOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
-                    >
-                      <PlusCircleIcon className="h-4 w-4 text-[#8d593a]" />
-                      เพิ่มสินค้าใหม่
-                    </Link>
-                  </>
+                  /* แอดมิน: มีเฉพาะ โปรไฟล์ของฉัน ตามที่กำหนด */
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsProfileOpen(false)}
+                    className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
+                  >
+                    <ProfileMenuIcon type="profile" />
+                    โปรไฟล์ของฉัน
+                  </Link>
                 )}
 
                 <div className="my-1 border-t border-[#dfd1c1]/60" />
@@ -528,9 +483,10 @@ export default function Navbar({ cartCount = 0 }) {
 
         {/* Mobile Dropdown Navigation */}
         <div
-          className={`overflow-hidden transition-all duration-300 lg:hidden ${
-            isOpen ? "max-h-[500px] opacity-100 py-3 border-t border-[#dfd1c1] mt-2" : "max-h-0 opacity-0 py-0 pointer-events-none"
-          }`}
+          className={`transition-all duration-300 lg:hidden ${isOpen
+              ? "max-h-[85vh] opacity-100 py-3 border-t border-[#dfd1c1] mt-2 overflow-y-auto pointer-events-auto"
+              : "max-h-0 opacity-0 py-0 pointer-events-none overflow-hidden invisible"
+            }`}
         >
           <div className="flex flex-col gap-1 px-1">
             {links.map((link) => {
@@ -539,7 +495,7 @@ export default function Navbar({ cartCount = 0 }) {
               if (link.isPending) {
                 return (
                   /* =========================================================================
-                     [มาร์กจุดเชื่อมต่อ: เมนูจัดการวัตถุดิบใน Mobile Menu - รอเพื่อนพัฒนาเสร็จ]
+                     [มาร์กจุดเชื่อมต่อ: เมนูวัตถุดิบใน Mobile Menu - รอเพื่อนพัฒนาเสร็จ]
                      TODO: เมื่อเพื่อนทำหน้าเสร็จ ให้เปลี่ยนเป็น <Link to="/admin/ingredients">
                      ========================================================================= */
                   <button
@@ -548,7 +504,7 @@ export default function Navbar({ cartCount = 0 }) {
                     onClick={() => {
                       setIsOpen(false);
                       /* TODO: navigate(link.to); เมื่อเพื่อนทำหน้าเสร็จ */
-                      alert("เมนูจัดการวัตถุดิบ: อยู่ระหว่างการพัฒนาโดยเพื่อนในทีม (รอเชื่อมต่อไปยังหน้า /admin/ingredients)");
+                      alert("เมนูวัตถุดิบ: อยู่ระหว่างการพัฒนาโดยเพื่อนในทีม (รอเชื่อมต่อไปยังหน้า /admin/ingredients)");
                     }}
                     className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-base font-semibold text-[#3b2a1a] hover:bg-[#8d593a]/15 text-left cursor-pointer"
                   >
@@ -563,12 +519,14 @@ export default function Navbar({ cartCount = 0 }) {
                 <Link
                   key={link.to}
                   to={link.to}
-                  onClick={() => setIsOpen(false)}
-                  className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-base font-semibold transition-colors ${
-                    isActive
+                  onClick={() => {
+                    setIsOpen(false);
+                    window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+                  }}
+                  className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-base font-semibold transition-colors ${isActive
                       ? "bg-[#8b5e34] text-white"
                       : "text-[#3b2a1a] hover:bg-[#8d593a]/15"
-                  }`}
+                    }`}
                 >
                   {Icon && <Icon className="h-5 w-5 shrink-0" />}
                   <span>{link.label}</span>
@@ -580,90 +538,58 @@ export default function Navbar({ cartCount = 0 }) {
 
             {currentUser ? (
               <div className="space-y-2 pt-1">
-                <div className="flex items-center justify-between rounded-2xl bg-[#4c1f08] p-3 text-white">
-                  <div className="flex items-center gap-2.5">
+                {/* Profile Card รวมปุ่มโปรไฟล์และออกจากระบบไว้ด้วยกันในแถวเดียว ไม่ต้องมีปุ่มแยกด้านล่าง */}
+                <div className="flex items-center justify-between gap-2 rounded-2xl bg-[#4c1f08] p-2.5 sm:p-3 text-white shadow-sm">
+                  <Link
+                    to="/profile"
+                    onClick={() => {
+                      setIsOpen(false);
+                      window.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+                    }}
+                    className="flex flex-1 items-center gap-2.5 min-w-0 pr-1 transition-opacity hover:opacity-95 group"
+                    title="ไปที่โปรไฟล์ของฉัน"
+                  >
                     {currentRole === "admin" ? (
-                      <span className="grid h-9 w-9 place-items-center rounded-full bg-white/20 text-[#f1ead7]">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/20 text-[#f1ead7] group-hover:bg-white/30 transition-colors">
                         <AdminToolsIcon className="h-5 w-5 text-white" />
                       </span>
                     ) : (
                       <img
                         src={customerAvatar}
                         alt=""
-                        className="h-9 w-9 rounded-full border border-white/70 object-cover"
+                        className="h-9 w-9 shrink-0 rounded-full border border-white/70 object-cover"
                       />
                     )}
-                    <div>
-                      <strong className="block text-sm leading-tight">{displayName}</strong>
-                      <span className="text-[11px] text-[#e7d8cb]">{displayRole}</span>
+                    <div className="min-w-0 truncate">
+                      <div className="flex items-center gap-1.5">
+                        <strong className="text-sm leading-tight font-bold truncate">{displayName}</strong>
+                        <span className="inline-flex items-center gap-0.5 rounded-md bg-white/20 px-1.5 py-0.5 text-[10px] font-medium text-white group-hover:bg-white/30 transition-colors">
+                          โปรไฟล์ของฉัน &rarr;
+                        </span>
+                      </div>
+                      <span className="block text-[11px] text-[#e7d8cb] truncate">{displayRole}</span>
                     </div>
-                  </div>
+                  </Link>
+
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold text-white hover:bg-white/25 cursor-pointer"
+                    className="rounded-full bg-white/15 px-3 py-1.5 text-xs font-bold text-white hover:bg-red-500/80 transition-colors cursor-pointer shrink-0"
                   >
-                    ออก
+                    ออกจากระบบ
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
-                  {currentRole === "customer" ? (
-                    <>
-                      <Link
-                        to="/profile"
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center justify-center gap-2 rounded-xl bg-white/80 p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-white shadow-xs"
-                      >
-                        <ProfileMenuIcon type="profile" />
-                        โปรไฟล์
-                      </Link>
-                      <Link
-                        to="/orders"
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center justify-center gap-2 rounded-xl bg-white/80 p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-white shadow-xs"
-                      >
-                        <ProfileMenuIcon type="orders" />
-                        คำสั่งซื้อ
-                      </Link>
-                    </>
-                  ) : (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 col-span-2">
-                      <Link
-                        to="/admin/dashboard"
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center justify-center gap-1 rounded-xl bg-white/80 p-2 text-[11px] font-bold text-[#3d2c2e] hover:bg-white shadow-xs"
-                      >
-                        <AdminToolsIcon className="h-3.5 w-3.5" />
-                        แดชบอร์ด
-                      </Link>
-                      <Link
-                        to="/admin/products"
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center justify-center gap-1 rounded-xl bg-white/80 p-2 text-[11px] font-bold text-[#3d2c2e] hover:bg-white shadow-xs"
-                      >
-                        <PackageIcon className="h-3.5 w-3.5" />
-                        สินค้า
-                      </Link>
-                      <Link
-                        to="/admin/users"
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center justify-center gap-1 rounded-xl bg-white/80 p-2 text-[11px] font-bold text-[#3d2c2e] hover:bg-white shadow-xs"
-                      >
-                        <span className="text-xs">👥</span>
-                        สมาชิก
-                      </Link>
-                      <Link
-                        to="/profile"
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center justify-center gap-1 rounded-xl bg-white/80 p-2 text-[11px] font-bold text-[#3d2c2e] hover:bg-white shadow-xs"
-                      >
-                        <ProfileMenuIcon type="profile" />
-                        โปรไฟล์
-                      </Link>
-                    </div>
-                  )}
-                </div>
+                {currentRole === "customer" && (
+                  <Link
+                    to="/orders"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-white/80 p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-white shadow-xs"
+                  >
+                    <ProfileMenuIcon type="orders" />
+                    รายการคำสั่งซื้อของฉัน
+                  </Link>
+                )}
               </div>
             ) : (
               <div className="pt-2">

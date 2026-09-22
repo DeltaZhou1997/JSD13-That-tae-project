@@ -1,12 +1,22 @@
-import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
 import Navbar from './Navbar.jsx'
 import Footer from './Footer.jsx'
 import useToast from '../hooks/useToast.js'
 
 function Layout({ context }) {
   const [cartItems, setCartItems] = useState([])
+  const location = useLocation()
   const toast = useToast()
+
+  // เลื่อนกลับขึ้นด้านบนสุดแบบ Smooth ทุกครั้งที่เปลี่ยนหน้า/เปลี่ยนแท็บ
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'smooth',
+    })
+  }, [location.pathname, location.search])
 
   const handleAddToCart = (product, count = 1) => {
     const targetId = product._id || product.id;

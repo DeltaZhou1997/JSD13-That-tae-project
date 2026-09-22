@@ -1,7 +1,10 @@
 import { useOutletContext, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext.js';
 import CartItem from './CartItem.jsx';
 
 export default function Cart() {
+  const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'admin';
   const context = useOutletContext() || {};
   const {
     cartItems = [],
@@ -37,7 +40,7 @@ export default function Cart() {
       </h2>
 
       {/* Rewards Banner */}
-      {cartItems.length > 0 && (
+      {cartItems.length > 0 && !isAdmin && (
         <div className="mb-6 overflow-hidden rounded-2xl border border-[#e8dfd1] bg-white p-4 shadow-sm">
           {qualifiesForReward ? (
             <div className="flex items-center gap-2.5 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl p-3">
@@ -65,28 +68,20 @@ export default function Cart() {
         </div>
       )}
 
+      {/* Items List */}
       {cartItems.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-[#d9cbbd] bg-white p-12 text-center shadow-sm">
-          <div className="w-16 h-16 rounded-full bg-[#fcf8f2] border border-[#e8dfd1] text-[#8d593a] flex items-center justify-center mx-auto mb-4">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-8 h-8" aria-hidden="true">
-              <path d="M3 9h18l-1.4 9H4.4L3 9Z" />
-              <path d="m8 9 4-5 4 5M8 13v2m4-2v2m4-2v2" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-bold text-[#3d2c2e] mb-1">ยังไม่มีสินค้าในตะกร้า</h3>
-          <p className="text-xs text-[#6f675f] max-w-sm mx-auto mb-6">
-            เลือก Cooking Kit เมนูอาหารไทยตามธาตุเจ้าเรือนที่คุณชื่นชอบลงตะกร้าได้เลย
-          </p>
+        <div className="rounded-3xl border border-[#e8dfd1] bg-white p-12 text-center shadow-sm">
+          <p className="mb-4 text-base text-[#6f675f]">ยังไม่มีสินค้าในตะกร้า</p>
           <Link
             to="/menus"
-            className="inline-block rounded-full bg-[#4c1f08] px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#6b3215] transition-colors"
+            className="inline-block rounded-full bg-[#4c1f08] px-6 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#6b3215]"
           >
             เลือกดูเมนูอาหาร
           </Link>
         </div>
       ) : (
-        <div className="rounded-3xl bg-white p-6 shadow-sm border border-[#e8dfd1]">
-          <div className="flex flex-col">
+        <div className="overflow-hidden rounded-3xl border border-[#e8dfd1] bg-white shadow-sm">
+          <div className="divide-y divide-[#f1ead7] p-2 sm:p-4">
             {cartItems.map((item) => (
               <CartItem
                 key={item._id || item.id}
@@ -125,12 +120,18 @@ export default function Cart() {
           </div>
 
           <div className="mt-6">
-            <Link
-              to="/checkout"
-              className="block w-full rounded-full bg-[#4c1f08] py-3.5 text-center text-sm font-bold text-white shadow-md transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215] cursor-pointer"
-            >
-              ดำเนินการชำระเงิน
-            </Link>
+            {isAdmin ? (
+              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3.5 text-center text-xs font-semibold text-amber-900">
+                ⚠️ บัญชีผู้ดูแลระบบ (Admin) สำหรับจัดการระบบหลังบ้าน ไม่มีสิทธิ์สั่งซื้อสินค้า
+              </div>
+            ) : (
+              <Link
+                to="/checkout"
+                className="block w-full rounded-full bg-[#4c1f08] py-3.5 text-center text-sm font-bold text-white shadow-md transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215] cursor-pointer"
+              >
+                ดำเนินการชำระเงิน
+              </Link>
+            )}
           </div>
         </div>
       )}

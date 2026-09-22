@@ -9,6 +9,7 @@ import Login from "./pages/Login.jsx"
 import Register from "./pages/Register.jsx"
 import AdminDashboard from './pages/admin/AdminDashboard.jsx'
 import AdminProductList from './pages/admin/AdminProductList.jsx'
+import AdminOrderList from './pages/admin/AdminOrderList.jsx'
 import ProductForm from './pages/admin/ProductForm.jsx'
 import AdminUserList from './pages/admin/AdminUserList.jsx'
 import ProductsProvider from './context/ProductsProvider.jsx'
@@ -43,6 +44,10 @@ const router = createBrowserRouter([
       {
         path: "admin/dashboard",
         element: <AdminDashboard />
+      },
+      {
+        path: "admin/orders",
+        element: <AdminOrderList />
       },
       {
         path: "admin/users",
