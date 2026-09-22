@@ -1,3 +1,4 @@
+// client/src/pages/CheckoutPage.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import {
@@ -28,6 +29,10 @@ export default function CheckoutPage() {
   const navigate = useNavigate();
   const stripe = useStripe();
   const elements = useElements();
+
+  // 🌟 ตรวจจับกรณีลูกค้ากดย้อนกลับมาจาก Stripe (?canceled=true)
+  const isCanceledFromStripe =
+    new URLSearchParams(window.location.search).get("canceled") === "true";
 
   const { currentUser: authUser } = useAuth();
   const currentUser = authUser || users[0];
@@ -194,7 +199,7 @@ export default function CheckoutPage() {
         const data = await res.json();
 
         if (data.success && data.url) {
-          // 🌟 บันทึกข้อมูลคำสั่งซื้อจริงไว้ใน sessionStorage ก่อนเด้งไปหน้า Stripe
+          // 🌟 บันทึกข้อมูลคำสั่งซื้อไว้ใน sessionStorage ก่อนเด้งไปหน้า Stripe
           sessionStorage.setItem(
             "last_v2_order",
             JSON.stringify({
@@ -202,8 +207,8 @@ export default function CheckoutPage() {
               orderId: data.orderId || orderPayload.orderId,
             }),
           );
-          if (handleClearCart) handleClearCart();
 
+          // ⚠️ ไม่สั่ง handleClearCart() ตรงนี้ เพื่อให้ของในตะกร้าไม่หายถ้าลูกค้ากดย้อนกลับมา
           // 🚀 เด้งไปหน้าชำระเงินของ Stripe ทันที!
           window.location.href = data.url;
         } else {
@@ -309,6 +314,23 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-[#fdfbf7] py-10 px-4 sm:px-6 lg:px-8 text-[#2f2119]">
       <div className="max-w-6xl mx-auto">
+        {/* 🌟 แสดงแถบแจ้งเตือนสีส้มเมื่อลูกค้ากดย้อนกลับมาจาก Stripe */}
+        {isCanceledFromStripe && (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-2xl flex items-start gap-3.5 text-left shadow-sm animate-in fade-in">
+            <span className="text-2xl">⚠️</span>
+            <div>
+              <p className="text-sm font-bold text-amber-900">
+                การชำระเงินยังไม่เสร็จสมบูรณ์ หรือถูกยกเลิก
+              </p>
+              <p className="text-xs text-amber-700 mt-0.5 leading-relaxed">
+                สินค้าทั้งหมดยังคงอยู่ในตะกร้าของคุณอย่างปลอดภัย
+                ท่านสามารถตรวจสอบข้อมูล เลือกช่องทางการชำระเงินอื่น
+                หรือกดลองใหม่อีกครั้งได้ทันทีครับ
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* ส่วนหัวหน้า Checkout */}
         <div className="mb-6">
           <span className="text-xs uppercase tracking-widest text-[#8d593a] font-bold">
