@@ -6,7 +6,7 @@ export default function OrdersPage() {
   const { currentUser } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [_error, setError] = useState(null);
 
   const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
   const userId = currentUser?.id || currentUser?._id || "USR-001";

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, useOutletContext } from "react-router-dom";
+import { useNavigate, useOutletContext, Link } from "react-router-dom";
 
 import { users } from "../mock-data/users";
 import { useAuth } from "../context/AuthContext.js";
@@ -225,6 +225,38 @@ export default function CheckoutPage() {
       navigate("/order-success", { state: { order: orderPayload } });
     }
   };
+
+  // กรณีผู้ใช้เป็น Admin (ไม่มีสิทธิ์สั่งซื้อสินค้า)
+  if (authUser?.role === "admin") {
+    return (
+      <div className="min-h-[70vh] bg-[#fdfbf7] flex flex-col items-center justify-center p-6 text-center text-[#2f2119]">
+        <div className="w-20 h-20 bg-amber-50 border border-amber-200 rounded-full flex items-center justify-center text-amber-800 text-3xl mb-4 shadow-xs">
+          ⚠️
+        </div>
+        <h2 className="text-2xl font-bold text-[#4c1f08] mb-2">
+          ผู้ดูแลระบบ (Admin) ไม่มีสิทธิ์สั่งซื้อสินค้า
+        </h2>
+        <p className="text-sm text-[#7a5c4d] max-w-md mb-6 leading-relaxed">
+          บัญชีของคุณมีสิทธิ์ระดับผู้ดูแลระบบร้านค้า สำหรับจัดการระบบหลังบ้านเท่านั้น
+          หากต้องการทดสอบการสั่งซื้อ กรุณาเข้าสู่ระบบด้วยบัญชีลูกค้าทั่วไป
+        </p>
+        <div className="flex gap-3">
+          <Link
+            to="/admin/dashboard"
+            className="rounded-full bg-[#4c1f08] px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#6b3215] transition-colors cursor-pointer"
+          >
+            ไปยังแดชบอร์ด
+          </Link>
+          <Link
+            to="/menus"
+            className="rounded-full border border-[#d9cbbd] bg-white px-6 py-2.5 text-xs font-bold text-[#4c1f08] hover:bg-[#f1ead7] transition-colors cursor-pointer"
+          >
+            ดูรายการเมนู
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // กรณีไม่มีสินค้าในตะกร้า
   if (!cartItems || cartItems.length === 0) {

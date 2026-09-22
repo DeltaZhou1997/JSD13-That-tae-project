@@ -231,6 +231,8 @@ router.put("/:id", async (req, res, next) => {
       conditions,
       isSubscribed,
       tierStatus,
+      role,
+      deliveryAddress,
     } = req.body || {};
 
     if (email && email.trim().toLowerCase() !== user.email.toLowerCase()) {
@@ -270,6 +272,8 @@ router.put("/:id", async (req, res, next) => {
     if (conditions !== undefined) user.conditions = conditions;
     if (isSubscribed !== undefined) user.isSubscribed = isSubscribed;
     if (tierStatus !== undefined) user.tierStatus = tierStatus;
+    if (role !== undefined && (role === "admin" || role === "customer")) user.role = role;
+    if (deliveryAddress !== undefined) user.deliveryAddress = deliveryAddress;
 
     user.updatedAt = new Date().toISOString();
 

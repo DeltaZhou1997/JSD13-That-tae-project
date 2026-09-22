@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import { Layout } from './components/index.js'
 
 import HomePage from './pages/Home.jsx'
@@ -7,8 +7,11 @@ import ToastProvider from './context/ToastProvider.jsx'
 import { AppProvider } from './context/AppContext.jsx';
 import Login from "./pages/Login.jsx"
 import Register from "./pages/Register.jsx"
+import AdminDashboard from './pages/admin/AdminDashboard.jsx'
 import AdminProductList from './pages/admin/AdminProductList.jsx'
+import AdminOrderList from './pages/admin/AdminOrderList.jsx'
 import ProductForm from './pages/admin/ProductForm.jsx'
+import AdminUserList from './pages/admin/AdminUserList.jsx'
 import AdminIngredientList from './pages/admin/AdminIngredientList.jsx'
 import IngredientForm from './pages/admin/IngredientForm.jsx'
 import AdminRecipeBuilder from './pages/admin/AdminRecipeBuilder.jsx'
@@ -37,6 +40,22 @@ const router = createBrowserRouter([
       {
         index: true,
         element: <HomePage />
+      },
+      {
+        path: "admin",
+        element: <Navigate to="/admin/dashboard" replace />
+      },
+      {
+        path: "admin/dashboard",
+        element: <AdminDashboard />
+      },
+      {
+        path: "admin/orders",
+        element: <AdminOrderList />
+      },
+      {
+        path: "admin/users",
+        element: <AdminUserList />
       },
       {
         path: "admin/products",

@@ -63,6 +63,7 @@ export default function HeroSection() {
   return (
     <section
       ref={heroRef}
+      id="hero"
       className="relative isolate -mt-20 flex min-h-[100svh] items-center overflow-hidden text-white sm:-mt-24 sm:min-h-[680px] lg:min-h-[760px]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}

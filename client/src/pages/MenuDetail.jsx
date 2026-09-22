@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams, useOutletContext } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.js';
 import { useApp } from '../context/AppContext';
 import { useProducts } from '../context/ProductsContext.js';
 import { dishes } from '../mock-data/index.js';
@@ -131,6 +132,8 @@ export default function MenuDetail() {
   const { language } = useApp() || { language: 'th' };
   const { handleAddToCart } = useOutletContext() || {};
   const { getProductById } = useProducts();
+  const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'admin';
   const [menu, setMenu] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState('');
@@ -140,7 +143,7 @@ export default function MenuDetail() {
   const cleanUrl = (url) => {
     if (!url || typeof url !== 'string') return '';
     if (url.startsWith('file://')) {
-      const match = url.match(/assets\/([^\/]+)\/([^\/]+)$/);
+      const match = url.match(/assets\/([^/]+)\/([^/]+)$/);
       return match ? `/assets/${match[1]}/${match[2]}` : url;
     }
     return url;
@@ -337,42 +340,52 @@ export default function MenuDetail() {
             )}
 
             {/* Quantity Selector & Add to Cart Button */}
-            <div className="flex gap-4 items-center">
-              <div className="flex items-center border border-stone-300 rounded-2xl bg-stone-50 p-1">
+            {isAdmin ? (
+              <div className="flex items-center gap-3 rounded-2xl bg-amber-50 border border-amber-200/80 p-4 text-xs sm:text-sm text-amber-900 font-medium">
+                <span className="text-xl">⚠️</span>
+                <div>
+                  <strong className="block font-bold text-amber-800">บัญชีผู้ดูแลระบบ (Admin)</strong>
+                  <span>สำหรับจัดการข้อมูลร้านค้า ไม่มีสิทธิ์สั่งซื้อสินค้า</span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex gap-4 items-center">
+                <div className="flex items-center border border-stone-300 rounded-2xl bg-stone-50 p-1">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    className="w-10 h-10 rounded-xl bg-white hover:bg-stone-200 text-stone-700 font-bold text-lg transition flex items-center justify-center cursor-pointer shadow-2xs"
+                    aria-label="ลดจำนวน"
+                  >
+                    −
+                  </button>
+                  <span className="w-12 text-center font-bold text-stone-900 text-base">
+                    {quantity}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => q + 1)}
+                    className="w-10 h-10 rounded-xl bg-white hover:bg-stone-200 text-stone-700 font-bold text-lg transition flex items-center justify-center cursor-pointer shadow-2xs"
+                    aria-label="เพิ่มจำนวน"
+                  >
+                    +
+                  </button>
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="w-10 h-10 rounded-xl bg-white hover:bg-stone-200 text-stone-700 font-bold text-lg transition flex items-center justify-center cursor-pointer shadow-2xs"
-                  aria-label="ลดจำนวน"
+                  onClick={() => {
+                    if (handleAddToCart) handleAddToCart(menu, quantity);
+                  }}
+                  className="flex-1 rounded-2xl bg-[#8b5e34] hover:bg-[#724a26] text-white font-bold text-base sm:text-lg shadow-md hover:shadow-lg transition-all py-3.5 px-6 cursor-pointer flex items-center justify-center gap-2.5"
                 >
-                  −
-                </button>
-                <span className="w-12 text-center font-bold text-stone-900 text-base">
-                  {quantity}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setQuantity((q) => q + 1)}
-                  className="w-10 h-10 rounded-xl bg-white hover:bg-stone-200 text-stone-700 font-bold text-lg transition flex items-center justify-center cursor-pointer shadow-2xs"
-                  aria-label="เพิ่มจำนวน"
-                >
-                  +
+                  <svg className="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span>{language === 'th' ? 'เพิ่มลงตะกร้า' : 'Add to Cart'}</span>
                 </button>
               </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (handleAddToCart) handleAddToCart(menu, quantity);
-                }}
-                className="flex-1 rounded-2xl bg-[#8b5e34] hover:bg-[#724a26] text-white font-bold text-base sm:text-lg shadow-md hover:shadow-lg transition-all py-3.5 px-6 cursor-pointer flex items-center justify-center gap-2.5"
-              >
-                <svg className="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                <span>{language === 'th' ? 'เพิ่มลงตะกร้า' : 'Add to Cart'}</span>
-              </button>
-            </div>
+            )}
           </div>
         </section>
 
