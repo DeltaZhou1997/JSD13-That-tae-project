@@ -1,22 +1,45 @@
-import mongoose from "mongoose";
+import mongoose, { disconnect, mongo } from "mongoose";
+
+let isConnected = false;
+
 
 export async function connectDB() {
-  const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
 
-  if (!uri || uri.trim() === "") {
-    console.log("ℹ️ ไม่พบ MONGO_URI ใน .env — เซิร์ฟเวอร์จะทำงานในโหมด In-memory Mock");
-    return false;
+  if (isConnected) return;
+
+  const uri = process.env.MONGODB_URI
+  if (!uri) { throw new error("not found ENV or MONGODB_URI, Please Check Variable") }
+
+  // ใส่ไว้สำหรับ ให้ตัว Mongoose มันมีความยืดหยุ่น ไม่ต้องเป๊ะตา่ม schema
+  mongoose.set("strictQuery", false);
+
+  mongoose.connect(uri, {
+    dbName: "thattae"
+  });
+
+  isConnected = true;
+  console.log("MongoDB Connected at :", mongoose.connection.host)
+}
+
+export async function disconnectDB() {
+  if (!isConnected) return; //เช็คว่าต่อไหม ถ้าต่ออยู่
+
+  await mongoose.disconnect();
+  isConnected = false;
+  console.log("MongoDB Disconnected")
+}
+
+export function getDBStatus() {
+  const states = {
+    0: "disconnected",
+    1: "connected",
+    2: "connecting",
+    3: "disconnecting"
   }
 
-  try {
-    await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000,
-    });
-    console.log("🍃 เชื่อมต่อ MongoDB Atlas สำเร็จเรียบร้อยแล้ว");
-    return true;
-  } catch (error) {
-    console.warn("⚠️ ไม่สามารถเชื่อมต่อ MongoDB ได้:", error.message);
-    console.log("ℹ️ เซิร์ฟเวอร์จะสลับไปทำงานในโหมด In-memory Mock อัตโนมัติ");
-    return false;
+  return {
+    state: states[mongoose.connection.readyState] || "unknown",
+    host: mongoose.connection.host || "none",
+    name: mongoose.connection.name || "none",
   }
 }
