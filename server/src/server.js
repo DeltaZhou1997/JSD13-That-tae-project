@@ -10,6 +10,10 @@ const port = process.env.PORT || 3001;
 // Middlewares
 app.use(cookieParser());
 
+
+
+
+//*********************************** เอาไว้รันทดสอบในคอมเรา*************** */
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
@@ -30,6 +34,12 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+/********************************************************************* */
+
+
+
+
+
 
 // Health Check & Root Endpoints
 app.get("/", (req, res) => {
@@ -51,7 +61,7 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// Mount Routes: เปิดเฉพาะ v2 เท่านั้น (Map ทุก endpoint เข้า v2 เพื่อให้ Frontend ทำงานได้ทันที)
+// Mount Routes: เปิด เฉพาะ v2 เท่านั้น (Map ทุก endpoint เข้า v2 เพื่อให้ Frontend ทำงานได้ทันที)
 app.use("/api/v2", v2Router);
 app.use("/api/v1", v2Router); // Forward คำขอเดิมจาก Frontend ที่ยังชี้ /api/v1 ให้มาทำงานบน MongoDB v2 อัตโนมัติ
 app.use("/api", v2Router);    // Fallback route สำหรับ /api ให้ชี้เข้า v2
