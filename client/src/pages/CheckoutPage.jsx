@@ -90,6 +90,11 @@ export default function CheckoutPage() {
   }, [authUser]);
 
   const selectSavedAddress = (id) => {
+    if (id === "other") {
+      setSelectedAddressId("other");
+      setFormData((prev) => ({ ...prev, address: "", subdistrict: "", district: "", province: "", zipcode: "" }));
+      return;
+    }
     const selected = (authUser?.addresses || []).find((item) => String(item._id) === String(id));
     if (!selected) return;
     setSelectedAddressId(String(selected._id));
@@ -531,7 +536,7 @@ export default function CheckoutPage() {
         >
           <div className="lg:col-span-7 flex flex-col gap-6">
             <div className="mb-3 flex items-center justify-between gap-3">
-              {authUser?.addresses?.length > 0 ? <select value={selectedAddressId} onChange={(e) => selectSavedAddress(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-[#e8dfd1] bg-white px-3 py-2 text-sm font-bold text-[#4c1f08]"><option value="">เลือกที่อยู่จัดส่ง</option>{authUser.addresses.map((item) => <option key={item._id} value={item._id}>{item.label}{item.isDefault ? " (หลัก)" : ""}</option>)}</select> : <span className="text-xs text-[#7a6b63]">ยังไม่มีรายการที่อยู่ที่บันทึกไว้</span>}
+              {authUser?.addresses?.length > 0 ? <select value={selectedAddressId} onChange={(e) => selectSavedAddress(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-[#e8dfd1] bg-white px-3 py-2 text-sm font-bold text-[#4c1f08]"><option value="">เลือกที่อยู่จัดส่ง</option>{authUser.addresses.map((item) => <option key={item._id} value={item._id}>{item.label}{item.isDefault ? " (หลัก)" : ""}</option>)}<option value="other">ใช้ที่อยู่อื่นชั่วคราว (ไม่บันทึก)</option></select> : <span className="text-xs text-[#7a6b63]">ยังไม่มีรายการที่อยู่ที่บันทึกไว้</span>}
               <button type="button" onClick={() => setIsAddressModalOpen(true)} className="shrink-0 text-sm font-bold text-[#8d593a] underline">แก้ไขที่อยู่</button>
             </div>
             <ShippingForm

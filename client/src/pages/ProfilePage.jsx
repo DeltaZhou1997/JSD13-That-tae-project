@@ -254,6 +254,7 @@ export default function ProfilePage() {
   const [isDraggingAvatar, setIsDraggingAvatar] = useState(false);
   const [addressBook, setAddressBook] = useState(currentUser?.addresses || []);
   const [addressModal, setAddressModal] = useState(null);
+  const [addressManagerOpen, setAddressManagerOpen] = useState(false);
   const [addressSaving, setAddressSaving] = useState(false);
   const emptyAddress = { label: "บ้าน", address: "", subdistrict: "", district: "", province: "", zipcode: "", phone: currentUser?.phone || "" };
   const [addressForm, setAddressForm] = useState(emptyAddress);
@@ -324,7 +325,15 @@ export default function ProfilePage() {
     }
   }, [currentUser]);
 
-  useEffect(() => setAddressBook(currentUser?.addresses || []), [currentUser?.addresses]);
+  useEffect(() => {
+    setAddressBook(currentUser?.addresses || []);
+    const userId = currentUser?.id || currentUser?._id;
+    if (!userId) return;
+    fetch(`${apiUrl}/api/v2/users/me/addresses`, { headers: getAuthHeaders() })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => { if (data?.addresses) { setAddressBook(data.addresses); updateUser({ addresses: data.addresses }); } })
+      .catch(() => {});
+  }, [currentUser?.id, currentUser?._id]);
 
   const saveBookAddress = async (event) => {
     event.preventDefault();
@@ -468,7 +477,6 @@ export default function ProfilePage() {
   const isAdmin = currentUser.role === "admin";
   const tier = currentUser.tierStatus || "Bronze";
   const points = currentUser.biaPoints ?? currentUser.points ?? 0;
-  const memberId = currentUser.id ? `TT-${String(currentUser.id).replace(/\D/g, "").slice(-6) || "8829"}` : "TT-202604";
 
   // คำนวณแต้มสำหรับระดับสิทธิพิเศษถัดไป
   const tierProgress = tier === "Bronze" ? Math.min(100, Math.round((points / 500) * 100))
@@ -485,7 +493,7 @@ export default function ProfilePage() {
         {/* ===================================================================== */}
         {/* 🌟 Header Section: Profile Banner & Quick Actions                     */}
         {/* ===================================================================== */}
-        <div className="bg-white border border-[#E8DFD1] rounded-3xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
+        <div className="dashboard-card-enter bg-white border border-[#E8DFD1] rounded-3xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
           {/* Subtle Decorative Background Blob */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-[#8D593A]/5 via-amber-50/20 to-transparent rounded-full -mr-20 -mt-20 pointer-events-none" />
 
@@ -555,8 +563,6 @@ export default function ProfilePage() {
                 </div>
                 <p className="text-xs sm:text-sm text-[#7A6B63] mt-1 flex items-center gap-2">
                   <span>{currentUser.email}</span>
-                  <span className="text-[#D4C5B0]">•</span>
-                  <span className="font-mono text-xs font-semibold text-[#8D593A]">รหัส: {memberId}</span>
                 </p>
 
                 {/* ส่วนแสดงคะแนนและระดับสมาชิก อยู่กับข้อมูลคน (User Header) */}
@@ -642,7 +648,7 @@ export default function ProfilePage() {
           <div className="lg:col-span-6 space-y-6">
 
             {/* Card 1.1: ธาตุเจ้าเรือนประจำตัว (Body Element Showcase) */}
-            <div className="bg-white border border-[#E8DFD1] rounded-3xl p-6 sm:p-7 shadow-xs space-y-5">
+            <div className="dashboard-card-enter bg-white border border-[#E8DFD1] rounded-3xl p-6 sm:p-7 shadow-xs space-y-5">
               <div className="flex items-center justify-between border-b border-[#F2ECE4] pb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-[#FAF7F2] border border-[#EAE2D5] flex items-center justify-center text-[#8D593A]">
@@ -721,7 +727,7 @@ export default function ProfilePage() {
 
             {/* Card 1.2: คำแนะนำโภชนาการและไลฟ์สไตล์ (Personalized Tips) */}
             {userElement && elementInfo && (
-              <div className="bg-white border border-[#E8DFD1] rounded-3xl p-6 sm:p-7 shadow-xs space-y-4">
+              <div className="dashboard-card-enter bg-white border border-[#E8DFD1] rounded-3xl p-6 sm:p-7 shadow-xs space-y-4">
                 <div className="flex items-center gap-2 border-b border-[#F2ECE4] pb-3">
                   <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
                     <SparklesIcon className="w-4 h-4" />
@@ -760,7 +766,7 @@ export default function ProfilePage() {
           <div className="lg:col-span-6 space-y-6">
 
             {/* Card 2.1: ข้อมูลติดต่อและที่อยู่จัดส่ง (Contact & Shipping Address) */}
-            <div className="bg-white border border-[#E8DFD1] rounded-3xl p-6 sm:p-7 shadow-xs space-y-4">
+            <div className="dashboard-card-enter bg-white border border-[#E8DFD1] rounded-3xl p-6 sm:p-7 shadow-xs space-y-4">
               <div className="flex items-center justify-between border-b border-[#F2ECE4] pb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-[#FAF7F2] border border-[#EAE2D5] flex items-center justify-center text-[#8D593A]">
@@ -771,7 +777,7 @@ export default function ProfilePage() {
 
                 <button
                   type="button"
-                  onClick={() => setIsEditModalOpen(true)}
+                  onClick={() => setAddressManagerOpen(true)}
                   className="text-xs font-bold text-[#8D593A] hover:text-[#6B3215] transition inline-flex items-center gap-1 cursor-pointer"
                 >
                   <EditPencilIcon className="w-3.5 h-3.5" />
@@ -780,7 +786,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#EAE2D5]/80">
+                <div className="hidden">
                   <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#7A6B63] mb-1">
                     <PhoneIcon className="w-3 h-3 text-[#8D593A]" />
                     <span>เบอร์โทรศัพท์</span>
@@ -790,7 +796,7 @@ export default function ProfilePage() {
                   </span>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#EAE2D5]/80">
+                <div className="hidden">
                   <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#7A6B63] mb-1">
                     <MailIcon className="w-3 h-3 text-[#8D593A]" />
                     <span>อีเมล</span>
@@ -801,7 +807,7 @@ export default function ProfilePage() {
                 </div>
 
                 {!isAdmin && (
-                  <div className="p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#EAE2D5]/80">
+                  <div className="hidden">
                     <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#7A6B63] mb-1">
                       <BloodIcon className="w-3 h-3 text-rose-500" />
                       <span>กรุ๊ปเลือด</span>
@@ -812,7 +818,7 @@ export default function ProfilePage() {
                   </div>
                 )}
 
-                <div className={`p-3.5 rounded-2xl bg-[#FAF8F5] border border-[#EAE2D5]/80 ${isAdmin ? "sm:col-span-2" : ""}`}>
+                <div className="hidden">
                   <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#7A6B63] mb-1">
                     <ShieldCheckIcon className="w-3 h-3 text-[#8D593A]" />
                     <span>บทบาทในระบบ</span>
@@ -842,7 +848,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Address book */}
-            {!isAdmin && <div className="bg-white border border-[#E8DFD1] rounded-3xl p-6 shadow-xs">
+            {!isAdmin && <div className="hidden">
               <div className="flex items-center justify-between mb-4">
                 <div><h2 className="text-base font-black text-[#3D2E2B]">สมุดที่อยู่จัดส่ง</h2><p className="text-xs text-[#7A6B63] mt-1">บันทึกได้หลายที่อยู่ และเลือกใช้ตอนชำระเงิน</p></div>
                 <button type="button" onClick={() => { setAddressForm({ ...emptyAddress, phone: currentUser.phone || "" }); setAddressModal("new"); }} className="rounded-full bg-[#4C1F08] px-3 py-2 text-xs font-bold text-white">+ เพิ่มที่อยู่</button>
@@ -889,7 +895,13 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {addressModal && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => !addressSaving && setAddressModal(null)}><form onSubmit={saveBookAddress} onClick={(e) => e.stopPropagation()} className="w-full max-w-xl space-y-4 rounded-3xl bg-white p-6 shadow-2xl">
+      {addressManagerOpen && <div className="modal-backdrop-enter fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" onClick={() => setAddressManagerOpen(false)}><div onClick={(e) => e.stopPropagation()} className="modal-panel-enter w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between"><div><h2 className="text-lg font-black text-[#3D2E2B]">เลือกที่อยู่จัดส่ง</h2><p className="mt-1 text-xs text-[#7A6B63]">เลือกที่อยู่หลัก หรือจัดการรายการที่อยู่ของคุณ</p></div><button type="button" onClick={() => setAddressManagerOpen(false)}>✕</button></div>
+        <div className="max-h-[55vh] space-y-3 overflow-y-auto">{addressBook.length === 0 && <p className="rounded-2xl bg-[#FAF8F5] p-5 text-center text-sm text-[#7A6B63]">ยังไม่มีที่อยู่ที่บันทึกไว้</p>}{addressBook.map((item) => <div key={item._id} className={`rounded-2xl border p-4 transition ${item.isDefault ? "border-[#8D593A] bg-[#FBF4EC]" : "border-[#E8DFD1]"}`}><div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2"><strong>{item.label}</strong>{item.isDefault && <span className="rounded-full bg-[#8D593A] px-2 py-0.5 text-[10px] font-bold text-white">หลัก</span>}</div><p className="mt-1 text-xs leading-5 text-[#63534B]">{item.address} ต.{item.subdistrict} อ.{item.district} จ.{item.province} {item.zipcode}<br />โทร. {item.phone}</p></div><div className="flex gap-2 text-xs font-bold"><button type="button" className="text-[#8D593A]" onClick={() => { setAddressForm({ ...item }); setAddressModal(item); }}>แก้ไข</button><button type="button" className="text-rose-600" onClick={() => deleteBookAddress(item._id)}>ลบ</button></div></div>{!item.isDefault && <button type="button" onClick={() => setDefaultBookAddress(item)} className="mt-3 text-xs font-bold text-[#8D593A] underline">ตั้งเป็นที่อยู่หลัก</button>}</div>)}</div>
+        <button type="button" onClick={() => { setAddressForm({ ...emptyAddress, phone: currentUser.phone || "" }); setAddressModal("new"); }} className="mt-4 w-full rounded-xl bg-[#4C1F08] py-3 text-sm font-bold text-white">+ เพิ่มที่อยู่ใหม่</button>
+      </div></div>}
+
+      {addressModal && <div className="modal-backdrop-enter fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" onClick={() => !addressSaving && setAddressModal(null)}><form onSubmit={saveBookAddress} onClick={(e) => e.stopPropagation()} className="modal-panel-enter w-full max-w-xl space-y-4 rounded-3xl bg-white p-6 shadow-2xl">
         <div className="flex items-center justify-between"><h2 className="text-lg font-black text-[#3D2E2B]">{addressModal === "new" ? "เพิ่มที่อยู่ใหม่" : "แก้ไขที่อยู่"}</h2><button type="button" onClick={() => setAddressModal(null)}>✕</button></div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{[["label","ชื่อที่อยู่ เช่น บ้าน / ที่ทำงาน"],["phone","เบอร์โทรศัพท์"],["address","บ้านเลขที่ อาคาร ถนน ซอย"],["subdistrict","ตำบล / แขวง"],["district","อำเภอ / เขต"],["province","จังหวัด"],["zipcode","รหัสไปรษณีย์"]].map(([name, label]) => <label key={name} className={name === "address" ? "sm:col-span-2 text-xs font-bold text-[#7A6B63]" : "text-xs font-bold text-[#7A6B63]"}>{label}<input required value={addressForm[name] || ""} onChange={(e) => setAddressForm((prev) => ({ ...prev, [name]: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#E8DFD1] bg-[#FAF8F5] px-3 py-2 text-sm font-normal text-[#3D2E2B] outline-none focus:border-[#8D593A]" /></label>)}</div>
         <label className="flex items-center gap-2 text-xs font-bold text-[#63534B]"><input type="checkbox" checked={Boolean(addressForm.isDefault)} onChange={(e) => setAddressForm((prev) => ({ ...prev, isDefault: e.target.checked }))} /> ตั้งเป็นที่อยู่หลัก</label>
@@ -901,11 +913,11 @@ export default function ProfilePage() {
       {/* ===================================================================== */}
       {isEditModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-xs animate-fade-in"
+          className="modal-backdrop-enter fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/50 backdrop-blur-sm"
           onClick={() => !isConfirmOpen && setIsEditModalOpen(false)}
         >
           <div
-            className="bg-white w-full max-w-xl rounded-3xl shadow-2xl border border-[#E8DFD1] overflow-hidden transform transition-all animate-scale-up"
+            className="modal-panel-enter flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-[1.75rem] border border-[#E8DFD1] bg-white shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -931,7 +943,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Modal Body Form */}
-            <form onSubmit={handlePreSave} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+            <form onSubmit={handlePreSave} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label className="block text-xs font-bold text-[#3D2E2B] mb-1">ชื่อจริง *</label>
@@ -1078,7 +1090,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Modal Footer Buttons */}
-              <div className="pt-4 flex items-center justify-end gap-3 border-t border-[#F2ECE4]">
+              <div className="sticky bottom-0 -mx-5 -mb-5 flex items-center justify-end gap-3 border-t border-[#F2ECE4] bg-white/95 px-5 py-4 backdrop-blur sm:-mx-6 sm:-mb-6 sm:px-6">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
@@ -1103,11 +1115,11 @@ export default function ProfilePage() {
       {/* ===================================================================== */}
       {isConfirmOpen && (
         <div
-          className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in"
+          className="modal-backdrop-enter fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           onClick={() => !saving && setIsConfirmOpen(false)}
         >
           <div
-            className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-[#E8DFD1] p-6 space-y-4 transform transition-all animate-scale-up"
+          className="modal-panel-enter w-full max-w-md rounded-3xl border border-[#E8DFD1] bg-white p-6 shadow-2xl space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 pb-3 border-b border-[#F2ECE4]">

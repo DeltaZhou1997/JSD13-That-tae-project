@@ -256,7 +256,7 @@ export default function AdminDashboard() {
         ) : (
           <>
             {/* Metric 1: ยอดขายรวม */}
-            <div className="relative overflow-hidden rounded-2xl border border-[#f1ead7] bg-white p-3.5 sm:p-5 shadow-xs transition-all hover:shadow-sm">
+            <div className="dashboard-card-enter relative overflow-hidden rounded-2xl border border-[#f1ead7] bg-white p-3.5 sm:p-5 shadow-xs transition-all hover:shadow-sm">
               <div className="pointer-events-none absolute -right-2 -bottom-3 sm:-right-3 sm:-bottom-4 select-none text-amber-600/10">
                 <CurrencyBahtIcon className="h-20 w-20 sm:h-28 sm:w-28" />
               </div>
@@ -278,7 +278,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Metric 2: คำสั่งซื้อ */}
-            <div className="relative overflow-hidden rounded-2xl border border-[#f1ead7] bg-white p-3.5 sm:p-5 shadow-xs transition-all hover:shadow-sm">
+            <div className="dashboard-card-enter relative overflow-hidden rounded-2xl border border-[#f1ead7] bg-white p-3.5 sm:p-5 shadow-xs transition-all hover:shadow-sm">
               <div className="pointer-events-none absolute -right-2 -bottom-3 sm:-right-3 sm:-bottom-4 select-none text-blue-600/10">
                 <ShoppingBagIcon className="h-20 w-20 sm:h-28 sm:w-28" />
               </div>
@@ -304,7 +304,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Metric 3: เมนู Cooking Kit ในร้าน */}
-            <div className="relative overflow-hidden rounded-2xl border border-[#f1ead7] bg-white p-3.5 sm:p-5 shadow-xs transition-all hover:shadow-sm">
+            <div className="dashboard-card-enter relative overflow-hidden rounded-2xl border border-[#f1ead7] bg-white p-3.5 sm:p-5 shadow-xs transition-all hover:shadow-sm">
               <div className="pointer-events-none absolute -right-2 -bottom-3 sm:-right-3 sm:-bottom-4 select-none text-[#8b5e34]/10">
                 <BoxIcon className="h-20 w-20 sm:h-28 sm:w-28" />
               </div>
@@ -322,7 +322,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Metric 4: สมาชิกและลูกค้า */}
-            <div className="relative overflow-hidden rounded-2xl border border-[#f1ead7] bg-white p-3.5 sm:p-5 shadow-xs transition-all hover:shadow-sm">
+            <div className="dashboard-card-enter relative overflow-hidden rounded-2xl border border-[#f1ead7] bg-white p-3.5 sm:p-5 shadow-xs transition-all hover:shadow-sm">
               <div className="pointer-events-none absolute -right-2 -bottom-3 sm:-right-3 sm:-bottom-4 select-none text-purple-600/10">
                 <UsersIcon className="h-20 w-20 sm:h-28 sm:w-28" />
               </div>

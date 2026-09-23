@@ -204,8 +204,14 @@ router.post("/", handleRegister); // รองรับ Frontend ที่เร
 // Address book: รองรับหลายที่อยู่ต่อผู้ใช้
 router.get("/me/addresses", verifyToken, async (req, res, next) => {
     try {
-        const user = await User.findById(req.user.id).select("addresses deliveryAddress").lean();
+        const user = await User.findById(req.user.id);
         if (!user) return res.status(404).json({ message: "ไม่พบผู้ใช้" });
+        // ย้ายที่อยู่ระบบเดิมเข้า address book อัตโนมัติครั้งแรก
+        const old = user.deliveryAddress;
+        if ((!user.addresses || user.addresses.length === 0) && old?.street && old?.subdistrict && old?.district && old?.province && old?.postalCode) {
+            user.addresses.push({ label: "บ้าน", address: old.street, subdistrict: old.subdistrict, district: old.district, province: old.province, zipcode: old.postalCode, phone: user.phone, isDefault: true });
+            await user.save();
+        }
         return res.json({ addresses: user.addresses || [], deliveryAddress: user.deliveryAddress || null });
     } catch (err) { next(err); }
 });
