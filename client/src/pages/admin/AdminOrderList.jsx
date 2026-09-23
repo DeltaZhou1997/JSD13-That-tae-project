@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import useToast from "../../hooks/useToast.js";
+import { getAuthHeaders } from "../../utils/authHeader.js";
 
 // ข้อมูลจำลองกรณีเซิร์ฟเวอร์ยังไม่มีคำสั่งซื้อจริง
 const DEFAULT_MOCK_ORDERS = [
@@ -154,7 +155,9 @@ export default function AdminOrderList() {
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${apiUrl}/api/v1/orders`);
+      const res = await fetch(`${apiUrl}/api/v1/orders`, {
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลคำสั่งซื้อได้");
       const data = await res.json();
       const orderList = Array.isArray(data) && data.length > 0 ? data : DEFAULT_MOCK_ORDERS;
@@ -182,8 +185,8 @@ export default function AdminOrderList() {
     try {
       const res = await fetch(`${apiUrl}/api/v1/orders/${orderId}/status`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ status: newStatus, orderStatus: newStatus }),
       });
 
       // ปรับปรุง State หน้าจอทันที

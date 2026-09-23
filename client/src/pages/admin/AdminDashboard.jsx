@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.js";
 import { useProducts } from "../../context/ProductsContext.js";
 import defaultUsers from "../../mock-data/users.js";
+import { getAuthHeaders } from "../../utils/authHeader.js";
 
 // ข้อมูลออเดอร์ตัวอย่างสำหรับ E-commerce Dashboard
 const DEFAULT_ORDERS = [
@@ -135,9 +136,10 @@ export default function AdminDashboard() {
   const loadDashboardData = useCallback(async () => {
     setLoading(true);
     try {
+      const headers = getAuthHeaders();
       const [usersRes, ordersRes] = await Promise.allSettled([
-        fetch(`${apiUrl}/api/v1/users`),
-        fetch(`${apiUrl}/api/v1/orders`),
+        fetch(`${apiUrl}/api/v1/users`, { headers }),
+        fetch(`${apiUrl}/api/v1/orders`, { headers }),
       ]);
 
       if (usersRes.status === "fulfilled" && usersRes.value.ok) {

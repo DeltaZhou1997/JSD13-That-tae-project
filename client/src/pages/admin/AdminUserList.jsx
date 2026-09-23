@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import useToast from "../../hooks/useToast.js";
 import defaultUsers from "../../mock-data/users.js";
+import { getAuthHeaders } from "../../utils/authHeader.js";
 
 const PRESET_CONDITIONS = [
   { id: "diabetes", label: "เบาหวาน (Low Sugar)" },
@@ -49,7 +50,9 @@ export default function AdminUserList() {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${apiUrl}/api/v1/users`);
+      const res = await fetch(`${apiUrl}/api/v1/users`, {
+        headers: getAuthHeaders(),
+      });
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
@@ -110,7 +113,7 @@ export default function AdminUserList() {
     try {
       const res = await fetch(`${apiUrl}/api/v1/users/${userId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(editFormData),
       });
 
@@ -144,7 +147,7 @@ export default function AdminUserList() {
     try {
       const res = await fetch(`${apiUrl}/api/v1/users`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(newUserData),
       });
 
@@ -186,6 +189,7 @@ export default function AdminUserList() {
     try {
       const res = await fetch(`${apiUrl}/api/v1/users/${id}`, {
         method: "DELETE",
+        headers: getAuthHeaders(),
       });
 
       if (!res.ok) {

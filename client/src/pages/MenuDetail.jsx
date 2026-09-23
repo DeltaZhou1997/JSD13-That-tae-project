@@ -141,11 +141,15 @@ export default function MenuDetail() {
   const [viewMode, setViewMode] = useState('table'); // 'table' as default | 'cards'
 
 
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
   const cleanUrl = (url) => {
     if (!url || typeof url !== 'string') return '';
     if (url.startsWith('file://')) {
       const match = url.match(/assets\/([^/]+)\/([^/]+)$/);
       return match ? `/assets/${match[1]}/${match[2]}` : url;
+    }
+    if (url.startsWith('/api/v2/images/')) {
+      return `${apiUrl}${url}`;
     }
     return url;
   };

@@ -5,6 +5,7 @@ import {
   createInitialProducts,
 } from "./ProductsContext.js";
 import { createTempObjectId } from "../utils/objectId.js";
+import { getAuthHeaders } from "../utils/authHeader.js";
 
 export default function ProductsProvider({ children }) {
   const [products, setProducts] = useState(createInitialProducts);
@@ -45,7 +46,7 @@ export default function ProductsProvider({ children }) {
       try {
         const res = await fetch(`${apiUrl}/api/v1/products`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: getAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify(data),
         });
         const json = await res.json();
@@ -77,7 +78,7 @@ export default function ProductsProvider({ children }) {
       try {
         await fetch(`${apiUrl}/api/v1/products/${id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: getAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify(data),
         });
       } catch (err) {
@@ -95,6 +96,7 @@ export default function ProductsProvider({ children }) {
       try {
         await fetch(`${apiUrl}/api/v1/products/${id}`, {
           method: "DELETE",
+          headers: getAuthHeaders(),
         });
       } catch (err) {
         console.warn("Offline deleteProduct:", err.message);

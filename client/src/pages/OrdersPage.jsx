@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.js";
+import { getAuthHeaders } from "../utils/authHeader.js";
 
 export default function OrdersPage() {
   const { currentUser } = useAuth();
@@ -17,7 +18,9 @@ export default function OrdersPage() {
     async function fetchOrders() {
       setLoading(true);
       try {
-        const res = await fetch(`${apiUrl}/api/v1/orders/user/${userId}`);
+        const res = await fetch(`${apiUrl}/api/v1/orders/user/${userId}`, {
+          headers: getAuthHeaders(),
+        });
         if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลรายการคำสั่งซื้อได้");
         const data = await res.json();
         if (isMounted) {

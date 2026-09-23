@@ -82,10 +82,16 @@ export default function MenuCard({ menu, index = 0 }) {
   const normalizedElement = ELEMENT_MAP[rawElement.toLowerCase()] || rawElement;
   const elConfig = ELEMENT_CONFIG[normalizedElement] || null;
 
+  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
   const rawImg = Array.isArray(menu.imageUrl) ? (menu.imageUrl[0] || '') : (menu.imageUrl || '');
-  const imageUrl = typeof rawImg === 'string' && rawImg.startsWith('file://')
-    ? rawImg.replace(/^file:\/\/\/.*?assets\//, '/assets/')
-    : rawImg || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80";
+  let imageUrl = rawImg;
+  if (typeof rawImg === 'string' && rawImg.startsWith('file://')) {
+    imageUrl = rawImg.replace(/^file:\/\/\/.*?assets\//, '/assets/');
+  } else if (typeof rawImg === 'string' && rawImg.startsWith('/api/v2/images/')) {
+    imageUrl = `${apiUrl}${rawImg}`;
+  } else if (!rawImg) {
+    imageUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80";
+  }
 
   // สร้างความสูงรูปที่เหลื่อมกันเล็กน้อยสไตล์ Bento ในจอมือถือ (เช่น index สลับ ให้ภาพสูง 32 กับ 40)
   const isTallImage = index % 3 === 1;

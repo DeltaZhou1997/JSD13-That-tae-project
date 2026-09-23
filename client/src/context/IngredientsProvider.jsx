@@ -7,6 +7,7 @@ import {
   normalizeIngredient,
 } from "./IngredientsContext.js";
 import { createTempObjectId } from "../utils/objectId.js";
+import { getAuthHeaders } from "../utils/authHeader.js";
 
 export default function IngredientsProvider({ children }) {
   const [ingredients, setIngredients] = useState(createInitialIngredients);
@@ -46,7 +47,7 @@ export default function IngredientsProvider({ children }) {
       try {
         const res = await fetch(`${apiUrl}/api/v1/ingredients`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: getAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify(data),
         });
         const json = await res.json();
@@ -76,7 +77,7 @@ export default function IngredientsProvider({ children }) {
       try {
         await fetch(`${apiUrl}/api/v1/ingredients/${id}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: getAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify(data),
         });
       } catch (err) {
@@ -97,7 +98,7 @@ export default function IngredientsProvider({ children }) {
       try {
         await fetch(`${apiUrl}/api/v1/ingredients/${id}/stock`, {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: getAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ currentStockGrams: stock }),
         });
       } catch (err) {
@@ -111,7 +112,10 @@ export default function IngredientsProvider({ children }) {
     async (id) => {
       setIngredients((prev) => prev.filter((item) => item._id !== id));
       try {
-        await fetch(`${apiUrl}/api/v1/ingredients/${id}`, { method: "DELETE" });
+        await fetch(`${apiUrl}/api/v1/ingredients/${id}`, {
+          method: "DELETE",
+          headers: getAuthHeaders(),
+        });
       } catch (err) {
         console.warn("Offline deleteIngredient:", err.message);
       }

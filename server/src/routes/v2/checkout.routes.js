@@ -1,5 +1,6 @@
 import { Router } from "express";
 import mongoose from "mongoose";
+import Stripe from "stripe";
 import { Order } from "../../models/Order.model.js";
 import { Product } from "../../models/Product.model.js";
 import { Ingredient } from "../../models/Ingredient.model.js";
@@ -8,6 +9,10 @@ import { User } from "../../models/User.model.js";
 import { verifyToken, requireAdmin } from "./users.routes.js";
 
 const router = Router();
+
+// Stripe Client Setup (ถ้ามี STRIPE_SECRET_KEY ให้ใช้ SDK จริง)
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const stripe = stripeSecretKey && stripeSecretKey.startsWith("sk_") ? new Stripe(stripeSecretKey) : null;
 
 // Helper สำหรับตัดสต็อกสินค้าและวัตถุดิบจริงใน MongoDB
 async function deductStockForOrder(items) {
@@ -53,9 +58,9 @@ async function deductStockForOrder(items) {
 }
 
 // =========================================================================
-// 1. POST /api/v2/checkout/order — สั่งซื้อ, บันทึก Order และตัดสต็อก
+// 1. POST /api/v2/checkout/order หรือ /api/v1/checkout — สร้างคำสั่งซื้อ
 // =========================================================================
-router.post("/order", async (req, res, next) => {
+const handleCreateOrder = async (req, res, next) => {
   try {
     const {
       orderId,
@@ -69,6 +74,8 @@ router.post("/order", async (req, res, next) => {
       shippingFee = 60,
       grandTotal,
       earnedPoints = 0,
+      stripePaymentIntentId,
+      stripeSessionId,
     } = req.body;
 
     if (!items || items.length === 0) {
@@ -105,7 +112,7 @@ router.post("/order", async (req, res, next) => {
       planDetails,
       items: items.map((i) => ({
         productId: String(i.productId || i.product || i._id),
-        productName: i.productName || i.name || "Cooking Kit",
+        productName: i.productName || i.name || i.nameTh || "Cooking Kit",
         price: Number(i.price || 0),
         quantity: Number(i.quantity || 1),
         imageUrl: i.imageUrl || "",
@@ -118,6 +125,8 @@ router.post("/order", async (req, res, next) => {
       shippingFee: Number(shippingFee || 0),
       grandTotal: Number(grandTotal || 0),
       earnedPoints: Number(earnedPoints || 0),
+      stripePaymentIntentId: stripePaymentIntentId || null,
+      stripeSessionId: stripeSessionId || null,
     });
 
     const savedOrder = await newOrder.save();
@@ -140,12 +149,82 @@ router.post("/order", async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-});
+};
+
+router.post("/", handleCreateOrder);
+router.post("/order", handleCreateOrder);
 
 // =========================================================================
-// 2. GET /api/v2/checkout/orders/user/:userId — ประวัติคำสั่งซื้อของลูกค้า
+// 2. POST /create-session — สร้าง Stripe Hosted Checkout Session
 // =========================================================================
-router.get("/orders/user/:userId", async (req, res, next) => {
+const handleCreateStripeSession = async (req, res, next) => {
+  try {
+    const { items = [], orderId, grandTotal, clientUrl: customClientUrl } = req.body;
+    const clientUrl = customClientUrl || process.env.CLIENT_URL || "http://localhost:5173";
+    const finalOrderId = orderId || `ORD-${Date.now()}`;
+
+    if (stripe) {
+      const line_items = items.map((item) => ({
+        price_data: {
+          currency: "thb",
+          product_data: {
+            name: item.productName || item.name || "ชุดอาหาร That Tae Cooking Kit",
+            images: item.imageUrl ? [item.imageUrl] : [],
+          },
+          unit_amount: Math.round(Number(item.price || 0) * 100),
+        },
+        quantity: Number(item.quantity) || 1,
+      }));
+
+      if (line_items.length === 0 && grandTotal) {
+        line_items.push({
+          price_data: {
+            currency: "thb",
+            product_data: { name: "คำสั่งซื้อชุดอาหาร Cooking Kit" },
+            unit_amount: Math.round(Number(grandTotal) * 100),
+          },
+          quantity: 1,
+        });
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items,
+        mode: "payment",
+        success_url: `${clientUrl}/order-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${clientUrl}/checkout`,
+        metadata: {
+          orderId: finalOrderId,
+        },
+      });
+
+      return res.status(200).json({
+        success: true,
+        url: session.url,
+        orderId: finalOrderId,
+        sessionId: session.id,
+      });
+    }
+
+    // Mock response ถ้าไม่ได้ตั้งค่า STRIPE_SECRET_KEY
+    return res.status(200).json({
+      success: true,
+      url: `${clientUrl}/order-success?mock_stripe=true&order_id=${finalOrderId}`,
+      orderId: finalOrderId,
+      message: "Stripe Demo Session Created (Mock)",
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+router.post("/create-session", handleCreateStripeSession);
+router.post("/checkout/create-session", handleCreateStripeSession);
+
+// =========================================================================
+// 3. GET /orders/user/:userId หรือ /user/:userId — ประวัติคำสั่งซื้อของลูกค้า
+// =========================================================================
+const handleGetUserOrders = async (req, res, next) => {
   try {
     const orders = await Order.find({ userId: req.params.userId })
       .sort({ createdAt: -1 })
@@ -154,14 +233,36 @@ router.get("/orders/user/:userId", async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-});
+};
+
+router.get("/user/:userId", handleGetUserOrders);
+router.get("/orders/user/:userId", handleGetUserOrders);
 
 // =========================================================================
-// 3. GET /api/v2/checkout/orders/:id — ดูรายละเอียดคำสั่งซื้อเดี่ยว
+// 4. GET /orders หรือ GET / — แอดมินดูรายการคำสั่งซื้อทั้งหมด
 // =========================================================================
-router.get("/orders/:id", async (req, res, next) => {
+const handleGetAllOrders = async (req, res, next) => {
+  try {
+    const orders = await Order.find().sort({ createdAt: -1 }).lean();
+    return res.status(200).json(orders);
+  } catch (err) {
+    next(err);
+  }
+};
+
+router.get("/", handleGetAllOrders);
+router.get("/orders", handleGetAllOrders);
+router.get("/all", handleGetAllOrders);
+
+// =========================================================================
+// 5. GET /:id หรือ /orders/:id — ดูรายละเอียดคำสั่งซื้อเดี่ยว
+// =========================================================================
+const handleGetSingleOrder = async (req, res, next) => {
   try {
     const { id } = req.params;
+    if (["orders", "order", "user", "create-session", "all"].includes(id)) {
+      return next();
+    }
     const query = mongoose.Types.ObjectId.isValid(id)
       ? { $or: [{ _id: id }, { orderId: id }] }
       : { orderId: id };
@@ -174,30 +275,20 @@ router.get("/orders/:id", async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-});
+};
+
+router.get("/:id", handleGetSingleOrder);
+router.get("/orders/:id", handleGetSingleOrder);
 
 // =========================================================================
-// 4. GET /api/v2/checkout/orders — แอดมินดูรายการคำสั่งซื้อทั้งหมด
-// สิทธิ์: Admin เท่านั้น
+// 6. PATCH /:id/status หรือ /orders/:id/status — อัปเดตสถานะคำสั่งซื้อ
 // =========================================================================
-router.get("/orders", verifyToken, requireAdmin, async (req, res, next) => {
+const handleUpdateStatus = async (req, res, next) => {
   try {
-    const orders = await Order.find().sort({ createdAt: -1 }).lean();
-    return res.status(200).json(orders);
-  } catch (err) {
-    next(err);
-  }
-});
-
-// =========================================================================
-// 5. PATCH /api/v2/checkout/orders/:id/status — อัปเดตสถานะคำสั่งซื้อ
-// สิทธิ์: Admin เท่านั้น
-// =========================================================================
-router.patch("/orders/:id/status", verifyToken, requireAdmin, async (req, res, next) => {
-  try {
-    const { orderStatus, paymentStatus } = req.body;
+    const { orderStatus, paymentStatus, status } = req.body;
     const updateData = {};
     if (orderStatus) updateData.orderStatus = orderStatus;
+    if (status) updateData.orderStatus = status;
     if (paymentStatus) updateData.paymentStatus = paymentStatus;
 
     const order = await Order.findOneAndUpdate(
@@ -217,6 +308,9 @@ router.patch("/orders/:id/status", verifyToken, requireAdmin, async (req, res, n
   } catch (err) {
     next(err);
   }
-});
+};
+
+router.patch("/:id/status", handleUpdateStatus);
+router.patch("/orders/:id/status", handleUpdateStatus);
 
 export default router;

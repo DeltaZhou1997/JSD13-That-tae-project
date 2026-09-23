@@ -13,6 +13,7 @@ import {
   POPULAR_FOOD_RESTRICTIONS,
   RESTRICTION_CATEGORIES,
 } from "../../constants/foodRestrictions.js";
+import { getAuthHeaders } from "../../utils/authHeader.js";
 
 // Preset ภาพตัวอย่างอาหารไทยยอดนิยม
 const PRESET_DISH_IMAGES = [
@@ -68,12 +69,48 @@ export default function ProductForm() {
     ingredients: "",
     cookingSteps: "",
     imageUrl: "",
+    imageId: "",
   });
 
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [errors, setErrors] = useState({});
   const [notFound, setNotFound] = useState(false);
 
   const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+
+  // ฟังก์ชันอัปโหลดรูปภาพขึ้น MongoDB GridFS
+  const handleImageFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const uploadData = new FormData();
+    uploadData.append("image", file);
+
+    setIsUploadingImage(true);
+    try {
+      const res = await fetch(`${apiUrl}/api/v2/images/upload`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: uploadData,
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        const fullUrl = data.url.startsWith("http") ? data.url : `${apiUrl}${data.url}`;
+        setFormData((prev) => ({
+          ...prev,
+          imageUrl: fullUrl,
+          imageId: data.fileId || data.id || "",
+        }));
+        toast.success("อัปโหลดรูปภาพเข้า MongoDB GridFS สำเร็จ! ✨");
+      } else {
+        toast.error(data.message || "อัปโหลดภาพไม่สำเร็จ");
+      }
+    } catch (err) {
+      toast.error("เกิดข้อผิดพลาดในการอัปโหลดภาพ");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   // 1. ดึงวัตถุดิบทั้งหมดจากสต็อกมาให้แอดมินเลือก
   useEffect(() => {
@@ -451,17 +488,38 @@ export default function ProductForm() {
               </div>
             </div>
 
-            {/* ช่องระบุ URL รูปภาพ + ตัวอย่างพรีวิวสด */}
+            {/* ช่องระบุ URL รูปภาพ หรือ อัปโหลดเข้า MongoDB GridFS */}
             <div className="mt-4">
-              <label className={labelClass}>ลิงก์รูปภาพอาหาร (Image URL) พร้อมพรีวิวสด</label>
-              <input
-                type="url"
-                name="imageUrl"
-                value={formData.imageUrl}
-                onChange={handleChange}
-                placeholder="https://example.com/dish.jpg"
-                className={inputClass}
-              />
+              <label className={labelClass}>
+                รูปภาพอาหาร (อัปโหลดเข้า MongoDB GridFS หรือใส่ URL)
+              </label>
+              
+              <div className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="url"
+                  name="imageUrl"
+                  value={formData.imageUrl}
+                  onChange={handleChange}
+                  placeholder="https://example.com/dish.jpg หรืออัปโหลดไฟล์ด้านขวา"
+                  className={`${inputClass} flex-1`}
+                />
+
+                <label className="flex items-center justify-center gap-2 rounded-xl bg-[#4c1f08] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#6b3215] transition cursor-pointer shrink-0">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <span>{isUploadingImage ? "กำลังอัปโหลด..." : "อัปโหลดภาพ"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageFileUpload}
+                    disabled={isUploadingImage}
+                    className="hidden"
+                  />
+                </label>
+              </div>
 
               {/* Preset รูปภาพอาหารแนะนำ */}
               <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-[#7a5c4d]">
