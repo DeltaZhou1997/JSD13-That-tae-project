@@ -8,6 +8,7 @@ import {
   MEDICINAL_TASTES,
   NUTRIENT_KEYS,
   calculateRecipeMetrics,
+  getElementFromMedicinalTastes,
   toElementPercentages,
 } from "../../utils/recipeCalculator.js";
 
@@ -237,10 +238,11 @@ function IngredientForm() {
   };
 
   const preview = useMemo(() => {
+    const derivedElement = getElementFromMedicinalTastes(formData.medicinalTastes);
     const candidate = {
       category: formData.category,
       medicinalTaste: formData.medicinalTastes.join("/"),
-      elements: formData.elements,
+      elements: [derivedElement],
       basisWeightG: Number(formData.basisWeightG) || 100,
       nutrientsPer100g: NUTRIENT_KEYS.reduce(
         (acc, key) => ({ ...acc, [key]: Number(formData.nutrientsPer100g[key]) || 0 }),
@@ -269,10 +271,6 @@ function IngredientForm() {
 
     if (formData.medicinalTastes.length === 0) {
       newErrors.medicinalTastes = "กรุณาเลือกรสยาอย่างน้อย 1 รส";
-    }
-
-    if (formData.elements.length === 0) {
-      newErrors.elements = "กรุณาเลือกธาตุเจ้าเรือนอย่างน้อย 1 ธาตุ";
     }
 
     const badNutrients = NUTRIENT_KEYS.filter((key) => {
@@ -334,7 +332,7 @@ function IngredientForm() {
       category: formData.category,
       categoryTh: CATEGORY_MAP[formData.category],
       medicinalTaste: formData.medicinalTastes.join("/"),
-      elements: formData.elements,
+      elements: [preview.dominantElement],
       basisWeightG: Number(formData.basisWeightG) || 100,
       nutrientsPer100g: {
         calories: Number(formData.nutrientsPer100g.calories) || 0,
@@ -593,28 +591,12 @@ function IngredientForm() {
           </div>
 
 
-          <div>
-            <span className={labelClass}>
-              ธาตุเจ้าเรือน <span className="text-red-500">*</span>
-            </span>
-            <div className="flex flex-wrap gap-4 rounded border border-[#f1ead7] p-3">
-              {ELEMENTS.map((element) => (
-                <label
-                  key={element}
-                  className="flex cursor-pointer items-center gap-1.5 text-sm text-[#6b3215]"
-                >
-                  <input
-                    type="checkbox"
-                    checked={formData.elements.includes(element)}
-                    onChange={() => toggleInList("elements", element)}
-                  />
-                  ธาตุ{element}
-                </label>
-              ))}
+          <div className="rounded-2xl border border-dashed border-[#d9b78d] bg-[#fff9f0] p-4 text-sm text-[#6b3215]">
+            <div className="flex items-center gap-2 font-semibold text-[#4c1f08]">
+              <ElementIcon element={getElementFromMedicinalTastes(formData.medicinalTastes)} className="h-5 w-5" />
+              ธาตุคำนวณอัตโนมัติจากรสยา
             </div>
-            {errors.elements && (
-              <p className="mt-1 text-sm text-red-500">{errors.elements}</p>
-            )}
+            <p className="mt-1 text-xs">ระบบจะบันทึกธาตุ{getElementFromMedicinalTastes(formData.medicinalTastes)} เป็นธาตุหลักเมื่อกดบันทึก ไม่ต้องเลือกเอง</p>
           </div>
 
 
@@ -804,10 +786,18 @@ function IngredientForm() {
         <div className="mb-4 rounded bg-white p-3">
           <p className="text-sm text-[#6b3215]">ธาตุเด่นที่ประเมินได้</p>
           <div className="mt-2 flex items-center gap-3">
-            <span className="grid h-14 w-14 place-items-center rounded-2xl bg-[#fff4e8] text-[#8b5e34]">
+            <span
+              className="relative grid h-16 w-16 place-items-center rounded-full text-[#8b5e34]"
+              style={{ background: `conic-gradient(#b87945 ${previewPercentages[preview.dominantElement]}%, #f1ead7 0)` }}
+            >
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-[#fffaf6]">
               <ElementIcon element={preview.dominantElement} />
+              </span>
             </span>
-            <p className="text-xl font-bold text-[#4c1f08]">ธาตุ{preview.dominantElement}</p>
+            <div>
+              <p className="text-xl font-bold text-[#4c1f08]">ธาตุ{preview.dominantElement}</p>
+              <p className="text-xs text-[#8b5e34]">จากรสยา: {formData.medicinalTastes.join(" · ") || "ยังไม่ได้เลือกรสยา"}</p>
+            </div>
           </div>
         </div>
 

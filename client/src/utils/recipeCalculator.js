@@ -35,6 +35,19 @@ export const TASTE_ELEMENT_WEIGHTS = {
   จืด: { ไฟ: 1.5, น้ำ: 0.5 },
 };
 
+// ธาตุหลักของวัตถุดิบกำหนดจากรสยาประธานตามหลักเภสัชกรรมไทย
+export function getElementFromMedicinalTastes(tastes = []) {
+  const text = (Array.isArray(tastes) ? tastes : [tastes]).join("/");
+  const groups = [
+    ["ดิน", ["ฝาด", "หวาน", "มัน", "เค็ม"]],
+    ["น้ำ", ["เปรี้ยว", "ขม", "เมาเบื่อ"]],
+    ["ลม", ["เผ็ดร้อน", "สุขุม", "หอมเย็น"]],
+    ["ไฟ", ["จืด", "เย็น"]],
+  ];
+  const match = groups.find(([, tastesInGroup]) => tastesInGroup.some((taste) => text.includes(taste)));
+  return match?.[0] || "ดิน";
+}
+
 const DIRECT_ELEMENT_WEIGHT = 3;
 
 export const POTENCY_BY_CATEGORY = {
@@ -75,22 +88,9 @@ export function scoreIngredientElements(ingredient, grams) {
   const impact = Math.pow(qty, INTENSITY_EXPONENT) * potency;
 
   const taste = String(ingredient?.medicinalTaste || "");
-  Object.entries(TASTE_ELEMENT_WEIGHTS).forEach(([keyword, elementWeights]) => {
-    if (!taste.includes(keyword)) return;
-    Object.entries(elementWeights).forEach(([element, weight]) => {
-      scores[element] += impact * weight;
-    });
-  });
-
-  const listed = Array.isArray(ingredient?.elements)
-    ? ingredient.elements.filter((element) => ELEMENTS.includes(element))
-    : [];
-  if (listed.length > 0) {
-    const share = (impact * DIRECT_ELEMENT_WEIGHT) / listed.length;
-    listed.forEach((element) => {
-      scores[element] += share;
-    });
-  }
+  // ใช้ธาตุที่คำนวณจากรสยาเพียงธาตุเดียว ไม่กระจายคะแนนจากการเลือกเอง
+  const derivedElement = getElementFromMedicinalTastes([taste]);
+  scores[derivedElement] += impact * DIRECT_ELEMENT_WEIGHT;
 
   return scores;
 }
