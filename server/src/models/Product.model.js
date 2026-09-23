@@ -104,8 +104,11 @@ const productSchema = new mongoose.Schema(
         ingredientId: { type: String },
         nameTh: { type: String },
         nameEn: { type: String },
-        quantity: { type: Number, required: true, min: 1 },
+        // หน่วยตาม unit ของวัตถุดิบ (เช่น 0.5 kg) จึงรองรับทศนิยม
+        quantity: { type: Number, required: true, min: 0.001 },
         unit: { type: String, default: "g" },
+        // ปริมาณอ้างอิงของ nutrientsPer100g (หน่วยเดียวกับ unit เช่น 100 g, 1 piece)
+        basisWeightG: { type: Number },
         elements: [{ type: String }],
         nutrientsPer100g: {
           calories: { type: Number, default: 0 },
@@ -277,7 +280,8 @@ productSchema.methods.calculateAvailableKits = async function () {
       ing = await Ingredient.findOne({ nameTh: item.nameTh });
     }
 
-    const requiredPerKit = Math.max(1, Number(item.quantity) || 1);
+    // เดิม Math.max(1, ...) ทำให้ 0.05 kg ถูกนับเป็น 1 kg
+    const requiredPerKit = Number(item.quantity) > 0 ? Number(item.quantity) : 1;
     const regionStock = ing?.regionalStocks?.[targetRegion] !== undefined
       ? Number(ing.regionalStocks[targetRegion])
       : (ing?.stockQuantity ?? ing?.currentStockGrams ?? 0);

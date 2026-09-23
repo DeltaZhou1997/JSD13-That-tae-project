@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 
 import {
   CATEGORY_MAP,
+  getUnitInfo,
   isLowStock,
+  roundQty,
   useIngredients,
 } from "../../context/IngredientsContext.js";
 import useToast from "../../hooks/useToast.js";
@@ -58,7 +60,9 @@ function AdminIngredientList() {
   const handleStockChange = (id, value) => {
     const stock = Number(value);
     if (value === "" || Number.isNaN(stock) || stock < 0) return;
-    updateStock(id, Math.floor(stock));
+    // หน่วย kg / l ใส่ทศนิยมได้ ส่วนชิ้นต้องเป็นจำนวนเต็ม
+    const item = ingredients.find((i) => i._id === id);
+    updateStock(id, item?.unit === "piece" ? Math.floor(stock) : roundQty(stock));
   };
 
   return (
@@ -130,8 +134,8 @@ function AdminIngredientList() {
               <th className="p-3">หมวดหมู่</th>
               <th className="p-3">รสยา</th>
               <th className="p-3">ธาตุ</th>
-              <th className="p-3">แคลอรี/100g</th>
-              <th className="p-3">สต็อก (กรัม)</th>
+              <th className="p-3">แคลอรี</th>
+              <th className="p-3">สต็อก</th>
               <th className="p-3 text-center">การจัดการ</th>
             </tr>
           </thead>
@@ -154,17 +158,6 @@ function AdminIngredientList() {
                   >
                     <td className="p-3 font-medium text-[#4c1f08]">
                       <div className="flex items-center gap-3">
-                        {item.imageUrl ? (
-                          <img
-                            src={item.imageUrl}
-                            alt={item.nameTh}
-                            className="w-10 h-10 rounded-lg object-cover border border-[#f1ead7] shrink-0 shadow-2xs"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg bg-[#f1ead7]/60 flex items-center justify-center text-xs text-[#8d593a] shrink-0 font-bold">
-                            {item.nameTh.slice(0, 2)}
-                          </div>
-                        )}
                         <div>
                           <div>
                             {item.nameTh}
@@ -189,6 +182,9 @@ function AdminIngredientList() {
                     </td>
                     <td className="p-3 text-[#6b3215]">
                       {item.nutrientsPer100g?.calories ?? 0}
+                      <span className="block text-[10px] text-stone-400">
+                        ต่อ {item.basisWeightG} {getUnitInfo(item.unit).short}
+                      </span>
                     </td>
                     <td className="p-3 min-w-[210px]">
                       <div className="flex items-center gap-2 mb-1.5">
@@ -196,12 +192,12 @@ function AdminIngredientList() {
                         <input
                           type="number"
                           min="0"
-                          step="1"
+                          step={item.unit === "piece" ? 1 : "any"}
                           defaultValue={item.currentStockGrams}
                           onBlur={(event) => handleStockChange(item._id, event.target.value)}
                           className={`w-24 font-bold ${inputClass}`}
                         />
-                        <span className="text-xs text-[#7a5c4d]">g</span>
+                        <span className="text-xs text-[#7a5c4d]">{getUnitInfo(item.unit).short}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-1 text-[11px]">
                         <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-800 border border-emerald-200" title="ภาคเหนือ">
@@ -222,7 +218,7 @@ function AdminIngredientList() {
                         </span>
                       </div>
                       <span className="mt-1 block text-[10px] text-[#7a5c4d]">
-                        จุดเตือน {item.lowStockThresholdGrams}g
+                        จุดเตือน {item.lowStockThresholdGrams} {getUnitInfo(item.unit).short}
                       </span>
                     </td>
                     <td className="p-3">

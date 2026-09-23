@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { CATEGORY_MAP, useIngredients } from "../../context/IngredientsContext.js";
+import { CATEGORY_MAP, getUnitInfo, useIngredients } from "../../context/IngredientsContext.js";
 import { regionMap, useProducts } from "../../context/ProductsContext.js";
 import useToast from "../../hooks/useToast.js";
 import {
@@ -186,10 +186,10 @@ function AdminRecipeBuilder() {
       category: item.category,
       categoryTh: item.categoryTh,
       quantity: Number(item.quantity),
-      unit: "g",
+      unit: getUnitInfo(item.unit).value,
       medicinalTaste: item.medicinalTaste,
       elements: item.elements || [],
-      basisWeightG: Number(item.basisWeightG) || 100,
+      basisWeightG: Number(item.basisWeightG) || getUnitInfo(item.unit).defaultBasis,
       nutrientsPer100g: item.nutrientsPer100g || {},
     }));
 
@@ -202,7 +202,7 @@ function AdminRecipeBuilder() {
       servings,
       calories: metrics.perServing.calories,
 
-      ingredients: recipe.map((item) => `${item.nameTh} (${item.quantity}g)`).join(", "),
+      ingredients: recipe.map((item) => `${item.nameTh} (${item.quantity} ${getUnitInfo(item.unit).short})`).join(", "),
       recipe,
       nutritionCache: {
         basisWeightUnit: "100g_ingredients",
@@ -226,7 +226,7 @@ function AdminRecipeBuilder() {
             ออกแบบสูตรอาหาร &amp; คำนวณธาตุเจ้าเรือน
           </h1>
           <p className="mt-1 text-sm text-[#6b3215]">
-            เลือกวัตถุดิบจากคลัง {ingredients.length} ชนิด ใส่ปริมาณเป็นกรัม
+            เลือกวัตถุดิบจากคลัง {ingredients.length} ชนิด ใส่ปริมาณตามหน่วยของวัตถุดิบแต่ละชนิด
             ระบบจะประมวลผลโภชนาการและธาตุตามรสยาให้อัตโนมัติ
           </p>
         </div>
@@ -411,16 +411,16 @@ function AdminRecipeBuilder() {
                     <input
                       type="number"
                       min="0"
-                      step="1"
+                      step={item.unit === "piece" ? 1 : "any"}
                       value={item.quantity}
                       onChange={(event) =>
                         handleQuantityChange(item._id, event.target.value)
                       }
                       className="w-24 rounded border border-[#f1ead7] p-1.5 text-sm"
                     />
-                    <span className="text-xs text-[#6b3215]">กรัม</span>
+                    <span className="text-xs text-[#6b3215]">{getUnitInfo(item.unit).label}</span>
                     <span className="ml-auto text-xs text-[#6b3215]">
-                      คลังเหลือ {item.currentStockGrams ?? "-"} g
+                      คลังเหลือ {item.currentStockGrams ?? "-"} {getUnitInfo(item.unit).short}
                     </span>
                   </div>
                 </div>

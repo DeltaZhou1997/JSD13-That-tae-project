@@ -8,7 +8,11 @@ import {
   regionMap,
   useProducts,
 } from "../../context/ProductsContext.js";
+import { getUnitInfo, roundQty } from "../../context/IngredientsContext.js";
 import useToast from "../../hooks/useToast.js";
+
+// ปริมาณเริ่มต้นต่อชุดตามหน่วยของวัตถุดิบ
+const DEFAULT_QTY_BY_UNIT = { g: 50, ml: 50, kg: 0.1, l: 0.1, piece: 1 };
 import {
   POPULAR_FOOD_RESTRICTIONS,
   RESTRICTION_CATEGORIES,
@@ -286,6 +290,7 @@ export default function ProductForm() {
           nameTh: r.nameTh || "วัตถุดิบ",
           quantity: Number(r.quantity) || 100,
           unit: r.unit || "g",
+          basis: Number(r.basisWeightG) || getUnitInfo(r.unit).defaultBasis,
           calories: Number(r.nutrientsPer100g?.calories) || 0,
           elements: r.elements || [],
           region: r.region || "ทั่วไป",
@@ -301,6 +306,7 @@ export default function ProductForm() {
     const found = availableIngredients.find((i) => (i._id || i.id) === ingId);
     if (found) {
       setPickerUnit(found.unit || "g");
+      setPickerQty(DEFAULT_QTY_BY_UNIT[found.unit] ?? 50);
     }
   };
 
@@ -313,13 +319,14 @@ export default function ProductForm() {
     const targetId = target._id || target.id;
     const existingIndex = selectedIngredients.findIndex((s) => s.id === targetId);
 
-    const qty = Math.max(1, Number(pickerQty) || 50);
+    // รองรับทศนิยม (เช่น 0.2 kg) — เดิม Math.max(1, ...) ทำให้ 0.2 kg กลายเป็น 1 kg
+    const qty = Number(pickerQty) > 0 ? roundQty(Number(pickerQty)) : (DEFAULT_QTY_BY_UNIT[target.unit] ?? 50);
 
     if (existingIndex >= 0) {
       // อัปเดตจำนวนถ้ามีอยู่แล้ว
       setSelectedIngredients((prev) =>
         prev.map((item, idx) =>
-          idx === existingIndex ? { ...item, quantity: item.quantity + qty } : item
+          idx === existingIndex ? { ...item, quantity: roundQty(item.quantity + qty) } : item
         )
       );
     } else {
@@ -332,6 +339,8 @@ export default function ProductForm() {
           nameEn: target.nameEn,
           quantity: qty,
           unit: target.unit || pickerUnit || "g",
+          // ปริมาณอ้างอิงของค่าสารอาหาร (หน่วยเดียวกับ unit)
+          basis: Number(target.basisWeightG) || getUnitInfo(target.unit).defaultBasis,
           calories: Number(target.nutrientsPer100g?.calories) || 0,
           protein: Number(target.nutrientsPer100g?.protein) || 0,
           carbs: Number(target.nutrientsPer100g?.carbs) || 0,
@@ -360,8 +369,8 @@ export default function ProductForm() {
     let totalSodium = 0;
 
     selectedIngredients.forEach((item) => {
-      // คิดสัดส่วนตามต่อ 100g
-      const ratio = (item.quantity || 100) / 100;
+      // คิดสัดส่วนตามปริมาณอ้างอิงของวัตถุดิบ (เช่น ต่อ 100 g หรือ ต่อ 1 ชิ้น)
+      const ratio = (Number(item.quantity) || 0) / (item.basis || getUnitInfo(item.unit).defaultBasis);
       totalCalories += (item.calories || 0) * ratio;
       totalProtein += (item.protein || 0) * ratio;
       totalCarbs += (item.carbs || 0) * ratio;
@@ -380,6 +389,42 @@ export default function ProductForm() {
 
   // คำนวณสัดส่วนธาตุเจ้าเรือน (Elemental Breakdown & Dominant Element)
   // ใช้วิธีคำนวณเดียวกับ RecipePieChart.jsx ในหน้า MenuDetail.jsx 100%
+  // จำนวนชุดที่ทำได้จากสต็อกวัตถุดิบในภาคของเมนู (สูตรเดียวกับ Product.calculateAvailableKits ฝั่ง Server)
+  // ปริมาณในสูตรกับสต็อกใช้หน่วยของวัตถุดิบตัวเดียวกัน (g / kg / ml / l / ชิ้น)
+  const calculatedStockMetrics = useMemo(() => {
+    const targetRegion = REGION_MAP_TO_INGREDIENT[formData.region] || "central";
+    const targetRegionNameTh = REGION_TH_TITLES[targetRegion];
+
+    const breakdown = selectedIngredients.map((item) => {
+      const ing = availableIngredients.find((i) => (i._id || i.id) === item.id);
+      const availableInRegion = Number(
+        ing?.regionalStocks?.[targetRegion] ?? ing?.stockQuantity ?? ing?.currentStockGrams ?? 0,
+      );
+      const requiredQty = Number(item.quantity) > 0 ? Number(item.quantity) : 1;
+      return {
+        id: item.id,
+        nameTh: item.nameTh,
+        unit: getUnitInfo(ing?.unit || item.unit).short,
+        requiredQty,
+        availableInRegion,
+        possibleSets: Math.max(0, Math.floor(availableInRegion / requiredQty)),
+      };
+    });
+
+    const bottleneck = breakdown.reduce(
+      (min, b) => (!min || b.possibleSets < min.possibleSets ? b : min),
+      null,
+    );
+
+    return {
+      targetRegion,
+      targetRegionNameTh,
+      calculatedStock: bottleneck ? bottleneck.possibleSets : 0,
+      bottleneck,
+      breakdown,
+    };
+  }, [selectedIngredients, availableIngredients, formData.region]);
+
   const calculatedElementMetrics = useMemo(() => {
     const scores = { ดิน: 0, น้ำ: 0, ลม: 0, ไฟ: 0 };
 
@@ -545,6 +590,7 @@ export default function ProductForm() {
         nameEn: s.nameEn,
         quantity: s.quantity,
         unit: s.unit,
+        basisWeightG: s.basis || getUnitInfo(s.unit).defaultBasis,
         elements: s.elements,
         nutrientsPer100g: {
           calories: s.calories,
@@ -799,7 +845,8 @@ export default function ProductForm() {
                     </label>
                     <input
                       type="number"
-                      min="1"
+                      min="0"
+                      step={pickerUnit === "piece" ? 1 : "any"}
                       value={pickerQty}
                       onChange={(e) => setPickerQty(Number(e.target.value))}
                       className="w-full rounded-lg border border-[#d9cbbd] p-2 text-xs"
@@ -858,7 +905,7 @@ export default function ProductForm() {
 
                           <div className="flex items-center gap-3">
                             <span className="text-[11px] text-[#7a5c4d]">
-                              ~{Math.round((item.calories * item.quantity) / 100)} kcal
+                              ~{Math.round((item.calories * item.quantity) / (item.basis || getUnitInfo(item.unit).defaultBasis))} kcal
                             </span>
                             <button
                               type="button"

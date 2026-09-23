@@ -1,7 +1,14 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { CATEGORY_MAP, useIngredients } from "../../context/IngredientsContext.js";
+import {
+  CATEGORY_MAP,
+  INGREDIENT_UNITS,
+  getUnitFactor,
+  getUnitInfo,
+  roundQty,
+  useIngredients,
+} from "../../context/IngredientsContext.js";
 import useToast from "../../hooks/useToast.js";
 import {
   ELEMENTS,
@@ -12,7 +19,6 @@ import {
   getElementFromMedicinalTastes,
 } from "../../utils/recipeCalculator.js";
 
-import { getApiUrl, getAuthHeaders } from "../../utils/authHeader.js";
 import { formatDate } from "../../utils/dateFormatter.js";
 import DatePicker from "../../components/common/DatePicker.jsx";
 
@@ -121,8 +127,7 @@ function createEmptyForm() {
     nameEn: "",
     scientificName: "",
     category: "vegetable",
-    imageUrl: "",
-    imageId: null,
+    unit: "g",
     medicinalTastes: [],
     elements: [],
     nutrientsPer100g: emptyNutrientForm(),
@@ -155,59 +160,8 @@ function IngredientForm() {
   const [formData, setFormData] = useState(createEmptyForm);
   const [errors, setErrors] = useState({});
   const [notFound, setNotFound] = useState(false);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef(null);
-  const apiUrl = getApiUrl();
-
-  const handleUploadImageFile = async (file) => {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("กรุณาเลือกไฟล์รูปภาพเท่านั้น (JPG, PNG, WebP)");
-      return;
-    }
-
-    const uploadData = new FormData();
-    uploadData.append("image", file);
-
-    setIsUploadingImage(true);
-    try {
-      const res = await fetch(`${apiUrl}/api/v2/images/upload`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: uploadData,
-      });
-      const data = await res.json();
-      if (res.ok && data.url) {
-        const fullUrl = data.url.startsWith("http") ? data.url : `${apiUrl}${data.url}`;
-        setFormData((prev) => ({
-          ...prev,
-          imageUrl: fullUrl,
-          imageId: data.fileId || data.id || null,
-        }));
-        toast.success("อัปโหลดรูปภาพวัตถุดิบขึ้นระบบเรียบร้อย! ✨");
-      } else {
-        toast.error(data.message || "อัปโหลดภาพไม่สำเร็จ");
-      }
-    } catch (err) {
-      toast.error("เกิดข้อผิดพลาดในการอัปโหลดภาพ");
-    } finally {
-      setIsUploadingImage(false);
-    }
-  };
-
-  const handleImageFileSelect = (e) => {
-    const file = e.target.files?.[0];
-    if (file) handleUploadImageFile(file);
-  };
-
-  const handleImageDrop = (e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer?.files?.[0];
-    if (file) handleUploadImageFile(file);
-  };
-
+  // หน่วยที่บันทึกไว้ใน DB (ใช้เตือนเรื่องสูตรเมนูเมื่อเปลี่ยนหน่วยตอนแก้ไข)
+  const [originalUnit, setOriginalUnit] = useState(null);
   useEffect(() => {
     if (!isEditMode) return;
 
@@ -218,9 +172,11 @@ function IngredientForm() {
     }
 
     setNotFound(false);
+    setOriginalUnit(getUnitInfo(item.unit).value);
     setFormData({
       ...createEmptyForm(),
       ...item,
+      unit: getUnitInfo(item.unit).value,
       medicinalTastes: parseTastes(item.medicinalTaste),
       elements: Array.isArray(item.elements) ? item.elements : [],
       nutrientsPer100g: NUTRIENT_KEYS.reduce(
@@ -269,6 +225,45 @@ function IngredientForm() {
       };
     });
     clearError(`regionalStock_${regionKey}`);
+  };
+
+  const unitInfo = getUnitInfo(formData.unit);
+  const unitChangedFromSaved = isEditMode && originalUnit && originalUnit !== unitInfo.value;
+  const unitConvertibleFromSaved = unitChangedFromSaved && getUnitFactor(originalUnit, unitInfo.value) !== null;
+
+  // เปลี่ยนหน่วย: ถ้าเป็นหน่วยกลุ่มเดียวกัน (g↔kg, ml↔l) แปลงสต็อก จุดเตือน และปริมาณอ้างอิงให้อัตโนมัติ
+  const handleUnitChange = (nextUnit) => {
+    const from = getUnitInfo(formData.unit);
+    const to = getUnitInfo(nextUnit);
+    if (from.value === to.value) return;
+    const factor = getUnitFactor(from.value, to.value);
+    const convert = (v) => String(roundQty((Number(v) || 0) * factor));
+
+    setFormData((prev) => {
+      if (factor === null) {
+        // แปลงไม่ได้ (เช่น g → ชิ้น) — ปรับเฉพาะปริมาณอ้างอิงถ้ายังเป็นค่าเริ่มต้น
+        const basisIsDefault = Number(prev.basisWeightG) === from.defaultBasis;
+        return { ...prev, unit: to.value, basisWeightG: basisIsDefault ? String(to.defaultBasis) : prev.basisWeightG };
+      }
+      const regionalStocks = Object.fromEntries(
+        Object.entries(prev.regionalStocks || {}).map(([key, v]) => [key, convert(v)]),
+      );
+      const sum = Object.values(regionalStocks).reduce((acc, v) => acc + (Number(v) || 0), 0);
+      return {
+        ...prev,
+        unit: to.value,
+        regionalStocks,
+        currentStockGrams: String(roundQty(sum)),
+        lowStockThresholdGrams: convert(prev.lowStockThresholdGrams),
+        basisWeightG: convert(prev.basisWeightG),
+      };
+    });
+
+    if (factor === null) {
+      toast.error(`${from.label} → ${to.label} แปลงค่าให้ไม่ได้ กรุณากรอกสต็อก จุดเตือน และค่าสารอาหารใหม่เป็นหน่วย${to.label}`);
+    } else {
+      toast.success(`แปลงสต็อกจาก ${from.label} เป็น ${to.label} ให้แล้ว`);
+    }
   };
 
 
@@ -358,21 +353,25 @@ function IngredientForm() {
 
     const basis = Number(formData.basisWeightG);
     if (formData.basisWeightG === "" || Number.isNaN(basis) || basis <= 0) {
-      newErrors.basisWeightG = "น้ำหนักอ้างอิงต้องเป็นตัวเลขมากกว่า 0";
+      newErrors.basisWeightG = "ปริมาณอ้างอิงต้องเป็นตัวเลขมากกว่า 0";
     }
 
+    // หน่วย "ชิ้น" ต้องเป็นจำนวนเต็ม ส่วน g/kg/ml/l ใส่ทศนิยมได้ (เช่น 2.5 kg)
+    const mustBeInteger = formData.unit === "piece";
     [
-      ["currentStockGrams", "จำนวนสต็อก (กรัม)"],
-      ["lowStockThresholdGrams", "จุดเตือนสต็อก (กรัม)"],
+      ["currentStockGrams", `จำนวนสต็อก (${unitInfo.label})`],
+      ["lowStockThresholdGrams", `จุดเตือนสต็อก (${unitInfo.label})`],
     ].forEach(([field, label]) => {
       const num = Number(formData[field]);
       if (
         formData[field] === "" ||
         Number.isNaN(num) ||
         num < 0 ||
-        !Number.isInteger(num)
+        (mustBeInteger && !Number.isInteger(num))
       ) {
-        newErrors[field] = `${label} ต้องเป็นจำนวนเต็มตั้งแต่ 0 ขึ้นไป`;
+        newErrors[field] = mustBeInteger
+          ? `${label} ต้องเป็นจำนวนเต็มตั้งแต่ 0 ขึ้นไป`
+          : `${label} ต้องเป็นตัวเลขตั้งแต่ 0 ขึ้นไป`;
       }
     });
 
@@ -405,7 +404,7 @@ function IngredientForm() {
       categoryTh: CATEGORY_MAP[formData.category],
       medicinalTaste: formData.medicinalTastes.join("/"),
       elements: [preview.dominantElement],
-      basisWeightG: Number(formData.basisWeightG) || 100,
+      basisWeightG: Number(formData.basisWeightG) || unitInfo.defaultBasis,
       nutrientsPer100g: {
         calories: Number(formData.nutrientsPer100g.calories) || 0,
         carb: Number(formData.nutrientsPer100g.carbs) || 0,
@@ -444,16 +443,26 @@ function IngredientForm() {
         Math.max(0, Number(formData.regionalStocks?.central) || 0) +
         Math.max(0, Number(formData.regionalStocks?.south) || 0)
       ),
-      unit: "g",
+      unit: unitInfo.value,
       lowStockThresholdGrams: Number(formData.lowStockThresholdGrams) || 0,
       expiryDate: formData.expiryDate || undefined,
-      imageUrl: formData.imageUrl || "",
-      imageId: formData.imageId || null,
       isActive: formData.isActive !== false,
     };
 
     if (isEditMode) {
-      await updateIngredient(id, payload);
+      const result = await updateIngredient(id, payload);
+      if (!result?.ok) {
+        toast.error(result?.message || "บันทึกการแก้ไขไม่สำเร็จ");
+        return;
+      }
+      const change = result.unitChange;
+      if (change?.affectedProducts?.length) {
+        if (change.converted) {
+          toast.success(`แปลงปริมาณในสูตร ${change.affectedProducts.length} เมนูเป็นหน่วย ${getUnitInfo(change.to).label} ให้แล้ว`);
+        } else {
+          toast.error(`เปลี่ยนหน่วยแล้ว แต่ต้องแก้ปริมาณในสูตรเองอีก ${change.affectedProducts.length} เมนู: ${change.affectedProducts.slice(0, 3).join(", ")}${change.affectedProducts.length > 3 ? " ..." : ""}`);
+        }
+      }
       toast.success("แก้ไขข้อมูลวัตถุดิบสำเร็จ");
     } else {
       await addIngredient(payload);
@@ -486,87 +495,6 @@ function IngredientForm() {
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          {/* ส่วนอัปโหลดรูปภาพวัตถุดิบ (Drag & Drop + File Selector) */}
-          <div>
-            <label className={labelClass}>
-              รูปภาพวัตถุดิบ <span className="text-xs font-normal text-stone-500">(ไม่บังคับ - จะมีหรือไม่มีรูปภาพก็ได้)</span>
-            </label>
-            <div
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={handleImageDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl cursor-pointer transition-all ${isDragging
-                  ? "border-[#4c1f08] bg-[#f8f5f0]"
-                  : "border-[#f1ead7] hover:border-[#4c1f08] bg-[#faf7f2]/50"
-                }`}
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageFileSelect}
-                className="hidden"
-              />
-              {formData.imageUrl ? (
-                <div className="relative group text-center" onClick={(e) => e.stopPropagation()}>
-                  <img
-                    src={formData.imageUrl}
-                    alt="Ingredient preview"
-                    className="w-32 h-32 object-cover rounded-xl shadow-md border-2 border-white mx-auto ring-1 ring-[#e8dfd1]"
-                  />
-                  <div className="mt-2 flex items-center justify-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="text-xs bg-[#4c1f08] text-white px-3 py-1 rounded-md hover:bg-[#6b3215] transition"
-                    >
-                      เปลี่ยนรูป
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFormData((prev) => ({ ...prev, imageUrl: "", imageId: null }))}
-                      className="text-xs bg-rose-600 text-white px-3 py-1 rounded-md hover:bg-rose-700 transition"
-                    >
-                      ลบรูป
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center">
-                  {isUploadingImage ? (
-                    <div className="flex flex-col items-center">
-                      <div className="w-8 h-8 border-3 border-[#4c1f08] border-t-transparent rounded-full animate-spin mb-2" />
-                      <p className="text-sm font-medium text-[#4c1f08]">กำลังอัปโหลดรูปภาพขึ้นระบบ...</p>
-                    </div>
-                  ) : (
-                    <>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-10 h-10 text-[#8d593a] mx-auto mb-2">
-                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
-                        <circle cx="9" cy="9" r="2" />
-                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-                      </svg>
-                      <p className="text-sm font-semibold text-[#4c1f08]">
-                        ลากและวางรูปภาพที่นี่ หรือ <span className="underline">คลิกเพื่อเลือกไฟล์</span>
-                      </p>
-                      <p className="text-xs text-[#8d593a]/80 mt-1">รองรับไฟล์ PNG, JPG, WEBP (อัปโหลดเข้า MongoDB GridFS จริง)</p>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="mt-2">
-              <input
-                type="url"
-                name="imageUrl"
-                value={formData.imageUrl}
-                onChange={handleChange}
-                placeholder="หรือกรอก URL รูปภาพโดยตรง (https://...)"
-                className="w-full text-xs rounded border border-[#f1ead7] p-2 focus:border-[#4c1f08] focus:outline-none"
-              />
-            </div>
-          </div>
-
           <div>
             <label className={labelClass} htmlFor="nameTh">
               ชื่อวัตถุดิบ (ภาษาไทย) <span className="text-red-500">*</span>
@@ -634,6 +562,53 @@ function IngredientForm() {
             </select>
             {errors.category && (
               <p className="mt-1 text-sm text-red-500">{errors.category}</p>
+            )}
+          </div>
+
+          {/* หน่วยของวัตถุดิบ — ใช้กับสต็อก จุดเตือน ปริมาณอ้างอิงสารอาหาร และปริมาณในสูตรเมนู */}
+          <div>
+            <span className={labelClass}>
+              หน่วยนับของวัตถุดิบ <span className="text-red-500">*</span>
+            </span>
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="หน่วยนับของวัตถุดิบ">
+              {INGREDIENT_UNITS.map((u) => {
+                const active = unitInfo.value === u.value;
+                return (
+                  <button
+                    key={u.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => handleUnitChange(u.value)}
+                    className={`flex min-w-[76px] cursor-pointer flex-col items-center rounded-xl border-2 px-3 py-1.5 transition-all duration-200 active:scale-95 ${
+                      active
+                        ? "border-[#4c1f08] bg-[#4c1f08] text-white shadow-sm"
+                        : "border-[#f1ead7] bg-white text-[#4c1f08] hover:border-[#d9c4ae] hover:bg-[#fffaf5]"
+                    }`}
+                  >
+                    <span className="text-sm font-extrabold">{u.short}</span>
+                    <span className={`text-[10px] ${active ? "text-white/75" : "text-[#8d593a]"}`}>{u.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-1.5 text-xs text-[#8d593a]">
+              สต็อก จุดเตือน และปริมาณในสูตรเมนูจะใช้หน่วย <strong>{unitInfo.label}</strong> ทั้งหมด
+              — สลับระหว่าง กรัม↔กิโลกรัม หรือ มิลลิลิตร↔ลิตร ระบบแปลงตัวเลขให้อัตโนมัติ
+            </p>
+            {unitChangedFromSaved && (
+              <p
+                className={`mt-2 rounded-xl border p-2.5 text-xs ${
+                  unitConvertibleFromSaved
+                    ? "border-sky-200 bg-sky-50 text-sky-900"
+                    : "border-amber-300 bg-amber-50 text-amber-900"
+                }`}
+                role="status"
+              >
+                {unitConvertibleFromSaved
+                  ? `เปลี่ยนจาก ${getUnitInfo(originalUnit).label} เป็น ${unitInfo.label} — เมื่อบันทึก ระบบจะแปลงปริมาณในสูตรของทุกเมนูที่ใช้วัตถุดิบนี้ให้อัตโนมัติ`
+                  : `เปลี่ยนจาก ${getUnitInfo(originalUnit).label} เป็น ${unitInfo.label} แปลงค่าให้ไม่ได้ — หลังบันทึกต้องไปแก้ปริมาณในสูตรของเมนูที่ใช้วัตถุดิบนี้เอง`}
+              </p>
             )}
           </div>
 
@@ -787,7 +762,7 @@ function IngredientForm() {
 
           <div>
             <span className={labelClass}>
-              คุณค่าทางโภชนาการต่อ {formData.basisWeightG || 100} กรัม{" "}
+              คุณค่าทางโภชนาการต่อ {formData.basisWeightG || unitInfo.defaultBasis} {unitInfo.label}{" "}
               <span className="text-red-500">*</span>
             </span>
             <div className="grid grid-cols-2 gap-3 rounded border border-[#f1ead7] p-3 md:grid-cols-4">
@@ -822,14 +797,14 @@ function IngredientForm() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className={labelClass} htmlFor="basisWeightG">
-                น้ำหนักอ้างอิงของค่าสารอาหาร (กรัม){" "}
+                ปริมาณอ้างอิงของค่าสารอาหาร ({unitInfo.label}){" "}
                 <span className="text-red-500">*</span>
               </label>
               <input
                 id="basisWeightG"
                 type="number"
-                min="1"
-                step="1"
+                min="0.001"
+                step="any"
                 name="basisWeightG"
                 value={formData.basisWeightG}
                 onChange={handleChange}
@@ -871,7 +846,7 @@ function IngredientForm() {
               <div className="rounded-xl border border-[#d9cbbd] bg-white px-3 py-1.5 shadow-2xs">
                 <span className="text-xs text-[#8d593a]">สต็อกรวมทุกภูมิภาค: </span>
                 <span className="text-sm font-black text-[#4c1f08]">
-                  {Number(formData.currentStockGrams || 0).toLocaleString()} กรัม
+                  {Number(formData.currentStockGrams || 0).toLocaleString()} {unitInfo.label}
                 </span>
               </div>
             </div>
@@ -884,13 +859,13 @@ function IngredientForm() {
                       <span>{icon}</span>
                       <span>{label}</span>
                     </label>
-                    <span className="text-[10px] text-stone-500 font-medium">กรัม (g)</span>
+                    <span className="text-[10px] text-stone-500 font-medium">{unitInfo.label} ({unitInfo.short})</span>
                   </div>
                   <input
                     id={`reg-stock-${key}`}
                     type="number"
                     min="0"
-                    step="1"
+                    step={unitInfo.value === "piece" ? 1 : "any"}
                     value={formData.regionalStocks?.[key] ?? 0}
                     onChange={(e) => handleRegionalStockChange(key, e.target.value)}
                     placeholder="0"
@@ -906,13 +881,13 @@ function IngredientForm() {
             <div className="mt-4 pt-3 border-t border-[#f1ead7] flex flex-wrap items-center justify-between gap-4">
               <div className="w-full sm:w-1/2">
                 <label className={labelClass} htmlFor="lowStockThresholdGrams">
-                  จุดเตือนให้สั่งซื้อเพิ่มรวม (กรัม) <span className="text-red-500">*</span>
+                  จุดเตือนให้สั่งซื้อเพิ่มรวม ({unitInfo.label}) <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="lowStockThresholdGrams"
                   type="number"
                   min="0"
-                  step="1"
+                  step={unitInfo.value === "piece" ? 1 : "any"}
                   name="lowStockThresholdGrams"
                   value={formData.lowStockThresholdGrams}
                   onChange={handleChange}

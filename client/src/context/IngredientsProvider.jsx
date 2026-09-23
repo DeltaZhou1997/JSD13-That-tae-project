@@ -67,20 +67,41 @@ export default function IngredientsProvider({ children }) {
   );
 
   const updateIngredient = useCallback(
+    // คืนผลจาก Server: { ok, message, unitChange } — ถ้าบันทึกไม่สำเร็จจะคืนค่าเดิมบนหน้าจอ
     async (id, data) => {
+      let previousItem = null;
       setIngredients((prev) =>
-        prev.map((item) =>
-          item._id === id ? normalizeIngredient({ ...item, ...data, _id: id }) : item,
-        ),
+        prev.map((item) => {
+          if (item._id !== id) return item;
+          previousItem = item;
+          return normalizeIngredient({ ...item, ...data, _id: id });
+        }),
       );
+      const rollback = () => {
+        if (previousItem) {
+          setIngredients((prev) => prev.map((item) => (item._id === id ? previousItem : item)));
+        }
+      };
       try {
-        await fetch(`${apiUrl}/api/v2/ingredients/${id}`, {
+        const res = await fetch(`${apiUrl}/api/v2/ingredients/${id}`, {
           method: "PUT",
           headers: getAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify(data),
         });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          rollback();
+          return { ok: false, message: json.message || `บันทึกไม่สำเร็จ (HTTP ${res.status})` };
+        }
+        if (json.data) {
+          setIngredients((prev) =>
+            prev.map((item) => (item._id === id ? normalizeIngredient(json.data) : item)),
+          );
+        }
+        return { ok: true, message: json.message, unitChange: json.unitChange || null };
       } catch (err) {
-        console.warn("Offline updateIngredient:", err.message);
+        rollback();
+        return { ok: false, message: `เชื่อมต่อเซิร์ฟเวอร์ไม่ได้: ${err.message}` };
       }
     },
     [apiUrl],

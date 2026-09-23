@@ -1,8 +1,50 @@
 import { Router } from "express";
 import { Ingredient } from "../../models/Ingredient.model.js";
+import { Product } from "../../models/Product.model.js";
 import { verifyToken, requireAdmin } from "./users.routes.js";
+import { getUnitFactor, roundQty } from "../../utils/units.js";
 
 const router = Router();
+
+/**
+ * เมื่อหน่วยของวัตถุดิบเปลี่ยน ให้ปรับปริมาณในสูตรเมนูทุกเมนูที่ใช้วัตถุดิบนี้
+ * - หน่วยกลุ่มเดียวกัน (g↔kg, ml↔l): แปลงปริมาณให้อัตโนมัติ
+ * - คนละกลุ่ม (เช่น g → piece): แปลงไม่ได้ คืนรายชื่อเมนูให้แอดมินไปแก้สูตรเอง
+ */
+async function syncRecipeUnits(ingredient, oldUnit) {
+  const newUnit = ingredient.unit || "g";
+  if (oldUnit === newUnit) return null;
+
+  const id = String(ingredient._id);
+  const products = await Product.find({
+    $or: [{ "recipe.ingredient": ingredient._id }, { "recipe.ingredientId": id }],
+  }).select("recipe nameTh name");
+
+  const factor = getUnitFactor(oldUnit, newUnit);
+  const affected = products.map((p) => p.nameTh || p.name);
+
+  if (factor === null) {
+    return { from: oldUnit, to: newUnit, converted: false, affectedProducts: affected };
+  }
+
+  for (const product of products) {
+    const recipe = product.recipe.map((item) => {
+      const obj = item.toObject();
+      const matches = String(obj.ingredient || "") === id || String(obj.ingredientId || "") === id;
+      if (!matches) return obj;
+      return {
+        ...obj,
+        quantity: roundQty(Number(obj.quantity || 0) * factor),
+        unit: newUnit,
+        ...(obj.basisWeightG ? { basisWeightG: roundQty(Number(obj.basisWeightG) * factor) } : {}),
+      };
+    });
+    // updateOne ไม่รัน validator ของฟิลด์อื่นในเมนูเก่า
+    await Product.updateOne({ _id: product._id }, { $set: { recipe } });
+  }
+
+  return { from: oldUnit, to: newUnit, converted: true, factor, affectedProducts: affected };
+}
 
 // =========================================================================
 // 1. GET /api/v2/ingredients — ดึงรายการวัตถุดิบทั้งหมด (Search & Filters)
@@ -174,6 +216,11 @@ router.put("/:id", verifyToken, requireAdmin, async (req, res, next) => {
       req.body.currentStockGrams = Number(req.body.stockQuantity) || 0;
     }
 
+    const previous = await Ingredient.findById(req.params.id).select("unit").lean();
+    if (!previous) {
+      return res.status(404).json({ success: false, message: "ไม่พบวัตถุดิบเพื่อทำการแก้ไข" });
+    }
+
     const updated = await Ingredient.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
@@ -183,10 +230,15 @@ router.put("/:id", verifyToken, requireAdmin, async (req, res, next) => {
       return res.status(404).json({ success: false, message: "ไม่พบวัตถุดิบเพื่อทำการแก้ไข" });
     }
 
+    // เปลี่ยนหน่วย → ปรับปริมาณในสูตรของทุกเมนูที่ใช้วัตถุดิบนี้ให้เป็นหน่วยใหม่
+    // (สต็อกของวัตถุดิบ Frontend แปลงมาให้แล้วใน payload)
+    const unitChange = await syncRecipeUnits(updated, previous.unit || "g");
+
     return res.status(200).json({
       success: true,
       message: `แก้ไขข้อมูลวัตถุดิบ "${updated.nameTh}" สำเร็จ`,
       data: updated,
+      unitChange,
     });
   } catch (err) {
     next(err);
