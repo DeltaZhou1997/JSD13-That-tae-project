@@ -1,4 +1,6 @@
 import { Router } from "express";
+import mongoose from "mongoose";
+import Ingredient from "../../models/Ingredient.model.js";
 import rawIngredients from "../../mockDB/ingredients.js";
 
 export const ingredientsRouter = Router();
@@ -40,8 +42,29 @@ Object.entries(rawIngredients).forEach(([key, item], index) => {
 });
 
 // 1. GET /api/v1/ingredients - ดึงรายการวัตถุดิบทั้งหมด พร้อม Search & Filter
-ingredientsRouter.get("/", (req, res) => {
+ingredientsRouter.get("/", async (req, res) => {
   const { category, search, region, element } = req.query;
+
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const query = { isActive: true };
+      if (search) {
+        query.$or = [
+          { nameTh: { $regex: search, $options: "i" } },
+          { nameEn: { $regex: search, $options: "i" } },
+        ];
+      }
+      if (category && category !== "all") query.category = category;
+      if (region && region !== "all") query.$or = [{ regions: region }, { region: region }, { region: "all" }];
+      if (element && element !== "all") query.elements = element;
+
+      const dbList = await Ingredient.find(query).sort({ nameTh: 1 }).lean();
+      if (dbList && dbList.length > 0) {
+        return res.status(200).json(dbList);
+      }
+    }
+  } catch (_) {}
+
   let list = Object.values(ingredientsStore);
 
   // Filter: ค้นหาตามชื่อ (ไทยหรืออังกฤษ)
@@ -83,12 +106,22 @@ ingredientsRouter.get("/", (req, res) => {
 });
 
 // 2. GET /api/v1/ingredients/:id - ดึงข้อมูลวัตถุดิบรายตัว
-ingredientsRouter.get("/:id", (req, res) => {
-  const item = ingredientsStore[req.params.id];
+ingredientsRouter.get("/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nameTh: id };
+      const dbItem = await Ingredient.findOne(query).lean();
+      if (dbItem) return res.status(200).json({ success: true, data: dbItem });
+    }
+  } catch (_) {}
+
+  const item = ingredientsStore[id];
   if (!item) {
     return res.status(404).json({
       success: false,
-      message: `ไม่พบวัตถุดิบรหัส "${req.params.id}"`,
+      message: `ไม่พบวัตถุดิบรหัส "${id}"`,
     });
   }
 

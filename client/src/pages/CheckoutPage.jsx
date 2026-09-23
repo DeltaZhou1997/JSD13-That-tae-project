@@ -13,6 +13,7 @@ import { users } from "../mock-data/users";
 import { useAuth } from "../context/AuthContext.js";
 import { PAYMENT_METHODS } from "../constants/checkout";
 import { useProducts } from "../context/ProductsContext.js";
+import { getAuthHeaders, getApiUrl } from "../utils/authHeader.js";
 import {
   calculateEarnedPoints,
   calculateGrandTotal,
@@ -39,7 +40,7 @@ export default function CheckoutPage() {
 
   const { currentUser: authUser } = useAuth();
   const currentUser = authUser || users[0];
-  const currentUserId = currentUser?.id || "USR-001";
+  const currentUserId = currentUser?.id || currentUser?._id || "USR-001";
 
   // State สลับระบบชำระเงิน ('v2' = Stripe Hosted | 'v1' = In-App UI)
   const [paymentVersion, setPaymentVersion] = useState("v2");
@@ -143,11 +144,11 @@ export default function CheckoutPage() {
 
   // ส่งข้อมูลคำสั่งซื้อและนำทางไปหน้าสำเร็จ (v1)
   const finalizeOrder = async (orderPayload) => {
-    const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
+    const apiUrl = getApiUrl();
     try {
       const response = await fetch(`${apiUrl}/api/v1/checkout`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(orderPayload),
       });
       if (handleClearCart) handleClearCart();
@@ -246,7 +247,7 @@ export default function CheckoutPage() {
       try {
         const res = await fetch(`${apiUrl}/api/v2/checkout/create-session`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: getAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify(orderPayload),
         });
         const data = await res.json();
@@ -298,7 +299,7 @@ export default function CheckoutPage() {
           `${apiUrl}/api/v1/payment/create-payment-intent`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders({ "Content-Type": "application/json" }),
             body: JSON.stringify({
               amount: grandTotal,
               paymentMethodType: "card",

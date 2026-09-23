@@ -1,5 +1,15 @@
+import fs from "fs";
 import mongoose from "mongoose";
 import { connectDB } from "../config/db.js";
+
+// โหลด .env อัตโนมัติกรณีรันแบบ standalone และยังไม่มี env ใน process
+if (!process.env.MONGODB_URI && !process.env.MONGO_URI) {
+  if (typeof process.loadEnvFile === "function" && fs.existsSync(".env")) {
+    try {
+      process.loadEnvFile(".env");
+    } catch (_) {}
+  }
+}
 import dishes from "../mockDB/dishes.js";
 import rawIngredients from "../mockDB/ingredients.js";
 import Product from "../models/Product.model.js";

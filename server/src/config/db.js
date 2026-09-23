@@ -4,21 +4,22 @@ let isConnected = false;
 
 
 export async function connectDB() {
+  if (isConnected && mongoose.connection.readyState === 1) return;
 
-  if (isConnected) return;
+  const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
+  if (!uri) {
+    throw new Error("not found ENV MONGODB_URI or MONGO_URI, Please Check Variable");
+  }
 
-  const uri = process.env.MONGODB_URI
-  if (!uri) { throw new error("not found ENV or MONGODB_URI, Please Check Variable") }
-
-  // ใส่ไว้สำหรับ ให้ตัว Mongoose มันมีความยืดหยุ่น ไม่ต้องเป๊ะตา่ม schema
+  // ใส่ไว้สำหรับ ให้ตัว Mongoose มันมีความยืดหยุ่น ไม่ต้องเป๊ะตาม schema
   mongoose.set("strictQuery", false);
 
-  mongoose.connect(uri, {
-    dbName: "thattae"
+  await mongoose.connect(uri, {
+    dbName: "thattae",
   });
 
   isConnected = true;
-  console.log("MongoDB Connected at :", mongoose.connection.host)
+  console.log("MongoDB Connected at :", mongoose.connection.host);
 }
 
 export async function disconnectDB() {

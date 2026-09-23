@@ -139,18 +139,11 @@ const productSchema = new mongoose.Schema(
       ref: "images.files",
       default: null,
     },
-    // รองรับกรณีอาหาร 1 เมนูมีรูปภาพหลายมุมมองที่เก็บใน GridFS
-    images: [
-      {
-        fileId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "images.files",
-        },
-        url: { type: String, default: "" },
-        filename: { type: String, default: "" },
-        isPrimary: { type: Boolean, default: false },
-      },
-    ],
+    // รองรับกรณีอาหาร 1 เมนูมีรูปภาพหลายมุมมอง ทั้ง URL และ GridFS
+    images: {
+      type: [mongoose.Schema.Types.Mixed],
+      default: [],
+    },
     // URL สำหรับ Client เรียกดูรูปภาพ (Auto sync จาก /api/v2/images/:imageId)
     imageUrl: {
       type: String,

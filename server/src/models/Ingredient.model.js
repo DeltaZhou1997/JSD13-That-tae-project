@@ -7,6 +7,8 @@ export const INGREDIENT_CATEGORIES = {
   plantprotein: "โปรตีนจากพืช",
   vegetable: "ผัก & พืชสมุนไพร",
   seasoning_spice: "เครื่องปรุง & เครืองเทศ",
+  seasoning: "เครื่องปรุงรส",
+  herb_spice: "สมุนไพร & เครื่องเทศ",
   carb: "แป้ง & คาร์โบไฮเดรต",
   dairy: "นม",
   egg: "ไข่",
@@ -89,14 +91,7 @@ const ingredientSchema = new mongoose.Schema({
   medicinalTaste: {
     type: String,
     required: [true, "กรุณาระบุรสยาอย่างน้อย 1 รส"],
-    enum: {
-      values: MEDICINAL_TASTES,
-      message: "{VALUE} ไม่ใช่รสยาตามศาสตร์การแพทย์แผนไทย",
-    },
-    validate: {
-      validator: (arr) => Array.isArray(arr) && arr.length > 0,
-      message: "ต้องระบุรสยาอย่างน้อย 1 รส",
-    },
+    trim: true,
   },
   elements: {
     type: [

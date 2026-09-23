@@ -241,11 +241,10 @@ router.get("/user/:userId", async (req, res) => {
   const { userId } = req.params;
 
   try {
-    if (
-      mongoose.connection.readyState === 1 &&
-      mongoose.Types.ObjectId.isValid(userId)
-    ) {
-      const dbOrders = await Order.find({ user: userId }).sort({
+    if (mongoose.connection.readyState === 1) {
+      const dbOrders = await Order.find({
+        $or: [{ userId }, { user: userId }],
+      }).sort({
         createdAt: -1,
       });
       if (dbOrders && dbOrders.length > 0) {
@@ -321,16 +320,17 @@ router.patch("/:orderId/status", async (req, res) => {
     });
   }
 
-  const order = inMemoryOrders.find(
+  let foundOrder = inMemoryOrders.find(
     (o) => o.orderId === orderId || String(o._id) === orderId,
   );
-  if (order) {
-    order.status = status.toUpperCase();
-    order.updatedAt = new Date().toISOString();
+  if (foundOrder) {
+    foundOrder.status = status.toUpperCase();
+    foundOrder.updatedAt = new Date().toISOString();
   }
 
+  let dbOrder = null;
   if (mongoose.connection.readyState === 1) {
-    await Order.findOneAndUpdate(
+    dbOrder = await Order.findOneAndUpdate(
       {
         $or: [
           { orderId },
@@ -339,17 +339,18 @@ router.patch("/:orderId/status", async (req, res) => {
             : []),
         ],
       },
-      { $set: { status: status.toUpperCase() } },
+      { $set: { status: status.toUpperCase(), updatedAt: new Date() } },
+      { new: true },
     );
   }
 
-  if (!order) {
+  if (!foundOrder && !dbOrder) {
     return res.status(404).json({ message: `ไม่พบคำสั่งซื้อ "${orderId}"` });
   }
 
   res.status(200).json({
     message: "อัปเดตสถานะคำสั่งซื้อสำเร็จ",
-    order,
+    order: dbOrder || foundOrder,
   });
 });
 
