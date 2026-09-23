@@ -1,3 +1,4 @@
+import { NUTRIENT_BASIS_G, toGrams } from "./units.js";
 
 export const ELEMENTS = ["ดิน", "น้ำ", "ลม", "ไฟ"];
 
@@ -164,16 +165,17 @@ export function calculateRecipeMetrics(recipeItems, servings = 2) {
     const qty = Number(item?.quantity) || 0;
     if (qty <= 0) return;
 
-    totalWeight += qty;
+    // ปริมาณในสูตรเป็นหน่วยของวัตถุดิบ (g/kg/ml/l/ชิ้น) → แปลงเป็นกรัม เพราะค่าสารอาหารคิดต่อ 100 g เสมอ
+    const grams = toGrams(qty, ingredient.unit || item?.unit, ingredient.gramsPerPiece ?? item?.gramsPerPiece);
+    totalWeight += grams;
 
-    const basis = Number(ingredient.basisWeightG) || 100;
-    const ratio = qty / basis;
+    const ratio = grams / NUTRIENT_BASIS_G;
     const nutrients = ingredient.nutrientsPer100g || {};
     NUTRIENT_KEYS.forEach((key) => {
       totals[key] += (Number(nutrients[key]) || 0) * ratio;
     });
 
-    const scores = scoreIngredientElements(ingredient, qty);
+    const scores = scoreIngredientElements(ingredient, grams);
     ELEMENTS.forEach((element) => {
       elementScores[element] += scores[element];
     });

@@ -189,7 +189,7 @@ function AdminRecipeBuilder() {
       unit: getUnitInfo(item.unit).value,
       medicinalTaste: item.medicinalTaste,
       elements: item.elements || [],
-      basisWeightG: Number(item.basisWeightG) || getUnitInfo(item.unit).defaultBasis,
+      gramsPerPiece: Number(item.gramsPerPiece) || 0,
       nutrientsPer100g: item.nutrientsPer100g || {},
     }));
 

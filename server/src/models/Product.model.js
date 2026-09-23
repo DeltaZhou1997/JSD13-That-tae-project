@@ -107,8 +107,8 @@ const productSchema = new mongoose.Schema(
         // หน่วยตาม unit ของวัตถุดิบ (เช่น 0.5 kg) จึงรองรับทศนิยม
         quantity: { type: Number, required: true, min: 0.001 },
         unit: { type: String, default: "g" },
-        // ปริมาณอ้างอิงของ nutrientsPer100g (หน่วยเดียวกับ unit เช่น 100 g, 1 piece)
-        basisWeightG: { type: Number },
+        // น้ำหนักต่อ 1 ชิ้น (กรัม) กรณี unit = piece ใช้แปลงเป็นกรัมเพื่อคิดสารอาหารต่อ 100 g
+        gramsPerPiece: { type: Number },
         elements: [{ type: String }],
         nutrientsPer100g: {
           calories: { type: Number, default: 0 },

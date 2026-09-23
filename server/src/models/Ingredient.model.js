@@ -114,11 +114,16 @@ const ingredientSchema = new mongoose.Schema({
       message: "ต้องระบุธาตุเจ้าเรือนอย่างน้อย 1 ธาตุ",
     },
   },
-  // ปริมาณอ้างอิงของค่าสารอาหาร (หน่วยเดียวกับ unit เช่น 100 g, 0.1 kg, 1 piece)
+  // ค่าสารอาหารล็อกเป็น "ต่อ 100 กรัม" เสมอ (มาตรฐานกลาง) — ไม่ขึ้นกับหน่วยสต็อก
   basisWeightG: {
     type: Number,
     default: 100,
-    min: 0.001,
+    min: 1,
+  },
+  // น้ำหนักเฉลี่ยต่อ 1 ชิ้น (กรัม) ใช้เมื่อ unit = "piece" เพื่อแปลงเป็นกรัมตอนคิดสารอาหาร
+  gramsPerPiece: {
+    type: Number,
+    min: 0,
   },
   nutritionPer100G: {
     type: nutrientSchema,

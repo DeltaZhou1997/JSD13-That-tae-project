@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   CATEGORY_MAP,
   INGREDIENT_UNITS,
+  NUTRIENT_BASIS_G,
   getUnitFactor,
   getUnitInfo,
   roundQty,
@@ -20,7 +21,6 @@ import {
 } from "../../utils/recipeCalculator.js";
 
 import { formatDate } from "../../utils/dateFormatter.js";
-import DatePicker from "../../components/common/DatePicker.jsx";
 
 const inputClass =
   "w-full rounded border border-[#f1ead7] p-2 focus:border-[#4c1f08] focus:outline-none focus:ring-2 focus:ring-[#f1ead7]";
@@ -131,7 +131,7 @@ function createEmptyForm() {
     medicinalTastes: [],
     elements: [],
     nutrientsPer100g: emptyNutrientForm(),
-    basisWeightG: "100",
+    gramsPerPiece: "",
     regionalStocks: {
       north: "2500",
       northeast: "2500",
@@ -140,7 +140,6 @@ function createEmptyForm() {
     },
     currentStockGrams: "10000",
     lowStockThresholdGrams: "1000",
-    expiryDate: "",
     isActive: true,
   };
 }
@@ -183,7 +182,7 @@ function IngredientForm() {
         (acc, key) => ({ ...acc, [key]: String(item.nutrientsPer100g?.[key] ?? "") }),
         {},
       ),
-      basisWeightG: String(item.basisWeightG ?? "100"),
+      gramsPerPiece: item.gramsPerPiece ? String(item.gramsPerPiece) : "",
       regionalStocks: {
         north: String(item.regionalStocks?.north ?? 0),
         northeast: String(item.regionalStocks?.northeast ?? 0),
@@ -197,7 +196,6 @@ function IngredientForm() {
           (item.regionalStocks?.south ?? 0)) || item.currentStockGrams || "0"
       ),
       lowStockThresholdGrams: String(item.lowStockThresholdGrams ?? ""),
-      expiryDate: item.expiryDate || "",
     });
   }, [id, isEditMode, getIngredientById]);
 
@@ -231,7 +229,7 @@ function IngredientForm() {
   const unitChangedFromSaved = isEditMode && originalUnit && originalUnit !== unitInfo.value;
   const unitConvertibleFromSaved = unitChangedFromSaved && getUnitFactor(originalUnit, unitInfo.value) !== null;
 
-  // เปลี่ยนหน่วย: ถ้าเป็นหน่วยกลุ่มเดียวกัน (g↔kg, ml↔l) แปลงสต็อก จุดเตือน และปริมาณอ้างอิงให้อัตโนมัติ
+  // เปลี่ยนหน่วย: ถ้าเป็นหน่วยกลุ่มเดียวกัน (g↔kg, ml↔l) แปลงสต็อกและจุดเตือนให้อัตโนมัติ
   const handleUnitChange = (nextUnit) => {
     const from = getUnitInfo(formData.unit);
     const to = getUnitInfo(nextUnit);
@@ -240,11 +238,7 @@ function IngredientForm() {
     const convert = (v) => String(roundQty((Number(v) || 0) * factor));
 
     setFormData((prev) => {
-      if (factor === null) {
-        // แปลงไม่ได้ (เช่น g → ชิ้น) — ปรับเฉพาะปริมาณอ้างอิงถ้ายังเป็นค่าเริ่มต้น
-        const basisIsDefault = Number(prev.basisWeightG) === from.defaultBasis;
-        return { ...prev, unit: to.value, basisWeightG: basisIsDefault ? String(to.defaultBasis) : prev.basisWeightG };
-      }
+      if (factor === null) return { ...prev, unit: to.value };
       const regionalStocks = Object.fromEntries(
         Object.entries(prev.regionalStocks || {}).map(([key, v]) => [key, convert(v)]),
       );
@@ -255,12 +249,11 @@ function IngredientForm() {
         regionalStocks,
         currentStockGrams: String(roundQty(sum)),
         lowStockThresholdGrams: convert(prev.lowStockThresholdGrams),
-        basisWeightG: convert(prev.basisWeightG),
       };
     });
 
     if (factor === null) {
-      toast.error(`${from.label} → ${to.label} แปลงค่าให้ไม่ได้ กรุณากรอกสต็อก จุดเตือน และค่าสารอาหารใหม่เป็นหน่วย${to.label}`);
+      toast.error(`${from.label} → ${to.label} แปลงค่าให้ไม่ได้ กรุณากรอกสต็อกและจุดเตือนใหม่เป็นหน่วย${to.label}`);
     } else {
       toast.success(`แปลงสต็อกจาก ${from.label} เป็น ${to.label} ให้แล้ว`);
     }
@@ -295,7 +288,7 @@ function IngredientForm() {
       category: formData.category,
       medicinalTaste: formData.medicinalTastes.join("/"),
       elements: [derivedElement],
-      basisWeightG: Number(formData.basisWeightG) || 100,
+      unit: "g",
       nutrientsPer100g: NUTRIENT_KEYS.reduce(
         (acc, key) => ({ ...acc, [key]: Number(formData.nutrientsPer100g[key]) || 0 }),
         {},
@@ -351,9 +344,12 @@ function IngredientForm() {
         .join(", ")})`;
     }
 
-    const basis = Number(formData.basisWeightG);
-    if (formData.basisWeightG === "" || Number.isNaN(basis) || basis <= 0) {
-      newErrors.basisWeightG = "ปริมาณอ้างอิงต้องเป็นตัวเลขมากกว่า 0";
+    // หน่วย "ชิ้น" ต้องรู้น้ำหนักต่อชิ้น เพื่อแปลงเป็นกรัมตอนคำนวณสารอาหาร (ต่อ 100 g)
+    if (formData.unit === "piece") {
+      const perPiece = Number(formData.gramsPerPiece);
+      if (formData.gramsPerPiece === "" || Number.isNaN(perPiece) || perPiece <= 0) {
+        newErrors.gramsPerPiece = "กรุณาระบุน้ำหนักต่อ 1 ชิ้น (กรัม) มากกว่า 0";
+      }
     }
 
     // หน่วย "ชิ้น" ต้องเป็นจำนวนเต็ม ส่วน g/kg/ml/l ใส่ทศนิยมได้ (เช่น 2.5 kg)
@@ -375,15 +371,6 @@ function IngredientForm() {
       }
     });
 
-    if (formData.expiryDate) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const selected = new Date(formData.expiryDate);
-      selected.setHours(0, 0, 0, 0);
-      if (Number.isNaN(selected.getTime()) || selected < today) {
-        newErrors.expiryDate = "วันหมดอายุของล็อตวัตถุดิบต้องไม่เป็นวันที่ในอดีต";
-      }
-    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -404,7 +391,8 @@ function IngredientForm() {
       categoryTh: CATEGORY_MAP[formData.category],
       medicinalTaste: formData.medicinalTastes.join("/"),
       elements: [preview.dominantElement],
-      basisWeightG: Number(formData.basisWeightG) || unitInfo.defaultBasis,
+      basisWeightG: NUTRIENT_BASIS_G,
+      gramsPerPiece: unitInfo.value === "piece" ? Number(formData.gramsPerPiece) || 0 : null,
       nutrientsPer100g: {
         calories: Number(formData.nutrientsPer100g.calories) || 0,
         carb: Number(formData.nutrientsPer100g.carbs) || 0,
@@ -445,7 +433,6 @@ function IngredientForm() {
       ),
       unit: unitInfo.value,
       lowStockThresholdGrams: Number(formData.lowStockThresholdGrams) || 0,
-      expiryDate: formData.expiryDate || undefined,
       isActive: formData.isActive !== false,
     };
 
@@ -479,7 +466,7 @@ function IngredientForm() {
         <button
           type="button"
           onClick={() => navigate("/admin/ingredients")}
-          className="mt-4 rounded-lg bg-[#4c1f08] px-6 py-2 font-medium text-white transition hover:bg-[#6b3215]"
+          className="mt-4 rounded-full bg-[#4c1f08] px-6 py-2 font-medium text-white transition hover:bg-[#6b3215]"
         >
           กลับไปหน้าคลังวัตถุดิบ
         </button>
@@ -580,11 +567,10 @@ function IngredientForm() {
                     role="radio"
                     aria-checked={active}
                     onClick={() => handleUnitChange(u.value)}
-                    className={`flex min-w-[76px] cursor-pointer flex-col items-center rounded-xl border-2 px-3 py-1.5 transition-all duration-200 active:scale-95 ${
-                      active
+                    className={`flex min-w-[76px] cursor-pointer flex-col items-center rounded-full border-2 px-3 py-1.5 transition-all duration-200 active:scale-95 ${active
                         ? "border-[#4c1f08] bg-[#4c1f08] text-white shadow-sm"
                         : "border-[#f1ead7] bg-white text-[#4c1f08] hover:border-[#d9c4ae] hover:bg-[#fffaf5]"
-                    }`}
+                      }`}
                   >
                     <span className="text-sm font-extrabold">{u.short}</span>
                     <span className={`text-[10px] ${active ? "text-white/75" : "text-[#8d593a]"}`}>{u.label}</span>
@@ -598,11 +584,10 @@ function IngredientForm() {
             </p>
             {unitChangedFromSaved && (
               <p
-                className={`mt-2 rounded-xl border p-2.5 text-xs ${
-                  unitConvertibleFromSaved
+                className={`mt-2 rounded-xl border p-2.5 text-xs ${unitConvertibleFromSaved
                     ? "border-sky-200 bg-sky-50 text-sky-900"
                     : "border-amber-300 bg-amber-50 text-amber-900"
-                }`}
+                  }`}
                 role="status"
               >
                 {unitConvertibleFromSaved
@@ -646,24 +631,21 @@ function IngredientForm() {
                     type="button"
                     aria-pressed={isChecked}
                     onClick={() => handleToggleTaste(taste)}
-                    className={`relative flex min-h-[64px] cursor-pointer flex-col items-start justify-center rounded-2xl border-2 px-3.5 py-2.5 text-left transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4c1f08]/40 ${
-                      isLastTap ? "taste-pop" : ""
-                    } ${
-                      isChecked
+                    className={`relative flex min-h-[64px] cursor-pointer flex-col items-start justify-center rounded-full border-2 px-5 py-2.5 text-left transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4c1f08]/40 ${isLastTap ? "taste-pop" : ""
+                      } ${isChecked
                         ? "border-[#4c1f08] bg-[#4c1f08] text-white shadow-md"
                         : "border-[#f1ead7] bg-white text-[#4c1f08] hover:border-[#d9c4ae] hover:bg-[#fffaf5] active:scale-[.97]"
-                    }`}
+                      }`}
                   >
                     {/* วงแหวนกระเพื่อมตอนกด */}
                     {isLastTap && (
-                      <span className="taste-ring pointer-events-none absolute inset-0 rounded-2xl border-2 border-[#c49758]" />
+                      <span className="taste-ring pointer-events-none absolute inset-0 rounded-full border-2 border-[#c49758]" />
                     )}
                     {/* ป้ายลอยบอกผลการกด */}
                     {isLastTap && (
                       <span
-                        className={`taste-float pointer-events-none absolute left-1/2 top-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm ${
-                          lastTasteTap.added ? "bg-[#c49758] text-white" : "bg-stone-200 text-stone-600"
-                        }`}
+                        className={`taste-float pointer-events-none absolute left-1/2 top-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm ${lastTasteTap.added ? "bg-[#c49758] text-white" : "bg-stone-200 text-stone-600"
+                          }`}
                       >
                         {lastTasteTap.added ? `+ ${taste}` : `− ${taste}`}
                       </span>
@@ -672,9 +654,8 @@ function IngredientForm() {
                     <span className="flex w-full items-center justify-between gap-2">
                       <span className="text-sm font-extrabold">{taste}</span>
                       <span
-                        className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border text-[11px] font-black ${
-                          isChecked ? "taste-check-in border-white bg-white text-[#4c1f08]" : "border-[#e2d5c6] text-transparent"
-                        }`}
+                        className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border text-[11px] font-black ${isChecked ? "taste-check-in border-white bg-white text-[#4c1f08]" : "border-[#e2d5c6] text-transparent"
+                          }`}
                         aria-hidden="true"
                       >
                         ✓
@@ -694,11 +675,10 @@ function IngredientForm() {
 
             {/* ผลคำนวณธาตุ (อ่านอย่างเดียว) — นับจำนวนรสของแต่ละธาตุ ธาตุที่มากที่สุดเพียงธาตุเดียวคือธาตุเด่น */}
             <div
-              className={`rounded-2xl border p-3 transition-colors duration-300 ${
-                tasteAnalysis.status === "conflict" || tasteAnalysis.status === "unknown"
+              className={`rounded-2xl border p-3 transition-colors duration-300 ${tasteAnalysis.status === "conflict" || tasteAnalysis.status === "unknown"
                   ? "border-amber-300 bg-amber-50"
                   : "border-[#f1ead7] bg-[#fffaf5]"
-              }`}
+                }`}
             >
               {tasteAnalysis.status === "empty" && (
                 <p className="text-xs text-[#8d593a]">
@@ -743,9 +723,8 @@ function IngredientForm() {
                     return (
                       <div
                         key={key}
-                        className={`rounded-lg px-2 py-1.5 text-center transition-colors ${
-                          isTop ? "bg-white shadow-2xs ring-1 ring-[#4c1f08]/15" : ""
-                        }`}
+                        className={`rounded-lg px-2 py-1.5 text-center transition-colors ${isTop ? "bg-white shadow-2xs ring-1 ring-[#4c1f08]/15" : ""
+                          }`}
                       >
                         <p className={`text-[11px] ${isTop ? "font-bold text-[#4c1f08]" : "text-stone-500"}`}>ธาตุ{key}</p>
                         <p className={`text-sm font-extrabold ${count > 0 ? "text-[#4c1f08]" : "text-stone-300"}`}>
@@ -761,10 +740,18 @@ function IngredientForm() {
 
 
           <div>
-            <span className={labelClass}>
-              คุณค่าทางโภชนาการต่อ {formData.basisWeightG || unitInfo.defaultBasis} {unitInfo.label}{" "}
-              <span className="text-red-500">*</span>
-            </span>
+            <div className="mb-1 flex flex-wrap items-center gap-2">
+              <span className="font-medium text-[#4c1f08]">
+                คุณค่าทางโภชนาการต่อ 100 กรัม <span className="text-red-500">*</span>
+              </span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#f5ece2] px-2 py-0.5 text-[10px] font-bold text-[#6b3215]">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-3 w-3" aria-hidden="true">
+                  <rect x="4" y="11" width="16" height="10" rx="2" />
+                  <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+                </svg>
+                มาตรฐานกลาง
+              </span>
+            </div>
             <div className="grid grid-cols-2 gap-3 rounded border border-[#f1ead7] p-3 md:grid-cols-4">
               {NUTRIENT_KEYS.map((key) => (
                 <div key={key}>
@@ -791,45 +778,38 @@ function IngredientForm() {
             {errors.nutrientsPer100g && (
               <p className="mt-1 text-sm text-red-500">{errors.nutrientsPer100g}</p>
             )}
+            {(unitInfo.value === "ml" || unitInfo.value === "l") && (
+              <p className="mt-1.5 text-xs text-[#8d593a]">
+                วัตถุดิบหน่วย{unitInfo.label} ระบบคิดน้ำหนักโดยประมาณ 1 ml ≈ 1 กรัม ตอนคำนวณสารอาหารในเมนู
+              </p>
+            )}
           </div>
 
-
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className={labelClass} htmlFor="basisWeightG">
-                ปริมาณอ้างอิงของค่าสารอาหาร ({unitInfo.label}){" "}
-                <span className="text-red-500">*</span>
+          {/* หน่วย "ชิ้น" ต้องรู้น้ำหนักต่อชิ้น เพื่อแปลงเป็นกรัมตอนคำนวณสารอาหาร */}
+          {unitInfo.value === "piece" && (
+            <div className="element-result-in rounded-2xl border border-[#e8ded4] bg-[#fffaf5] p-3">
+              <label className={labelClass} htmlFor="gramsPerPiece">
+                น้ำหนักเฉลี่ยต่อ 1 ชิ้น (กรัม) <span className="text-red-500">*</span>
               </label>
               <input
-                id="basisWeightG"
+                id="gramsPerPiece"
                 type="number"
-                min="0.001"
+                min="0"
                 step="any"
-                name="basisWeightG"
-                value={formData.basisWeightG}
+                name="gramsPerPiece"
+                value={formData.gramsPerPiece}
                 onChange={handleChange}
+                placeholder="เช่น ไข่ไก่ 1 ฟอง ≈ 55"
                 className={inputClass}
               />
-              {errors.basisWeightG && (
-                <p className="mt-1 text-sm text-red-500">{errors.basisWeightG}</p>
+              <p className="mt-1 text-xs text-[#8d593a]">
+                ใช้แปลงจำนวนชิ้นในสูตรเมนูเป็นกรัม เพื่อคิดสารอาหารจากค่าต่อ 100 กรัม
+              </p>
+              {errors.gramsPerPiece && (
+                <p className="mt-1 text-sm text-red-500">{errors.gramsPerPiece}</p>
               )}
             </div>
-            <div>
-              <label className={labelClass} htmlFor="expiryDate">
-                วันหมดอายุของล็อตปัจจุบัน
-              </label>
-              <DatePicker
-                id="expiryDate"
-                name="expiryDate"
-                value={formData.expiryDate}
-                onChange={handleChange}
-                className={inputClass}
-              />
-              {errors.expiryDate && (
-                <p className="mt-1 text-sm text-red-500">{errors.expiryDate}</p>
-              )}
-            </div>
-          </div>
+          )}
 
 
           {/* ส่วนระบุปริมาณสต็อกแยกตาม 4 ภูมิภาค */}
@@ -914,18 +894,17 @@ function IngredientForm() {
               type="submit"
               disabled={!canSave}
               title={canSave ? undefined : "ปรับรสยาให้คำนวณธาตุได้ก่อน จึงจะบันทึกได้"}
-              className={`rounded-lg px-6 py-2 font-medium shadow-sm transition duration-200 ${
-                canSave
+              className={`rounded-full px-6 py-2 font-medium shadow-sm transition duration-200 ${canSave
                   ? "bg-[#4c1f08] text-white hover:-translate-y-0.5 hover:bg-[#6b3215]"
                   : "cursor-not-allowed bg-stone-300 text-stone-500 shadow-none"
-              }`}
+                }`}
             >
               {isEditMode ? "บันทึกการแก้ไข" : "เพิ่มเข้าคลัง"}
             </button>
             <button
               type="button"
               onClick={() => navigate("/admin/ingredients")}
-              className="rounded-lg bg-gray-300 px-6 py-2 font-medium text-gray-800 transition hover:bg-gray-400"
+              className="rounded-full bg-gray-300 px-6 py-2 font-medium text-gray-800 transition hover:bg-gray-400"
             >
               ยกเลิก
             </button>
@@ -940,9 +919,6 @@ function IngredientForm() {
             <h2 className="font-bold text-[#4c1f08] text-base">พรีวิววัตถุดิบ (ต่อ 100g)</h2>
             <p className="text-xs text-[#8d593a]">ประเมินธาตุเดี่ยวจากรสยา & สรุปโภชนาการ</p>
           </div>
-          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#f4ece3] text-[#6b3215]">
-            1 ชนิด : 1 ธาตุ
-          </span>
         </div>
 
         {/* ──────────────────────────────────────────────────────────
@@ -954,9 +930,8 @@ function IngredientForm() {
             const isWarn = tasteAnalysis.status !== "empty";
             return (
               <div
-                className={`mb-4 rounded-2xl border-2 border-dashed p-4 text-center text-xs ${
-                  isWarn ? "border-amber-300 bg-amber-50 text-amber-900" : "border-[#e8ddd0] bg-[#fffaf5] text-[#8d593a]"
-                }`}
+                className={`mb-4 rounded-2xl border-2 border-dashed p-4 text-center text-xs ${isWarn ? "border-amber-300 bg-amber-50 text-amber-900" : "border-[#e8ddd0] bg-[#fffaf5] text-[#8d593a]"
+                  }`}
               >
                 <p className="text-sm font-extrabold">{isWarn ? "ระบุธาตุเด่นไม่ได้" : "ยังไม่ทราบธาตุ"}</p>
                 <p className="mt-1">
@@ -1028,9 +1003,8 @@ function IngredientForm() {
               return (
                 <div
                   key={key}
-                  className={`flex justify-between items-center py-0.5 ${
-                    isCalories ? "font-bold text-[#4c1f08] border-b border-[#f0e4d7]/60 pb-1" : ""
-                  }`}
+                  className={`flex justify-between items-center py-0.5 ${isCalories ? "font-bold text-[#4c1f08] border-b border-[#f0e4d7]/60 pb-1" : ""
+                    }`}
                 >
                   <dt className="text-stone-600">{NUTRIENT_LABELS[key]}</dt>
                   <dd className={`font-medium ${isCalories ? "text-sm text-[#4c1f08]" : "text-stone-800"}`}>

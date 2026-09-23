@@ -36,7 +36,6 @@ async function syncRecipeUnits(ingredient, oldUnit) {
         ...obj,
         quantity: roundQty(Number(obj.quantity || 0) * factor),
         unit: newUnit,
-        ...(obj.basisWeightG ? { basisWeightG: roundQty(Number(obj.basisWeightG) * factor) } : {}),
       };
     });
     // updateOne ไม่รัน validator ของฟิลด์อื่นในเมนูเก่า
@@ -148,6 +147,8 @@ router.post("/", verifyToken, requireAdmin, async (req, res, next) => {
       fat: Number(n.fat || 0),
       sodium: Number(n.sodium || 0),
     };
+    // ค่าสารอาหารล็อกเป็นต่อ 100 กรัมเสมอ (มาตรฐานกลาง)
+    req.body.basisWeightG = 100;
     req.body.nutrientsPer100g = completeNutrients;
     req.body.nutritionPer100G = completeNutrients;
 
@@ -182,6 +183,8 @@ router.post("/", verifyToken, requireAdmin, async (req, res, next) => {
 // =========================================================================
 router.put("/:id", verifyToken, requireAdmin, async (req, res, next) => {
   try {
+    // ค่าสารอาหารล็อกเป็นต่อ 100 กรัมเสมอ (มาตรฐานกลาง)
+    req.body.basisWeightG = 100;
     if (req.body.nutrientsPer100g || req.body.nutritionPer100G) {
       const n = req.body.nutrientsPer100g || req.body.nutritionPer100G || {};
       const c = n.carb !== undefined ? n.carb : n.carbs !== undefined ? n.carbs : 0;

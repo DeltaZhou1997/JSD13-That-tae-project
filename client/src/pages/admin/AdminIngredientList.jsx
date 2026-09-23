@@ -82,13 +82,13 @@ function AdminIngredientList() {
         <div className="flex gap-2">
           <Link
             to="/admin/recipe-builder"
-            className="rounded-lg border border-[#4c1f08] px-4 py-2 font-medium text-[#4c1f08] transition duration-200 hover:-translate-y-0.5 hover:bg-[#f1ead7]"
+            className="rounded-full border border-[#4c1f08] px-4 py-2 font-medium text-[#4c1f08] transition duration-200 hover:-translate-y-0.5 hover:bg-[#f1ead7]"
           >
             ออกแบบสูตรอาหาร
           </Link>
           <Link
             to="/admin/ingredients/new"
-            className="rounded-lg bg-[#4c1f08] px-4 py-2 font-medium text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215]"
+            className="rounded-full bg-[#4c1f08] px-4 py-2 font-medium text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215]"
           >
             + เพิ่มวัตถุดิบ
           </Link>
@@ -183,7 +183,7 @@ function AdminIngredientList() {
                     <td className="p-3 text-[#6b3215]">
                       {item.nutrientsPer100g?.calories ?? 0}
                       <span className="block text-[10px] text-stone-400">
-                        ต่อ {item.basisWeightG} {getUnitInfo(item.unit).short}
+                        ต่อ 100 g
                       </span>
                     </td>
                     <td className="p-3 min-w-[210px]">
@@ -231,14 +231,14 @@ function AdminIngredientList() {
                             <button
                               type="button"
                               onClick={() => handleConfirmDelete(item)}
-                              className="cursor-pointer rounded bg-red-600 px-3 py-1 text-sm text-white transition hover:bg-red-700"
+                              className="cursor-pointer rounded-full bg-red-600 px-3 py-1 text-sm text-white transition hover:bg-red-700"
                             >
                               ยืนยันลบ
                             </button>
                             <button
                               type="button"
                               onClick={() => setPendingDeleteId(null)}
-                              className="cursor-pointer rounded bg-gray-300 px-3 py-1 text-sm text-gray-800 transition hover:bg-gray-400"
+                              className="cursor-pointer rounded-full bg-gray-300 px-3 py-1 text-sm text-gray-800 transition hover:bg-gray-400"
                             >
                               ยกเลิก
                             </button>
@@ -248,14 +248,14 @@ function AdminIngredientList() {
                         <div className="flex justify-center gap-2">
                           <Link
                             to={`/admin/ingredients/edit/${item._id}`}
-                            className="rounded bg-[#4c1f08] px-3 py-1 text-sm text-white transition hover:bg-[#6b3215]"
+                            className="rounded-full bg-[#4c1f08] px-3 py-1 text-sm text-white transition hover:bg-[#6b3215]"
                           >
                             แก้ไข
                           </Link>
                           <button
                             type="button"
                             onClick={() => setPendingDeleteId(item._id)}
-                            className="cursor-pointer rounded bg-red-600 px-3 py-1 text-sm text-white transition hover:bg-red-700"
+                            className="cursor-pointer rounded-full bg-red-600 px-3 py-1 text-sm text-white transition hover:bg-red-700"
                           >
                             ลบ
                           </button>
@@ -280,7 +280,7 @@ function AdminIngredientList() {
             type="button"
             disabled={currentPage <= 1}
             onClick={() => setPage(currentPage - 1)}
-            className="cursor-pointer rounded border border-[#f1ead7] px-3 py-1 transition hover:bg-[#f1ead7] disabled:cursor-not-allowed disabled:opacity-40"
+            className="cursor-pointer rounded-full border border-[#f1ead7] px-3 py-1 transition hover:bg-[#f1ead7] disabled:cursor-not-allowed disabled:opacity-40"
           >
             ก่อนหน้า
           </button>
@@ -291,7 +291,7 @@ function AdminIngredientList() {
             type="button"
             disabled={currentPage >= totalPages}
             onClick={() => setPage(currentPage + 1)}
-            className="cursor-pointer rounded border border-[#f1ead7] px-3 py-1 transition hover:bg-[#f1ead7] disabled:cursor-not-allowed disabled:opacity-40"
+            className="cursor-pointer rounded-full border border-[#f1ead7] px-3 py-1 transition hover:bg-[#f1ead7] disabled:cursor-not-allowed disabled:opacity-40"
           >
             ถัดไป
           </button>

@@ -8,7 +8,7 @@ import {
   regionMap,
   useProducts,
 } from "../../context/ProductsContext.js";
-import { getUnitInfo, roundQty } from "../../context/IngredientsContext.js";
+import { NUTRIENT_BASIS_G, getUnitInfo, roundQty, toGrams } from "../../context/IngredientsContext.js";
 import useToast from "../../hooks/useToast.js";
 
 // ปริมาณเริ่มต้นต่อชุดตามหน่วยของวัตถุดิบ
@@ -290,7 +290,7 @@ export default function ProductForm() {
           nameTh: r.nameTh || "วัตถุดิบ",
           quantity: Number(r.quantity) || 100,
           unit: r.unit || "g",
-          basis: Number(r.basisWeightG) || getUnitInfo(r.unit).defaultBasis,
+          gramsPerPiece: Number(r.gramsPerPiece) || 0,
           calories: Number(r.nutrientsPer100g?.calories) || 0,
           elements: r.elements || [],
           region: r.region || "ทั่วไป",
@@ -339,8 +339,8 @@ export default function ProductForm() {
           nameEn: target.nameEn,
           quantity: qty,
           unit: target.unit || pickerUnit || "g",
-          // ปริมาณอ้างอิงของค่าสารอาหาร (หน่วยเดียวกับ unit)
-          basis: Number(target.basisWeightG) || getUnitInfo(target.unit).defaultBasis,
+          // น้ำหนักต่อชิ้น (ใช้แปลงหน่วย "ชิ้น" เป็นกรัม)
+          gramsPerPiece: Number(target.gramsPerPiece) || 0,
           calories: Number(target.nutrientsPer100g?.calories) || 0,
           protein: Number(target.nutrientsPer100g?.protein) || 0,
           carbs: Number(target.nutrientsPer100g?.carbs) || 0,
@@ -369,8 +369,8 @@ export default function ProductForm() {
     let totalSodium = 0;
 
     selectedIngredients.forEach((item) => {
-      // คิดสัดส่วนตามปริมาณอ้างอิงของวัตถุดิบ (เช่น ต่อ 100 g หรือ ต่อ 1 ชิ้น)
-      const ratio = (Number(item.quantity) || 0) / (item.basis || getUnitInfo(item.unit).defaultBasis);
+      // ค่าสารอาหารคิดต่อ 100 กรัมเสมอ → แปลงปริมาณในสูตร (g/kg/ml/l/ชิ้น) เป็นกรัมก่อน
+      const ratio = toGrams(item.quantity, item.unit, item.gramsPerPiece) / NUTRIENT_BASIS_G;
       totalCalories += (item.calories || 0) * ratio;
       totalProtein += (item.protein || 0) * ratio;
       totalCarbs += (item.carbs || 0) * ratio;
@@ -590,7 +590,7 @@ export default function ProductForm() {
         nameEn: s.nameEn,
         quantity: s.quantity,
         unit: s.unit,
-        basisWeightG: s.basis || getUnitInfo(s.unit).defaultBasis,
+        gramsPerPiece: s.gramsPerPiece || undefined,
         elements: s.elements,
         nutrientsPer100g: {
           calories: s.calories,
@@ -905,7 +905,7 @@ export default function ProductForm() {
 
                           <div className="flex items-center gap-3">
                             <span className="text-[11px] text-[#7a5c4d]">
-                              ~{Math.round((item.calories * item.quantity) / (item.basis || getUnitInfo(item.unit).defaultBasis))} kcal
+                              ~{Math.round((item.calories * toGrams(item.quantity, item.unit, item.gramsPerPiece)) / NUTRIENT_BASIS_G)} kcal
                             </span>
                             <button
                               type="button"

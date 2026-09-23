@@ -17,29 +17,16 @@ export const CATEGORY_MAP = {
   other: "อื่น ๆ",
 };
 
-// หน่วยของวัตถุดิบ (ต้องตรงกับ INGREDIENT_UNIT ใน Ingredient.model.js และ server/src/utils/units.js)
-// สต็อก จุดเตือน ปริมาณอ้างอิงสารอาหาร และปริมาณในสูตรเมนู ใช้หน่วยนี้ทั้งหมด
-export const INGREDIENT_UNITS = [
-  { value: "g", label: "กรัม", short: "g", dimension: "mass", toBase: 1, defaultBasis: 100 },
-  { value: "kg", label: "กิโลกรัม", short: "kg", dimension: "mass", toBase: 1000, defaultBasis: 1 },
-  { value: "ml", label: "มิลลิลิตร", short: "ml", dimension: "volume", toBase: 1, defaultBasis: 100 },
-  { value: "l", label: "ลิตร", short: "L", dimension: "volume", toBase: 1000, defaultBasis: 1 },
-  { value: "piece", label: "ชิ้น", short: "ชิ้น", dimension: "count", toBase: 1, defaultBasis: 1 },
-];
-
-export function getUnitInfo(unit) {
-  return INGREDIENT_UNITS.find((u) => u.value === unit) || INGREDIENT_UNITS[0];
-}
-
-/** ตัวคูณแปลงหน่วย from → to (null ถ้าคนละกลุ่ม เช่น g → ชิ้น) */
-export function getUnitFactor(from, to) {
-  const a = getUnitInfo(from);
-  const b = getUnitInfo(to);
-  if (a.dimension !== b.dimension) return null;
-  return a.toBase / b.toBase;
-}
-
-export const roundQty = (value) => Math.round(Number(value) * 1000) / 1000;
+// หน่วยวัตถุดิบย้ายไปอยู่ที่ utils/units.js (re-export ไว้ให้ไฟล์เดิมใช้ต่อได้)
+export {
+  INGREDIENT_UNITS,
+  NUTRIENT_BASIS_G,
+  getUnitFactor,
+  getUnitInfo,
+  roundQty,
+  toGrams,
+} from "../utils/units.js";
+import { NUTRIENT_BASIS_G, getUnitInfo } from "../utils/units.js";
 
 export const DEFAULT_STOCK_GRAMS = 10000;
 export const DEFAULT_LOW_STOCK_GRAMS = 1000;
@@ -66,7 +53,9 @@ export function normalizeIngredient(item) {
     ...item,
     categoryTh: item?.categoryTh || CATEGORY_MAP[item?.category] || "อื่น ๆ",
     unit: getUnitInfo(item?.unit).value,
-    basisWeightG: Number(item?.basisWeightG) || getUnitInfo(item?.unit).defaultBasis,
+    // ค่าสารอาหารล็อกเป็นต่อ 100 กรัมเสมอ
+    basisWeightG: NUTRIENT_BASIS_G,
+    gramsPerPiece: Number(item?.gramsPerPiece) || 0,
     regionalStocks,
     currentStockGrams,
     stockQuantity: currentStockGrams,
