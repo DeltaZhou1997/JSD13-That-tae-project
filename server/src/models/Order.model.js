@@ -33,6 +33,10 @@ const shippingAddressSchema = new mongoose.Schema(
   {
     firstName: { type: String, default: "" },
     lastName: { type: String, default: "" },
+    // ชื่อเต็มผู้รับ (หน้าแอดมิน/คำสั่งซื้อใช้ฟิลด์นี้) — เติมจาก firstName + lastName อัตโนมัติ
+    fullName: { type: String, default: "" },
+    // ชื่อที่อยู่ในสมุดที่อยู่ เช่น "บ้าน", "ที่ทำงาน"
+    label: { type: String, default: "" },
     phone: { type: String, default: "" },
     address: { type: String, default: "" },
     subdistrict: { type: String, default: "" },
@@ -132,6 +136,19 @@ const orderSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// เติมชื่อเต็มผู้รับจากชื่อ-นามสกุล (ถ้าส่งมาแค่ fullName ก็แยกกลับเป็นชื่อ/นามสกุลให้)
+orderSchema.pre("validate", function () {
+  const sa = this.shippingAddress;
+  if (!sa) return;
+  if (!sa.fullName && (sa.firstName || sa.lastName)) {
+    sa.fullName = `${sa.firstName || ""} ${sa.lastName || ""}`.trim();
+  } else if (sa.fullName && !sa.firstName) {
+    const [first, ...rest] = sa.fullName.trim().split(/\s+/);
+    sa.firstName = first || "";
+    sa.lastName = rest.join(" ");
+  }
+});
 
 export const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
 export default Order;

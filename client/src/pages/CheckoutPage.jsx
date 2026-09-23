@@ -22,7 +22,7 @@ import {
 
 // Components
 import CheckoutUserStatus from "../components/checkout/CheckoutUserStatus";
-import ShippingForm from "../components/checkout/ShippingForm";
+import ShippingForm, { NEW_ADDRESS_ID } from "../components/checkout/ShippingForm";
 import PaymentMethodSelector from "../components/checkout/PaymentMethodSelector";
 import CheckoutSummary from "../components/checkout/CheckoutSummary";
 import PlanSelector from "../components/checkout/PlanSelector";
@@ -66,50 +66,109 @@ export default function CheckoutPage() {
   const [countdown, setCountdown] = useState(300);
   const [pendingOrderPayload, setPendingOrderPayload] = useState(null);
 
+  const BLANK_ADDRESS = { address: "", subdistrict: "", district: "", province: "", zipcode: "" };
   const [formData, setFormData] = useState({
-    fullName: `${currentUser.firstName} ${currentUser.lastName}`,
-    phone: currentUser.phone || "",
-    address: "",
-    subdistrict: "",
-    district: "",
-    province: "",
-    zipcode: "",
+    firstName: currentUser?.firstName || "",
+    lastName: currentUser?.lastName || "",
+    phone: currentUser?.phone || "",
+    ...BLANK_ADDRESS,
     deliveryDate: "12",
   });
-  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
-  const [isSavingAddress, setIsSavingAddress] = useState(false);
-  const [selectedAddressId, setSelectedAddressId] = useState("");
 
+  // สมุดที่อยู่ (GET /api/v2/users/me/addresses — ย้ายที่อยู่ตอนสมัครเข้าเป็น "บ้าน" ค่าเริ่มต้นอัตโนมัติ)
+  const [addressBook, setAddressBook] = useState(authUser?.addresses || []);
+  const [loadingAddresses, setLoadingAddresses] = useState(Boolean(authUser));
+  const [selectedAddressId, setSelectedAddressId] = useState("");
+  const [saveNewAddress, setSaveNewAddress] = useState(true);
+  const [newAddressLabel, setNewAddressLabel] = useState("บ้าน");
+
+  const fillFromAddress = (a) =>
+    setFormData((prev) => ({
+      ...prev,
+      address: a.address || "",
+      subdistrict: a.subdistrict || "",
+      district: a.district || "",
+      province: a.province || "",
+      zipcode: a.zipcode || "",
+      phone: a.phone || prev.phone,
+    }));
+
+  // ชื่อผู้รับเริ่มจากชื่อบัญชี (เมื่อโหลดผู้ใช้เสร็จ)
   useEffect(() => {
-    const savedAddresses = authUser?.addresses || [];
-    const selected = savedAddresses.find((item) => item.isDefault) || savedAddresses[0];
-    const a = selected ? { ...selected, street: selected.address, postalCode: selected.zipcode } : authUser?.deliveryAddress;
-    if (selected) setSelectedAddressId(String(selected._id));
-    if (a) setFormData((prev) => ({ ...prev, address: a.street || "", subdistrict: a.subdistrict || "", district: a.district || "", province: a.province || "", zipcode: a.postalCode || "", phone: authUser.phone || prev.phone, fullName: `${authUser.firstName || ""} ${authUser.lastName || ""}`.trim() }));
+    if (!authUser) return;
+    setFormData((prev) => ({
+      ...prev,
+      firstName: prev.firstName || authUser.firstName || "",
+      lastName: prev.lastName || authUser.lastName || "",
+      phone: prev.phone || authUser.phone || "",
+    }));
   }, [authUser]);
 
-  const selectSavedAddress = (id) => {
-    if (id === "other") {
-      setSelectedAddressId("other");
-      setFormData((prev) => ({ ...prev, address: "", subdistrict: "", district: "", province: "", zipcode: "" }));
+  useEffect(() => {
+    if (!authUser) {
+      setLoadingAddresses(false);
+      return undefined;
+    }
+    let alive = true;
+    setLoadingAddresses(true);
+    fetch(`${getApiUrl()}/api/v2/users/me/addresses`, { headers: getAuthHeaders() })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!alive) return;
+        const list = data?.addresses || authUser.addresses || [];
+        setAddressBook(list);
+        const chosen = list.find((a) => a.isDefault) || list[0];
+        if (chosen) {
+          setSelectedAddressId(String(chosen._id));
+          fillFromAddress(chosen);
+        } else {
+          setSelectedAddressId(NEW_ADDRESS_ID);
+        }
+      })
+      .catch(() => alive && setSelectedAddressId(NEW_ADDRESS_ID))
+      .finally(() => alive && setLoadingAddresses(false));
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser?.id, authUser?._id]);
+
+  const selectAddress = (id) => {
+    setSelectedAddressId(id);
+    setErrors((prev) => ({ ...prev, address: null, subdistrict: null, district: null, province: null, zipcode: null }));
+    if (id === NEW_ADDRESS_ID) {
+      setFormData((prev) => ({ ...prev, ...BLANK_ADDRESS }));
       return;
     }
-    const selected = (authUser?.addresses || []).find((item) => String(item._id) === String(id));
-    if (!selected) return;
-    setSelectedAddressId(String(selected._id));
-    setFormData((prev) => ({ ...prev, address: selected.address || "", subdistrict: selected.subdistrict || "", district: selected.district || "", province: selected.province || "", zipcode: selected.zipcode || "", phone: selected.phone || prev.phone, fullName: `${authUser.firstName || ""} ${authUser.lastName || ""}`.trim() }));
+    const chosen = addressBook.find((a) => String(a._id) === String(id));
+    if (chosen) fillFromAddress(chosen);
   };
 
-  const saveAddress = async () => {
-    const userId = authUser?.id || authUser?._id;
-    if (!userId) return;
-    setIsSavingAddress(true);
+  // บันทึกที่อยู่ใหม่ลงสมุดที่อยู่ (ที่อยู่แรกเป็นค่าเริ่มต้น)
+  const saveAddressToBook = async () => {
     try {
-      const res = await fetch(`${getApiUrl()}/api/v2/users/${userId}`, { method: "PUT", headers: getAuthHeaders({ "Content-Type": "application/json" }), body: JSON.stringify({ deliveryAddress: { street: formData.address, subdistrict: formData.subdistrict, district: formData.district, province: formData.province, postalCode: formData.zipcode }, phone: formData.phone }) });
-      if (!res.ok) throw new Error("บันทึกไม่สำเร็จ");
-      setIsAddressModalOpen(false);
-    } catch (e) { setErrors((prev) => ({ ...prev, address: "บันทึกที่อยู่ไม่สำเร็จ กรุณาลองใหม่" })); }
-    finally { setIsSavingAddress(false); }
+      const res = await fetch(`${getApiUrl()}/api/v2/users/me/addresses`, {
+        method: "POST",
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          label: newAddressLabel,
+          address: formData.address.trim(),
+          subdistrict: formData.subdistrict.trim(),
+          district: formData.district.trim(),
+          province: formData.province,
+          zipcode: formData.zipcode.trim(),
+          phone: formData.phone.trim(),
+          isDefault: addressBook.length === 0,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.addresses) {
+        setAddressBook(data.addresses);
+        if (data.address?._id) setSelectedAddressId(String(data.address._id));
+      }
+    } catch {
+      // บันทึกลงสมุดไม่สำเร็จไม่ขวางการสั่งซื้อ
+    }
   };
 
   const [cardData, setCardData] = useState({
@@ -219,12 +278,18 @@ export default function CheckoutPage() {
 
     // 1. ตรวจสอบฟอร์มที่อยู่จัดส่ง
     const newErrors = {};
-    if (!formData.fullName.trim()) newErrors.fullName = "กรุณากรอกชื่อ-นามสกุล";
-    if (!formData.phone.trim()) newErrors.phone = "กรุณากรอกเบอร์โทรศัพท์";
+    if (!formData.firstName.trim()) newErrors.firstName = "กรุณากรอกชื่อ";
+    if (!formData.lastName.trim()) newErrors.lastName = "กรุณากรอกนามสกุล";
+    if (!/^0[2-9]\d{7,8}$/.test(formData.phone.trim())) newErrors.phone = "กรุณากรอกเบอร์โทรศัพท์ให้ถูกต้อง (เช่น 0812345678)";
     if (!formData.address.trim()) newErrors.address = "กรุณากรอกที่อยู่จัดส่ง";
+    if (!formData.subdistrict.trim()) newErrors.subdistrict = "กรุณากรอกตำบล/แขวง";
     if (!formData.district.trim()) newErrors.district = "กรุณากรอกอำเภอ/เขต";
-    if (!formData.province.trim()) newErrors.province = "กรุณากรอกจังหวัด";
-    if (!formData.zipcode.trim()) newErrors.zipcode = "กรุณากรอกรหัสไปรษณีย์";
+    if (!formData.province.trim()) newErrors.province = "กรุณาเลือกจังหวัด";
+    if (!/^[1-9]\d{4}$/.test(formData.zipcode.trim())) newErrors.zipcode = "รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก";
+    // ที่อยู่ที่เลือกจากสมุดไม่ครบ → เปิดฟอร์มให้กรอกเพิ่ม
+    if (selectedAddressId !== NEW_ADDRESS_ID && ["address", "subdistrict", "district", "province", "zipcode"].some((k) => newErrors[k])) {
+      setSelectedAddressId(NEW_ADDRESS_ID);
+    }
 
     if (
       paymentVersion === "v1" &&
@@ -239,6 +304,13 @@ export default function CheckoutPage() {
       return;
     }
     setErrors({});
+
+    // ที่อยู่ใหม่ + ติ๊กบันทึก → เก็บลงสมุดที่อยู่ก่อนสั่งซื้อ
+    const isNewAddress = selectedAddressId === NEW_ADDRESS_ID || addressBook.length === 0;
+    if (isNewAddress && saveNewAddress && authUser) {
+      await saveAddressToBook();
+    }
+    const chosenBookAddress = addressBook.find((a) => String(a._id) === String(selectedAddressId));
 
     const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
 
@@ -260,7 +332,19 @@ export default function CheckoutPage() {
         price: Number(item.price) || 0,
         quantity: Number(item.quantity) || 1,
       })),
-      shippingAddress: { ...formData },
+      shippingAddress: {
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        fullName: `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim(),
+        label: isNewAddress ? (saveNewAddress ? newAddressLabel : "") : chosenBookAddress?.label || "",
+        phone: formData.phone.trim(),
+        address: formData.address.trim(),
+        subdistrict: formData.subdistrict.trim(),
+        district: formData.district.trim(),
+        province: formData.province,
+        zipcode: formData.zipcode.trim(),
+        deliveryDate: formData.deliveryDate,
+      },
       paymentMethod,
       itemsSubtotal,
       shippingFee: SHIPPING_FEE,
@@ -530,10 +614,6 @@ export default function CheckoutPage() {
           className="grid grid-cols-1 lg:grid-cols-12 gap-8"
         >
           <div className="lg:col-span-7 flex flex-col gap-6">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              {authUser?.addresses?.length > 0 ? <select value={selectedAddressId} onChange={(e) => selectSavedAddress(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-[#e8dfd1] bg-white px-3 py-2 text-sm font-bold text-[#4c1f08]"><option value="">เลือกที่อยู่จัดส่ง</option>{authUser.addresses.map((item) => <option key={item._id} value={item._id}>{item.label}{item.isDefault ? " (หลัก)" : ""}</option>)}<option value="other">ใช้ที่อยู่อื่นชั่วคราว (ไม่บันทึก)</option></select> : <span className="text-xs text-[#7a6b63]">ยังไม่มีรายการที่อยู่ที่บันทึกไว้</span>}
-              <button type="button" onClick={() => setIsAddressModalOpen(true)} className="shrink-0 text-sm font-bold text-[#8d593a] underline">แก้ไขที่อยู่</button>
-            </div>
             <ShippingForm
               formData={formData}
               onChange={handleInputChange}
@@ -541,6 +621,14 @@ export default function CheckoutPage() {
                 setFormData((prev) => ({ ...prev, deliveryDate: date }))
               }
               errors={errors}
+              addressBook={addressBook}
+              loadingAddresses={loadingAddresses}
+              selectedAddressId={selectedAddressId}
+              onSelectAddress={selectAddress}
+              saveNewAddress={saveNewAddress}
+              onToggleSaveNewAddress={setSaveNewAddress}
+              newAddressLabel={newAddressLabel}
+              onNewAddressLabelChange={setNewAddressLabel}
             />
             <PaymentMethodSelector
               paymentMethod={paymentMethod}
@@ -569,7 +657,6 @@ export default function CheckoutPage() {
             />
           </div>
           </form>
-          {isAddressModalOpen && <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"><div className="bg-[#fcf8f2] rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-4"><div className="flex justify-between items-center mb-2"><h2 className="font-bold">แก้ไขที่อยู่จัดส่ง</h2><button type="button" onClick={() => setIsAddressModalOpen(false)}>✕</button></div><ShippingForm formData={formData} onChange={handleInputChange} onDateChange={(date) => setFormData((p) => ({ ...p, deliveryDate: date }))} /><div className="flex justify-end gap-2 mt-3"><button type="button" onClick={() => setIsAddressModalOpen(false)} className="px-4 py-2">ยกเลิก</button><button type="button" disabled={isSavingAddress} onClick={saveAddress} className="px-4 py-2 rounded-xl bg-[#3d2c2e] text-white">{isSavingAddress ? "กำลังบันทึก..." : "บันทึกที่อยู่"}</button></div></div></div>}
       </div>
 
       {/* Modal พร้อมเพย์ของ v1 */}

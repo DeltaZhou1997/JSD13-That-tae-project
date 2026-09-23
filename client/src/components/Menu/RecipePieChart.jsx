@@ -22,13 +22,20 @@ const getQuantity = (item) => {
   return Number.isFinite(value) && value > 0 ? value : 0;
 };
 
+// น้ำหนักจริงเป็นกรัม (MenuDetail ส่ง item.grams ที่แปลงหน่วยแล้ว) ใช้คิดสัดส่วน ไม่ให้ 0.35 L กับ 250 g เทียบกันผิด
+const getWeight = (item) => {
+  const grams = Number(item?.grams);
+  return Number.isFinite(grams) && grams > 0 ? grams : getQuantity(item);
+};
+
 const toPercent = (value, total) => (total > 0 ? (value / total) * 100 : 0);
 
 const buildIngredientSlices = (recipe) => {
   const items = recipe
     .map((item) => ({
       name: item.nameTh || item.ingredientId || 'วัตถุดิบ',
-      value: getQuantity(item),
+      value: getWeight(item),
+      quantity: getQuantity(item),
       unit: item.unit || '',
     }))
     .filter((item) => item.value > 0)
@@ -58,7 +65,7 @@ const buildElementSlices = (recipe) => {
   const scores = Object.fromEntries(ELEMENT_ORDER.map((element) => [element, 0]));
 
   recipe.forEach((item) => {
-    const quantity = getQuantity(item);
+    const quantity = getWeight(item);
     if (!quantity) return;
 
     const elements = Array.isArray(item.elements)
@@ -163,7 +170,7 @@ function DonutChart({ title, subtitle, slices, centerLabel, centerCaption, showQ
                 <span className="font-extrabold text-stone-900">{slice.percentage.toFixed(1)}%</span>
                 {showQuantity && slice.unit && (
                   <span className="ml-1.5 text-[10px] font-medium text-stone-400">
-                    {slice.value.toLocaleString('th-TH')} {slice.unit}
+                    {(slice.quantity ?? slice.value).toLocaleString('th-TH')} {slice.unit}
                   </span>
                 )}
               </div>
