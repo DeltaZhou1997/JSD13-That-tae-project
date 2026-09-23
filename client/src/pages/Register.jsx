@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.js";
 import useToast from "../hooks/useToast.js";
 import { getApiUrl } from "../utils/authHeader.js";
+import defaultAvatar from "../assets/default-avatar.svg";
 
 // ─── SVG Icons ───────────────────────────────────────────────────────────────
 const IconUser = () => (
@@ -150,6 +151,8 @@ function Register() {
 
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreview, setAvatarPreview] = useState(defaultAvatar);
   const navigate = useNavigate();
   const { login } = useAuth();
   const toast = useToast();
@@ -158,6 +161,18 @@ function Register() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errorMsg) setErrorMsg("");
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setErrorMsg("กรุณาเลือกไฟล์รูปภาพเท่านั้น");
+      return;
+    }
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+    setErrorMsg("");
   };
 
   const validate = () => {
@@ -215,6 +230,24 @@ function Register() {
         // Auto-login ทันที
         if (data.user && data.token) {
           login(data.user, data.token);
+          if (avatarFile && data.user.id) {
+            const uploadData = new FormData();
+            uploadData.append("image", avatarFile);
+            const uploadResponse = await fetch(`${apiUrl}/api/v2/images/upload`, {
+              method: "POST",
+              headers: { Authorization: `Bearer ${data.token}` },
+              body: uploadData,
+            });
+            const uploaded = await uploadResponse.json();
+            if (uploadResponse.ok && uploaded.url) {
+              const avatarUrl = uploaded.url.startsWith("http") ? uploaded.url : `${apiUrl}${uploaded.url}`;
+              await fetch(`${apiUrl}/api/v2/users/${data.user.id}`, {
+                method: "PUT",
+                headers: { Authorization: `Bearer ${data.token}`, "Content-Type": "application/json" },
+                body: JSON.stringify({ avatar: avatarUrl }),
+              });
+            }
+          }
         }
         toast.success(`ยินดีต้อนรับคุณ ${data.user?.firstName || formData.firstName}!`);
         // สมัครสมาชิค → quiz ทำธาตุเจ้าเรือน → landing page พร้อม token
@@ -432,6 +465,21 @@ function Register() {
                   pattern="[0-9]{5}"
                   className={inputBase}
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* ── รูปโปรไฟล์ (ไม่บังคับ) ── */}
+          <div className={sectionCard}>
+            <SectionHeader icon={<IconUser />} label="รูปโปรไฟล์ (ไม่บังคับ)" />
+            <div className="flex items-center gap-4">
+              <img src={avatarPreview} alt="ตัวอย่างรูปโปรไฟล์" className="h-20 w-20 rounded-full border-2 border-[#e8ddd0] bg-[#eadfd4] object-cover" />
+              <div className="min-w-0 flex-1">
+                <label className="inline-flex cursor-pointer items-center rounded-xl bg-[#f1e4d5] px-4 py-2 text-sm font-bold text-[#4c1f08] transition hover:bg-[#e6d2bc]">
+                  เลือกรูปภาพ
+                  <input type="file" accept="image/*" onChange={handleAvatarChange} className="sr-only" />
+                </label>
+                <p className="mt-2 text-xs text-[#9e8070]">รองรับ JPG, PNG หรือ WebP หากไม่เลือก ระบบจะใช้รูป no-face อัตโนมัติ</p>
               </div>
             </div>
           </div>

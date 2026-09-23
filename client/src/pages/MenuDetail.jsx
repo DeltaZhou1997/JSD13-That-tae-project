@@ -3,7 +3,6 @@ import { Link, useParams, useOutletContext } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.js';
 import { useApp } from '../context/AppContext';
 import { useProducts } from '../context/ProductsContext.js';
-import { dishes } from '../mock-data/index.js';
 import RecipePieCharts from '../components/Menu/RecipePieChart.jsx';
 
 const CATEGORY_LABELS = {
@@ -155,7 +154,7 @@ export default function MenuDetail() {
   };
 
   useEffect(() => {
-    const foundDish = dishes[id] || (getProductById ? getProductById(id) : null);
+    const foundDish = getProductById ? getProductById(id) : null;
     if (foundDish) {
       setMenu(foundDish);
       const rawImgs = Array.isArray(foundDish.imageUrl)

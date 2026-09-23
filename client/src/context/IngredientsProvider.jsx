@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   IngredientsContext,
-  createInitialIngredients,
   isLowStock,
   normalizeIngredient,
 } from "./IngredientsContext.js";
@@ -10,7 +9,7 @@ import { createTempObjectId } from "../utils/objectId.js";
 import { getAuthHeaders, getApiUrl } from "../utils/authHeader.js";
 
 export default function IngredientsProvider({ children }) {
-  const [ingredients, setIngredients] = useState(createInitialIngredients);
+  const [ingredients, setIngredients] = useState([]);
   const apiUrl = getApiUrl();
 
   useEffect(() => {
@@ -22,11 +21,11 @@ export default function IngredientsProvider({ children }) {
           const json = await res.json();
           const items = Array.isArray(json) ? json : json.data || [];
           if (items.length > 0 && isMounted) {
-            setIngredients(items.map(normalizeIngredient));
+            if (isMounted) setIngredients(items.map(normalizeIngredient));
           }
         }
       } catch (err) {
-        console.warn("⚠️ เซิร์ฟเวอร์ออฟไลน์ ใช้ mock ingredients เริ่มต้น:", err.message);
+        console.warn("⚠️ ไม่สามารถโหลดวัตถุดิบจากเซิร์ฟเวอร์:", err.message);
       }
     }
     loadIngredients();

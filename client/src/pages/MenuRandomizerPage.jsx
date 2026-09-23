@@ -3,8 +3,8 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import RandomResultCard from "../components/menu-randomizer/RandomResultCard.jsx";
 import { useProducts } from "../context/ProductsContext.js";
-import { dishes } from "../mock-data/index.js";
 import gsap from "gsap";
+import LoadingThai from "../components/LoadingThai.jsx";
 
 // 1. Import รูปภาพทั้งหมดจาก src/assets โดยตรง
 import elementEarth from "../assets/element-earth.png";
@@ -14,10 +14,6 @@ import elementFire from "../assets/element-fire.png";
 import randomMenuDish from "../assets/randomizer/random_menu.png";
 
 // รูปสำรองสำหรับเมนู 4 ภาค
-import khaoSoiImg from "../assets/randomizer/khao_soi.jpg";
-import kaopunImg from "../assets/randomizer/kaopun.jpg";
-import mudsamunImg from "../assets/randomizer/mudsamun.jpg";
-import satorImg from "../assets/randomizer/sator.jpg";
 
 // Mapping ธาตุสำหรับตัวกรอง
 const ELEMENT_MAP = {
@@ -31,7 +27,7 @@ export default function MenuRandomizerPage() {
   const navigate = useNavigate();
   const outletContext = useOutletContext() || {};
   const contextAddToCart = outletContext.handleAddToCart;
-  const { products } = useProducts();
+  const { products, loading: productsLoading } = useProducts();
 
   const [selectedElement, setSelectedElement] = useState("water");
   const [currentDish, setCurrentDish] = useState(null);
@@ -43,11 +39,8 @@ export default function MenuRandomizerPage() {
   const resultModalRef = useRef(null);
   const dishImgRef = useRef(null);
 
-  // รวมรายการเมนูทั้งหมดจาก Database หรือ Mock-data
-  const allDishes = useMemo(() => {
-    if (products && products.length > 0) return products;
-    return Array.isArray(dishes) ? dishes : Object.values(dishes || {});
-  }, [products]);
+  // ใช้เมนูจากฐานข้อมูลเท่านั้น ไม่ fallback ไป mock data
+  const allDishes = useMemo(() => (Array.isArray(products) ? products : []), [products]);
 
   // สุ่มเมนู 4 ภาค จาก Database จริง (ภาคละ 1 เมนู)
   const regionalFeatured = useMemo(() => {
@@ -55,26 +48,18 @@ export default function MenuRandomizerPage() {
       {
         id: "northern",
         label: "ภาคเหนือ",
-        fallbackImg: khaoSoiImg,
-        defaultName: "ข้าวซอยไก่",
       },
       {
         id: "northeastern",
         label: "ภาคอีสาน",
-        fallbackImg: kaopunImg,
-        defaultName: "ข้าวปุ้นซาวน้ำปลาร้า",
       },
       {
         id: "central",
         label: "ภาคกลาง",
-        fallbackImg: mudsamunImg,
-        defaultName: "มัสมั่นไก่",
       },
       {
         id: "southern",
         label: "ภาคใต้",
-        fallbackImg: satorImg,
-        defaultName: "ผัดสะตอกุ้ง",
       },
     ];
 
@@ -95,12 +80,11 @@ export default function MenuRandomizerPage() {
           randomItem.imgUrl ||
           (Array.isArray(randomItem.imageUrl)
             ? randomItem.imageUrl[0]
-            : randomItem.imageUrl) ||
-          r.fallbackImg;
+            : randomItem.imageUrl);
 
         return {
           region: r.label,
-          name: randomItem.nameTh || randomItem.name || r.defaultName,
+          name: randomItem.nameTh || randomItem.name || "เมนูจากฐานข้อมูล",
           image: img,
           id: randomItem._id || randomItem.id,
         };
@@ -108,8 +92,8 @@ export default function MenuRandomizerPage() {
 
       return {
         region: r.label,
-        name: r.defaultName,
-        image: r.fallbackImg,
+        name: "ยังไม่มีเมนูในภูมิภาคนี้",
+        image: "",
       };
     });
   }, [allDishes]);
@@ -242,6 +226,9 @@ export default function MenuRandomizerPage() {
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] py-6 sm:py-10 px-3 sm:px-6 lg:px-8 max-w-full overflow-x-hidden">
+      {productsLoading && <LoadingThai className="min-h-[70vh]" />}
+      {!productsLoading && allDishes.length === 0 && <LoadingThai label="ยังไม่มีเมนูจากฐานข้อมูล" className="min-h-[70vh]" />}
+      {!productsLoading && allDishes.length > 0 && <>
       {/* 1. Header ส่วนหัวข้อพร้อมประกายดาว */}
       <div className="text-center max-w-2xl mx-auto mb-6 sm:mb-10">
         <div className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-bold text-[#8B5E34] tracking-[0.25em] uppercase mb-1.5 sm:mb-2">
@@ -525,6 +512,7 @@ export default function MenuRandomizerPage() {
           </div>
         </div>
       )}
+      </>}
     </div>
   );
 }

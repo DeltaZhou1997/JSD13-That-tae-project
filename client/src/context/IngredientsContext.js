@@ -1,9 +1,4 @@
 import { createContext, useContext } from "react";
-import { ingredients } from "../mock-data/index.js";
-
-const DEFAULT_STOCK_GRAMS = 10000;
-const DEFAULT_LOW_STOCK_GRAMS = 1000;
-
 export const CATEGORY_MAP = {
   meat: "เนื้อสัตว์ & โปรตีน",
   poultry: "สัตว์ปีก",
@@ -32,10 +27,6 @@ export function normalizeIngredient(item) {
         : Number(item.lowStockThresholdGrams),
     isActive: item.isActive !== false,
   };
-}
-
-export function createInitialIngredients() {
-  return Object.values(ingredients).map(normalizeIngredient);
 }
 
 export function isLowStock(item) {

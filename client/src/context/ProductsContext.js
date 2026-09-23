@@ -1,8 +1,4 @@
 import { createContext, useContext } from "react";
-import { dishes } from "../mock-data/index.js";
-
-const DEFAULT_QUANTITY = 20;
-const DEFAULT_CALORIES = 350;
 
 export function getTodayInputValue() {
   return new Date().toISOString().split("T")[0];
@@ -15,34 +11,6 @@ export const regionMap = {
   southern: "ภาคใต้",
   fusion: "ไทยฟิวชั่น",
 };
-
-export function mapDishToProduct(dish) {
-  return {
-    _id: dish._id,
-    name: dish.nameTh || "",
-    region: dish.region || "northern",
-    regionNameTh: dish.regionNameTh || regionMap[dish.region] || "",
-    description: dish.description || "",
-    history: dish.history || "",
-    price: dish.price ?? 0,
-    quantity: dish.servings ? dish.servings * 10 : DEFAULT_QUANTITY,
-    calories: DEFAULT_CALORIES,
-    date: getTodayInputValue(),
-    tags: [dish.regionNameTh].filter(Boolean),
-    servings: dish.servings || 2,
-    dominantElement: dish.dominantElement || "",
-    elementSuitability: dish.elementSuitability || [],
-    recipe: dish.recipe || [],
-    nutritionCache: dish.nutritionCache || null,
-    ingredients: "",
-    cookingSteps: "",
-    imageUrl: Array.isArray(dish.imageUrl) ? dish.imageUrl[0] : dish.imageUrl || "",
-  };
-}
-
-export function createInitialProducts() {
-  return Object.values(dishes).map(mapDishToProduct);
-}
 
 export const ProductsContext = createContext(null);
 

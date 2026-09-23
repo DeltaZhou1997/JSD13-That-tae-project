@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import thailandMap from "../../assets/thailand-map.svg";
-import { dishes, regions } from "../../mock-data/index.js";
+import { regions } from "../../mock-data/index.js";
+import { useProducts } from "../../context/ProductsContext.js";
+import LoadingThai from "../LoadingThai.jsx";
 import { Link } from "react-router-dom";
 
 export default function RegionalMapSection() {
+  const { products } = useProducts();
   const [activeIndex, setActiveIndex] = useState(0);
   const [isInteracting, setIsInteracting] = useState(false);
   const mapObjectRef = useRef(null);
@@ -14,7 +17,7 @@ export default function RegionalMapSection() {
   const marqueeRef = useRef(null);
   const marqueeTweenRef = useRef(null);
   const active = regions[activeIndex];
-  const activeDishes = Object.values(dishes).filter(
+  const activeDishes = (products || []).filter(
     (dish) => dish.region === active.dataRegion,
   );
 

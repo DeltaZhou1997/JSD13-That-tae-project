@@ -344,11 +344,12 @@ export default function Navbar({ cartCount = 0 }) {
   }, []);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-[100] px-3 pt-3 sm:px-5">
+    <header className="fixed inset-x-0 top-0 z-40 px-2 pt-2 sm:px-5 sm:pt-3 pointer-events-none">
       <nav
         className="mx-auto w-full max-w-[1200px] rounded-[2rem] border border-white/50
          bg-[#f4ebd9]/90 p-1.5 shadow-[0_12px_32px_rgba(61,44,46,0.15)] 
-         backdrop-blur-[12px] lg:flex lg:items-center lg:justify-between lg:rounded-[64px] lg:px-6 lg:py-2"
+         backdrop-blur-[12px] pointer-events-auto transition-all duration-500 ease-out
+         motion-safe:animate-[navDrop_500ms_ease-out] lg:flex lg:items-center lg:justify-between lg:rounded-[64px] lg:px-6 lg:py-2"
         aria-label="เมนูหลัก"
       >
         {/* Logo & Mobile Actions */}
@@ -598,9 +599,9 @@ export default function Navbar({ cartCount = 0 }) {
 
         {/* Mobile Dropdown Navigation */}
         <div
-          className={`transition-all duration-300 lg:hidden ${isOpen
-              ? "max-h-[85vh] opacity-100 py-3 border-t border-[#dfd1c1] mt-2 overflow-y-auto pointer-events-auto"
-              : "max-h-0 opacity-0 py-0 pointer-events-none overflow-hidden invisible"
+          className={`origin-top transition-all duration-300 ease-out lg:hidden ${isOpen
+              ? "max-h-[85vh] translate-y-0 opacity-100 py-3 border-t border-[#dfd1c1] mt-2 overflow-y-auto pointer-events-auto"
+              : "max-h-0 -translate-y-2 opacity-0 py-0 pointer-events-none overflow-hidden invisible"
             }`}
         >
           <div className="flex flex-col gap-1 px-1">
