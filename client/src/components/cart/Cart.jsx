@@ -7,6 +7,7 @@ import CartItem from './CartItem.jsx';
 import { SHIPPING_FEE, SUBSCRIPTION_PLANS } from "../../constants/checkout";
 import PlanSelector from '../checkout/PlanSelector.jsx';
 import { useProducts } from '../../context/ProductsContext.js';
+import { getStockStatus } from '../../utils/stock.js';
 
 function DeleteModal({ onCancel, onConfirm, targetInfo }) {
   const backdropRef = useRef(null);
@@ -113,12 +114,27 @@ export default function Cart() {
   } = context;
 
   const { products = [] } = useProducts();
+
+  // รายการที่วัตถุดิบไม่พอ (หมด หรือจำนวนในตะกร้าเกินที่ทำได้) → ห้ามไปชำระเงิน
+  const stockIssues = useMemo(
+    () =>
+      cartItems
+        .map((item) => {
+          const id = String(item._id || item.id);
+          const product = products.find((p) => String(p._id || p.id) === id);
+          return { id, ...getStockStatus(product, Number(item.quantity) || 1) };
+        })
+        .filter((st) => st.soldOut || st.short),
+    [cartItems, products],
+  );
+  const soldOutIds = stockIssues.filter((st) => st.soldOut).map((st) => st.id);
+
   const [itemToDelete, setItemToDelete] = useState(null);
   const [deletingItemId, setDeletingItemId] = useState(null);
 
   // State จำนวนที่จัดสรรให้เป็น A La Carte ของแต่ละเมนู { [itemId]: number }
   const [extraQtyMap, setExtraQtyMap] = useState({});
-  
+
   // Dragging State สำหรับตรวจจับและ Reorder ได้อย่างลื่นไหล
   const [draggedItem, setDraggedItem] = useState(null);
   const [isDragOverBoxZone, setIsDragOverBoxZone] = useState(false);
@@ -499,14 +515,10 @@ export default function Cart() {
     if (!selectedPlan || kitsDifference >= 0) return;
     const needed = Math.abs(kitsDifference);
 
-    if (extraItems.length > 0 && pinnedExtraIds.size > 0) {
-      setPinnedExtraIds(new Set());
-      return;
-    }
-
     const userElement = currentUser.element || currentUser.dominantElement || "ดิน";
     const existingIds = new Set(cartItems.map((i) => i._id || i.id || i.productId));
-    const unselectedProducts = products.filter((p) => !existingIds.has(p._id || p.id));
+    // สุ่มเฉพาะเมนูที่วัตถุดิบยังพอ
+    const unselectedProducts = products.filter((p) => !existingIds.has(p._id || p.id) && !getStockStatus(p).soldOut);
 
     const matchedElementDishes = unselectedProducts.filter((p) => {
       const isDominant = p.dominantElement === userElement;
@@ -621,7 +633,7 @@ export default function Cart() {
 
       {/* 2. เลย์เอาต์หลัก 2 คอลัมน์ (Desktop: เมื่อมีสินค้า คอลัมน์ซ้ายสินค้า col-span-7/8, ขวา Sidebar col-span-5/4 / เมื่อไม่มีสินค้า คอลัมน์ซ้ายขยายเต็มจอ col-span-12) */}
       <div className={`grid grid-cols-1 ${cartItems.length > 0 ? "lg:grid-cols-12 gap-8" : "gap-6"} items-start`}>
-        
+
         {/* =================================================================== */}
         {/* คอลัมน์ซ้าย: รูปแบบการสั่งซื้อ, รายการสินค้า, กล่องแพ็กเกจ */}
         {/* =================================================================== */}
@@ -913,7 +925,7 @@ export default function Cart() {
         {/* =================================================================== */}
         {cartItems.length > 0 && (
           <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-24 space-y-4">
-            
+
             {/* Rewards Banner (วางไว้เหนือสรุปยอดในฝั่ง Sidebar) */}
             {!isAdmin && (
               <div className="overflow-hidden rounded-3xl border border-[#e8dfd1] bg-white p-4 shadow-xs">
@@ -1096,6 +1108,27 @@ export default function Cart() {
                         หรือเปลี่ยนกลับเป็นสั่งซื้อรายชุด (A La Carte)
                       </button>
                     </div>
+                  </div>
+                ) : stockIssues.length > 0 ? (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      disabled
+                      className="block w-full rounded-full bg-stone-200 px-4 py-3.5 text-center text-xs font-bold leading-snug text-stone-500 cursor-not-allowed"
+                    >
+                      มีสินค้าไม่เพียงพอจำหน่าย {stockIssues.length} รายการ — ปรับตะกร้าก่อนชำระเงิน
+                    </button>
+                    {soldOutIds.length > 0 && (
+                      <div className="text-center">
+                        <button
+                          type="button"
+                          onClick={() => soldOutIds.forEach((id) => handleRemoveItem(id))}
+                          className="text-[11px] font-semibold text-[#8d593a] underline hover:text-[#6b3215] cursor-pointer"
+                        >
+                          ลบสินค้าที่หมดออกจากตะกร้า ({soldOutIds.length} รายการ)
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <Link

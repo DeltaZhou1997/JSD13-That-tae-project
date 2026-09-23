@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
+import { useOutletContext } from "react-router-dom";
 import { resolveImageUrl } from "../../utils/imageUrl.js";
+import { useProducts } from "../../context/ProductsContext.js";
+import { formatMissing, getStockStatus } from "../../utils/stock.js";
 
 export default function CartItem({
   item,
@@ -27,6 +30,14 @@ export default function CartItem({
   const displayName = item.nameTh || item.name || "Cooking Kit เมนูพิเศษ";
   const unitPrice = Number(item.price) || 0;
   const quantity = Number(item.quantity) || 1;
+
+  // สต็อก: เทียบกับจำนวน "รวม" ของเมนูนี้ในตะกร้า (กล่องแพ็กเกจ + A La Carte)
+  const { products = [] } = useProducts() || {};
+  const { cartItems = [] } = useOutletContext() || {};
+  const product = products.find((p) => String(p._id || p.id) === String(itemId));
+  const totalQtyInCart = Number(cartItems.find((c) => String(c._id || c.id) === String(itemId))?.quantity) || quantity;
+  const stock = getStockStatus(product, totalQtyInCart);
+  const canIncrease = !stock.soldOut && (stock.availableKits === null || totalQtyInCart < stock.availableKits);
 
   const [isOver, setIsOver] = useState(false);
   const rowRef = useRef(null);
@@ -122,7 +133,9 @@ export default function CartItem({
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`relative flex items-center justify-between border-b border-[#f1ead7] py-3.5 last:border-0 gap-3 transition-all duration-200 overflow-hidden ${
+      className={`relative flex flex-wrap sm:flex-nowrap items-center justify-between border-b border-[#f1ead7] py-3.5 last:border-0 gap-x-3 gap-y-2 transition-all duration-200 overflow-hidden ${
+        stock.soldOut ? "bg-stone-50 px-2.5 rounded-2xl" : ""
+      } ${
         isDraggable
           ? "cursor-grab active:cursor-grabbing hover:bg-[#faf6ef]/70 px-2.5 rounded-2xl"
           : ""
@@ -151,7 +164,7 @@ export default function CartItem({
         )}
 
         {/* Thumbnail Image */}
-        <div className="w-12 h-12 rounded-xl bg-[#f6ede5] flex items-center justify-center shrink-0 border border-[#e8dfd1] overflow-hidden shadow-2xs">
+        <div className={`relative w-12 h-12 rounded-xl bg-[#f6ede5] flex items-center justify-center shrink-0 border border-[#e8dfd1] overflow-hidden shadow-2xs ${stock.soldOut ? "grayscale opacity-60" : ""}`}>
           {item.imageUrl ? (
             <img
               src={resolveImageUrl(item.imageUrl)}
@@ -167,8 +180,8 @@ export default function CartItem({
 
         <div className="min-w-0 flex-1 select-none">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <h4 className="text-sm font-bold text-[#3d2c2e] truncate">{displayName}</h4>
-            
+            <h4 className={`text-sm font-bold truncate ${stock.soldOut ? "text-stone-400 line-through decoration-stone-300" : "text-[#3d2c2e]"}`}>{displayName}</h4>
+
             {/* ป้ายแสดงเมื่อเมนูนี้มีอยู่ในอีกโซนหนึ่งด้วย */}
             {coexistingCount > 0 && (
               <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold inline-flex items-center gap-1 border shadow-2xs ${
@@ -195,14 +208,39 @@ export default function CartItem({
               </span>
             )}
           </div>
-          <p className="text-xs text-[#8d593a] font-medium mt-0.5">
+          <p className={`text-xs font-medium mt-0.5 ${stock.soldOut ? "text-stone-400" : "text-[#8d593a]"}`}>
             ฿{unitPrice.toLocaleString()} บาท / ชุด
           </p>
+
+          {/* แจ้งสต็อกไม่พอ */}
+          {stock.soldOut && (
+            <div className="mt-1.5 flex max-w-full flex-wrap items-center gap-1.5">
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-red-700">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className="h-3 w-3" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path strokeLinecap="round" d="M12 8v4.5M12 16h.01" />
+                </svg>
+                สินค้าไม่เพียงพอจำหน่าย
+              </span>
+              {stock.missing.length > 0 && (
+                <span className="min-w-0 truncate text-[10px] sm:text-[11px] text-stone-500" title={stock.missing.join(", ")}>
+                  {formatMissing(stock.missing)}
+                </span>
+              )}
+            </div>
+          )}
+          {stock.short && (
+            <p className="mt-1.5 inline-flex max-w-full items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold text-amber-800">
+              <span className="truncate" title={stock.limitedBy ? `วัตถุดิบที่จำกัด: ${stock.limitedBy}` : undefined}>
+                เหลือทำได้ {stock.availableKits} ชุด{stock.limitedBy ? ` · ${stock.limitedBy}ใกล้หมด` : ""}
+              </span>
+            </p>
+          )}
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center justify-end gap-2 shrink-0 ml-auto">
         {/* สำหรับโซนกล่องแพ็กเกจ: ปุ่มสั่งเมนูนี้เพิ่มเป็น A La Carte ทันที */}
         {zone === 'box' && onAddExtra && (
           <button
@@ -292,7 +330,9 @@ export default function CartItem({
           <button
             type="button"
             onClick={handleIncrease}
-            className="px-2.5 py-1 text-slate-600 transition hover:bg-[#f6ede5] active:scale-90 cursor-pointer text-xs font-semibold select-none"
+            disabled={!canIncrease}
+            title={canIncrease ? undefined : "วัตถุดิบไม่พอสำหรับเพิ่มจำนวน"}
+            className="px-2.5 py-1 text-slate-600 transition hover:bg-[#f6ede5] active:scale-90 cursor-pointer text-xs font-semibold select-none disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:active:scale-100"
             aria-label="เพิ่มจำนวน"
           >
             +

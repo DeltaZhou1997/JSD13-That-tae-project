@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Product } from "../../models/Product.model.js";
 import { Ingredient } from "../../models/Ingredient.model.js";
 import { verifyToken, requireAdmin } from "./users.routes.js";
+import { withAvailability } from "../../utils/stockAvailability.js";
 
 const router = Router();
 
@@ -93,12 +94,13 @@ router.get("/", async (req, res, next) => {
         page: pageNum,
         limit: limitNum,
         totalPages: Math.ceil(total / limitNum),
-        data: products,
+        // availability: จำนวนชุดที่ทำได้ + วัตถุดิบที่ขาด (หน้าเมนู/ตะกร้าใช้แสดง "สินค้าหมด")
+        data: await withAvailability(products),
       });
     }
 
     const products = await Product.find(query).sort(sortOptions).lean();
-    return res.status(200).json(products);
+    return res.status(200).json(await withAvailability(products));
   } catch (err) {
     next(err);
   }
@@ -122,8 +124,9 @@ router.get("/:id", async (req, res, next) => {
     const productDoc = new Product(product);
     const stockStatus = await productDoc.checkStockAvailability(1);
 
+    const [withStock] = await withAvailability(product);
     return res.status(200).json({
-      ...product,
+      ...withStock,
       stockAvailability: stockStatus,
     });
   } catch (err) {

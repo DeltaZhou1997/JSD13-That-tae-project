@@ -6,6 +6,7 @@ import { useProducts } from '../context/ProductsContext.js';
 import { useIngredients } from '../context/IngredientsContext.js';
 import { getUnitInfo } from '../utils/units.js';
 import { buildRecipeRows, formatTastes } from '../utils/recipeRows.js';
+import { formatMissing, getStockStatus } from '../utils/stock.js';
 import RecipePieCharts from '../components/Menu/RecipePieChart.jsx';
 
 const CATEGORY_LABELS = {
@@ -30,7 +31,7 @@ const CATEGORY_LABELS = {
 const getCategoryBadge = (category, categoryTh) => {
   const cat = (category || '').toLowerCase();
   const th = categoryTh || CATEGORY_LABELS[category] || '';
-  
+
   if (cat.includes('meat') || cat.includes('poultry') || th.includes('เนื้อ') || th.includes('ไก่') || th.includes('หมู') || th.includes('เป็ด')) {
     return {
       label: th || 'เนื้อสัตว์ & โปรตีน',
@@ -210,12 +211,14 @@ export default function MenuDetail() {
   const nutrition = recipe.length > 0 ? { totals: recipeTotals } : menu.nutritionCache || null;
   const perServing = nutrition?.perServing || null;
   const dominantElement = menu.dominantElement || 'ดิน';
+  const stock = getStockStatus(menu, quantity);
+  const maxQty = stock.availableKits ?? Infinity;
   const elementStyle = ELEMENT_BADGES[dominantElement] || ELEMENT_BADGES['ดิน'];
 
   return (
     <div className="bg-[#faf8f5] min-h-screen pb-16">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
-        
+
         {/* Breadcrumbs */}
         <nav className="mb-6 flex items-center gap-2 text-xs sm:text-sm text-stone-500 font-medium">
           <Link to="/" className="hover:text-stone-800 transition">หน้าแรก</Link>
@@ -229,7 +232,7 @@ export default function MenuDetail() {
 
         {/* Hero Section: Product Showcase */}
         <section className="bg-white rounded-3xl border border-[#ebe4dc] p-6 sm:p-8 lg:p-10 shadow-xs grid gap-8 lg:grid-cols-2 lg:gap-12 items-center">
-          
+
           {/* Left: Image Showcase */}
           <div className="flex flex-col gap-4">
             <div className="relative overflow-hidden rounded-2xl border border-stone-200/80 bg-stone-50 shadow-xs">
@@ -286,7 +289,7 @@ export default function MenuDetail() {
 
           {/* Right: Product Details & Purchase */}
           <div className="flex flex-col justify-center">
-            
+
             {/* Element Suitability Header */}
             {menu.elementSuitability && menu.elementSuitability.length > 0 && (
               <div className="mb-3 inline-flex items-center gap-2 text-xs font-medium text-stone-500 bg-stone-50 px-3 py-1.5 rounded-full border border-stone-200/60 w-fit">
@@ -366,6 +369,22 @@ export default function MenuDetail() {
                   <span>สำหรับจัดการข้อมูลร้านค้า ไม่มีสิทธิ์สั่งซื้อสินค้า</span>
                 </div>
               </div>
+            ) : stock.soldOut ? (
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center rounded-2xl border border-stone-200 bg-stone-50 p-3 sm:p-4">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-stone-600">สินค้าหมดชั่วคราว</p>
+                  <p className="text-xs text-stone-500 mt-0.5 break-words">
+                    วัตถุดิบไม่เพียงพอ{stock.missing.length > 0 ? ` — ${formatMissing(stock.missing, 3)}` : ''}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled
+                  className="shrink-0 rounded-2xl bg-stone-200 text-stone-500 font-bold text-base py-3 px-6 cursor-not-allowed"
+                >
+                  สินค้าหมด
+                </button>
+              </div>
             ) : (
               <div className="flex gap-4 items-center">
                 <div className="flex items-center border border-stone-300 rounded-2xl bg-stone-50 p-1">
@@ -382,8 +401,10 @@ export default function MenuDetail() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => setQuantity((q) => q + 1)}
-                    className="w-10 h-10 rounded-xl bg-white hover:bg-stone-200 text-stone-700 font-bold text-lg transition flex items-center justify-center cursor-pointer shadow-2xs"
+                    onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
+                    disabled={quantity >= maxQty}
+                    title={quantity >= maxQty ? `ทำได้สูงสุด ${maxQty} ชุด` : undefined}
+                    className="w-10 h-10 rounded-xl bg-white hover:bg-stone-200 text-stone-700 font-bold text-lg transition flex items-center justify-center cursor-pointer shadow-2xs disabled:opacity-30 disabled:cursor-not-allowed"
                     aria-label="เพิ่มจำนวน"
                   >
                     +
@@ -410,7 +431,7 @@ export default function MenuDetail() {
         {/* Ingredients & Nutrition Breakdown Section */}
         {recipe.length > 0 && (
           <section className="bg-white rounded-3xl border border-[#ebe4dc] p-6 sm:p-8 lg:p-10 shadow-xs mt-10">
-            
+
             {/* Header & View Switcher */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-stone-100">
               <div className="flex items-center gap-3.5">
@@ -661,7 +682,7 @@ export default function MenuDetail() {
 
         {/* Culinary Heritage & Storage/Reheating Section */}
         <section className="mt-10 grid gap-6 md:grid-cols-2">
-          
+
           {/* Heritage Card */}
           <div className="bg-white rounded-3xl border border-[#ebe4dc] p-6 sm:p-8 shadow-xs">
             <div className="flex items-center gap-3 mb-4">
@@ -681,7 +702,7 @@ export default function MenuDetail() {
 
           {/* Cooking & Storage Instructions Card */}
           <div className="bg-white rounded-3xl border border-[#ebe4dc] p-6 sm:p-8 shadow-xs flex flex-col justify-between gap-6">
-            
+
             {/* Storage */}
             <div>
               <h4 className="font-bold text-stone-900 mb-2 flex items-center gap-2 text-sm">

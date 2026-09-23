@@ -1,6 +1,7 @@
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext.js';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { formatMissing, getStockStatus } from '../../utils/stock.js';
 
 const ELEMENT_CONFIG = {
   'ดิน': {
@@ -77,7 +78,7 @@ export default function MenuCard({ menu, index = 0 }) {
     fusion: language === 'th' ? 'ไทยฟิวชั่น' : 'Fusion',
   };
   const regionName = regionNames[menu.region] || menu.regionNameTh || menu.region || '';
-  
+
   const rawElement = (menu.dominantElement || '').trim();
   const normalizedElement = ELEMENT_MAP[rawElement.toLowerCase()] || rawElement;
   const elConfig = ELEMENT_CONFIG[normalizedElement] || null;
@@ -95,24 +96,44 @@ export default function MenuCard({ menu, index = 0 }) {
 
   // สร้างความสูงรูปที่เหลื่อมกันเล็กน้อยสไตล์ Bento ในจอมือถือ (เช่น index สลับ ให้ภาพสูง 32 กับ 40)
   const isTallImage = index % 3 === 1;
+
+  // วัตถุดิบในภาคของเมนูไม่พอแม้แต่อย่างเดียว → สินค้าหมด
+  const stock = getStockStatus(menu);
+  const soldOut = stock.soldOut;
   const mobileImgHeight = isTallImage ? "h-36 sm:h-48" : "h-28 sm:h-48";
 
   return (
-    <div 
-      className="group bg-white dark:bg-[#523a24] border border-[#d4c5b0] dark:border-[#755535] rounded-2xl overflow-hidden cursor-pointer flex flex-col h-full transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/10"
+    <div
+      className={`group border rounded-2xl overflow-hidden cursor-pointer flex flex-col h-full transition-all duration-300 ${
+        soldOut
+          ? 'bg-stone-50 dark:bg-[#3d2c2e] border-stone-200 dark:border-[#5a4a3a]'
+          : 'bg-white dark:bg-[#523a24] border-[#d4c5b0] dark:border-[#755535] hover:-translate-y-1 hover:shadow-xl hover:shadow-black/10'
+      }`}
+      aria-label={soldOut ? `${title} (สินค้าหมด)` : undefined}
       onClick={() => navigate(`/menus/${menu._id}`)}
     >
       <div className={`w-full ${mobileImgHeight} overflow-hidden relative bg-[#f0e6d8] dark:bg-[#3d2c2e] shrink-0`}>
-        <img 
-          src={imageUrl} 
-          alt={title} 
+        <img
+          src={imageUrl}
+          alt={title}
           onError={(e) => {
             e.currentTarget.onerror = null;
             const fallback = (menu.images && menu.images[1]) || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80";
             e.currentTarget.src = fallback;
           }}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+          className={`w-full h-full object-cover transition-transform duration-500 ${
+            soldOut ? 'grayscale opacity-60' : 'group-hover:scale-110'
+          }`}
         />
+
+        {/* ลายน้ำ "สินค้าหมด" */}
+        {soldOut && (
+          <div className="absolute inset-0 flex items-center justify-center bg-stone-900/15 pointer-events-none select-none">
+            <span className="-rotate-12 rounded-xl border-2 border-white/90 bg-stone-900/55 px-3 py-1 sm:px-5 sm:py-1.5 text-sm sm:text-lg font-black tracking-[0.2em] text-white shadow-lg backdrop-blur-[2px]">
+              สินค้าหมด
+            </span>
+          </div>
+        )}
         {/* Badges ขอบเมนู: แยกภูมิภาค และ ธาตุพร้อมโลโก้และสี Fill เด่นชัด อ่านง่าย */}
         <div className="absolute top-1.5 left-1.5 sm:top-2.5 sm:left-2.5 flex items-center gap-1 sm:gap-1.5 flex-wrap pointer-events-none">
           {regionName && (
@@ -131,7 +152,11 @@ export default function MenuCard({ menu, index = 0 }) {
 
       <div className="p-2.5 sm:p-4 flex flex-col flex-1 justify-between">
         <div>
-          <h4 className="text-[0.92rem] sm:text-[1.1rem] font-semibold text-[#3b2a1a] dark:text-[#f8f5f0] mb-1 line-clamp-1 group-hover:text-[#8b5e34] dark:group-hover:text-[#dcb37b] transition-colors">
+          <h4 className={`text-[0.92rem] sm:text-[1.1rem] font-semibold mb-1 line-clamp-1 transition-colors ${
+            soldOut
+              ? 'text-stone-500 dark:text-stone-400'
+              : 'text-[#3b2a1a] dark:text-[#f8f5f0] group-hover:text-[#8b5e34] dark:group-hover:text-[#dcb37b]'
+          }`}>
             {title}
           </h4>
           <p className="text-[11px] sm:text-sm opacity-70 mb-2 line-clamp-1 sm:line-clamp-2">
@@ -167,18 +192,35 @@ export default function MenuCard({ menu, index = 0 }) {
             </div>
           ) : null}
         </div>
-        
-        <div className="flex justify-between items-center sm:items-end border-t border-[#d4c5b0]/60 dark:border-[#755535]/60 pt-2 sm:pt-3 mt-auto">
-          <div className="text-[1rem] sm:text-[1.2rem] font-bold text-[#8b5e34] dark:text-[#dcb37b]">
-            ฿{menu.price}
+
+        <div className="flex justify-between items-center sm:items-end gap-2 border-t border-[#d4c5b0]/60 dark:border-[#755535]/60 pt-2 sm:pt-3 mt-auto">
+          <div className="min-w-0">
+            <div className={`text-[1rem] sm:text-[1.2rem] font-bold ${soldOut ? 'text-stone-400' : 'text-[#8b5e34] dark:text-[#dcb37b]'}`}>
+              ฿{menu.price}
+            </div>
+            {soldOut && stock.missing.length > 0 && (
+              <p className="truncate text-[10px] sm:text-[11px] text-stone-400" title={stock.missing.join(', ')}>
+                {formatMissing(stock.missing, 1)}
+              </p>
+            )}
           </div>
           {isAdmin ? (
             <span className="text-[10px] sm:text-xs font-bold text-[#8b5e34] dark:text-[#dcb37b] hover:underline">
               ดูเมนู &rarr;
             </span>
+          ) : soldOut ? (
+            <button
+              type="button"
+              disabled
+              onClick={(e) => e.stopPropagation()}
+              className="shrink-0 whitespace-nowrap bg-stone-200 dark:bg-stone-700 text-stone-500 dark:text-stone-300 px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-sm font-semibold cursor-not-allowed"
+              title="วัตถุดิบไม่เพียงพอ"
+            >
+              สินค้าหมด
+            </button>
           ) : (
-            <button 
-              className="bg-[#dcb37b] hover:bg-[#c99c60] text-[#3b2a1a] px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-lg flex justify-center items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-semibold transition-colors cursor-pointer active:scale-95 shadow-sm"
+            <button
+              className="shrink-0 bg-[#dcb37b] hover:bg-[#c99c60] text-[#3b2a1a] px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-lg flex justify-center items-center gap-1 sm:gap-1.5 text-xs sm:text-sm font-semibold transition-colors cursor-pointer active:scale-95 shadow-sm"
               onClick={(e) => {
                 e.stopPropagation();
                 if (handleAddToCart) {
