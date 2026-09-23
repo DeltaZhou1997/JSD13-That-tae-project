@@ -159,6 +159,7 @@ router.get("/:id", verifyToken, async (req, res, next) => {
 const handleRegister = async (req, res, next) => {
     try {
         const { firstName, lastName, name, email, password, phone, birthDate, gender, bloodType } = req.body;
+        const isAdminCaller = getOptionalUser(req)?.role === "admin";
 
         // แยกชื่อ-นามสกุล ถ้าส่ง name มาตัวเดียว
         let userFirstName = firstName?.trim();
@@ -218,7 +219,11 @@ const handleRegister = async (req, res, next) => {
                 ? [{ label: "บ้าน", address: deliveryAddress.street, subdistrict: deliveryAddress.subdistrict, district: deliveryAddress.district, province: deliveryAddress.province, zipcode: deliveryAddress.postalCode, phone: cleanPhone, isDefault: true }]
                 : [],
             // สร้างบัญชี admin ได้เฉพาะเมื่อผู้เรียกเป็น admin (กันคนทั่วไปส่ง role: "admin" มาสมัครเอง)
-            role: req.body.role === "admin" && getOptionalUser(req)?.role === "admin" ? "admin" : "customer",
+            role: req.body.role === "admin" && isAdminCaller ? "admin" : "customer",
+            // แอดมินกำหนดระดับสมาชิกตอนสร้างบัญชีได้ (ลูกค้าสมัครเองเริ่มที่ BRONZE เสมอ)
+            ...(isAdminCaller && req.body.tierStatus
+                ? { membership: { tier: String(req.body.tierStatus).toUpperCase() } }
+                : {}),
         });
 
         await newUser.save();
@@ -227,17 +232,7 @@ const handleRegister = async (req, res, next) => {
         return res.status(201).json({
             message: "ลงทะเบียนสมาชิกสำเร็จ",
             token,
-            user: {
-                id: newUser._id,
-                _id: newUser._id,
-                email: newUser.email,
-                firstName: newUser.firstName,
-                lastName: newUser.lastName,
-                role: newUser.role,
-                element: newUser.element,
-                points: newUser.points,
-                deliveryAddress: newUser.deliveryAddress,
-            },
+            user: toPublicUser(newUser),
         });
     } catch (err) {
         next(err);

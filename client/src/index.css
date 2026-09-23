@@ -12,6 +12,14 @@
 @keyframes modalPanelIn { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .modal-backdrop-enter { animation: modalBackdropIn .22s ease-out both; }
 .modal-panel-enter { animation: modalPanelIn .32s cubic-bezier(.22,1,.36,1) both; }
+/* ตอนปิด modal (ใช้คู่กับ useModalPresence ให้ค้างไว้จนเล่นจบก่อน unmount) */
+@keyframes modalBackdropOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes modalPanelOut { from { opacity: 1; transform: translateY(0) scale(1); } to { opacity: 0; transform: translateY(12px) scale(.96); } }
+.modal-backdrop-exit { animation: modalBackdropOut .2s ease-in both; }
+.modal-panel-exit { animation: modalPanelOut .2s cubic-bezier(.4,0,1,1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .modal-backdrop-enter, .modal-panel-enter, .modal-backdrop-exit, .modal-panel-exit { animation-duration: 1ms; }
+}
 @keyframes dashboardCardIn { from { opacity: 0; transform: translateY(18px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .dashboard-card-enter { animation: dashboardCardIn .55s cubic-bezier(.22,1,.36,1) both; }
 .dashboard-card-enter:nth-child(2) { animation-delay: .08s; }

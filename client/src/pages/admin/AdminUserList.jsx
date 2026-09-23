@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import AddUserModal from "../../components/admin/AddUserModal.jsx";
 import useToast from "../../hooks/useToast.js";
 import { getAuthHeaders } from "../../utils/authHeader.js";
 
@@ -25,20 +26,10 @@ export default function AdminUserList() {
   const [editFormData, setEditFormData] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
-  // State สำหรับ Modal เพิ่มผู้ใช้ใหม่
+  // State สำหรับ Modal เพิ่มผู้ใช้ใหม่ (ฟอร์มอยู่ใน AddUserModal)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newUserData, setNewUserData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "Password123!",
-    phone: "",
-    role: "customer",
-    tierStatus: "Bronze",
-    bloodType: "O",
-    gender: "female",
-    conditions: [],
-  });
+  const closeAddModal = useCallback(() => setIsAddModalOpen(false), []);
+  const handleUserCreated = useCallback((user) => setUsers((prev) => [user, ...prev]), []);
 
   // State ยืนยันการลบ
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
@@ -136,45 +127,6 @@ export default function AdminUserList() {
     }
   };
 
-  // สร้างผู้ใช้ใหม่
-  const handleCreateUser = async (e) => {
-    e.preventDefault();
-    setIsSaving(true);
-    try {
-      const res = await fetch(`${apiUrl}/api/v2/users`, {
-        method: "POST",
-        headers: getAuthHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify(newUserData),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.message || "ไม่สามารถสร้างผู้ใช้ใหม่ได้");
-      }
-
-      const created = await res.json();
-      setUsers((prev) => [created.user, ...prev]);
-      toast.success(`เพิ่มสมาชิกคุณ "${newUserData.firstName}" สำเร็จ`);
-      setIsAddModalOpen(false);
-      setNewUserData({
-        firstName: "",
-        lastName: "",
-        email: "",
-        password: "Password123!",
-        phone: "",
-        role: "customer",
-        tierStatus: "Bronze",
-        bloodType: "O",
-        gender: "female",
-        conditions: [],
-      });
-    } catch (err) {
-      toast.error(err.message || "ไม่สามารถสร้างผู้ใช้ใหม่ได้");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   // ยืนยันการลบผู้ใช้
   const handleConfirmDelete = async (id) => {
     try {
@@ -196,28 +148,16 @@ export default function AdminUserList() {
     }
   };
 
-  const toggleCondition = (condId, isNew = false) => {
-    if (isNew) {
-      setNewUserData((prev) => {
-        const exists = prev.conditions.includes(condId);
-        return {
-          ...prev,
-          conditions: exists
-            ? prev.conditions.filter((c) => c !== condId)
-            : [...prev.conditions, condId],
-        };
-      });
-    } else {
-      setEditFormData((prev) => {
-        const exists = prev.conditions.includes(condId);
-        return {
-          ...prev,
-          conditions: exists
-            ? prev.conditions.filter((c) => c !== condId)
-            : [...prev.conditions, condId],
-        };
-      });
-    }
+  const toggleCondition = (condId) => {
+    setEditFormData((prev) => {
+      const exists = prev.conditions.includes(condId);
+      return {
+        ...prev,
+        conditions: exists
+          ? prev.conditions.filter((c) => c !== condId)
+          : [...prev.conditions, condId],
+      };
+    });
   };
 
   return (
@@ -659,7 +599,7 @@ export default function AdminUserList() {
                         <input
                           type="checkbox"
                           checked={isChecked}
-                          onChange={() => toggleCondition(cond.id, false)}
+                          onChange={() => toggleCondition(cond.id)}
                           className="rounded text-[#4c1f08]"
                         />
                         {cond.label}
@@ -693,114 +633,11 @@ export default function AdminUserList() {
       {/* ─────────────────────────────────────────────────────────────
           Modal 2: เพิ่มสมาชิกใหม่ (Add User Modal)
       ────────────────────────────────────────────────────────────── */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs">
-          <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl border border-[#f1ead7] bg-white p-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#f1ead7] pb-4">
-              <h3 className="text-xl font-bold text-[#4c1f08]">เพิ่มบัญชีผู้ใช้งานใหม่</h3>
-              <button
-                type="button"
-                onClick={() => setIsAddModalOpen(false)}
-                className="grid h-8 w-8 place-items-center rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateUser} className="mt-4 space-y-4">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="block text-xs font-bold text-[#4c1f08] mb-1">ชื่อจริง *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newUserData.firstName}
-                    onChange={(e) => setNewUserData({ ...newUserData, firstName: e.target.value })}
-                    placeholder="เช่น วรัญญา"
-                    className="w-full rounded-xl border border-[#d9cbbd] p-2.5 text-sm focus:border-[#4c1f08] focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#4c1f08] mb-1">นามสกุล</label>
-                  <input
-                    type="text"
-                    value={newUserData.lastName}
-                    onChange={(e) => setNewUserData({ ...newUserData, lastName: e.target.value })}
-                    placeholder="เช่น จิตเจริญ"
-                    className="w-full rounded-xl border border-[#d9cbbd] p-2.5 text-sm focus:border-[#4c1f08] focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="block text-xs font-bold text-[#4c1f08] mb-1">อีเมล *</label>
-                  <input
-                    type="email"
-                    required
-                    value={newUserData.email}
-                    onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
-                    placeholder="user@example.com"
-                    className="w-full rounded-xl border border-[#d9cbbd] p-2.5 text-sm focus:border-[#4c1f08] focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#4c1f08] mb-1">รหัสผ่านเริ่มต้น *</label>
-                  <input
-                    type="text"
-                    required
-                    value={newUserData.password}
-                    onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
-                    className="w-full rounded-xl border border-[#d9cbbd] p-2.5 text-sm focus:border-[#4c1f08] focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="block text-xs font-bold text-[#4c1f08] mb-1">เบอร์โทรศัพท์ *</label>
-                  <input
-                    type="tel"
-                    required
-                    value={newUserData.phone}
-                    onChange={(e) => setNewUserData({ ...newUserData, phone: e.target.value })}
-                    placeholder="0812345678"
-                    className="w-full rounded-xl border border-[#d9cbbd] p-2.5 text-sm focus:border-[#4c1f08] focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#4c1f08] mb-1">สิทธิ์ (Role)</label>
-                  <select
-                    value={newUserData.role}
-                    onChange={(e) => setNewUserData({ ...newUserData, role: e.target.value })}
-                    className="w-full rounded-xl border border-[#d9cbbd] p-2.5 text-sm cursor-pointer"
-                  >
-                    <option value="customer">ลูกค้าสมาชิก (Customer)</option>
-                    <option value="admin">ผู้ดูแลระบบ (Admin)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2 border-t border-[#f1ead7] pt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="rounded-xl bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-300 cursor-pointer"
-                >
-                  ยกเลิก
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="rounded-xl bg-[#4c1f08] px-5 py-2 text-sm font-bold text-white hover:bg-[#6b3215] transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {isSaving ? "กำลังสร้าง..." : "สร้างสมาชิกใหม่"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <AddUserModal
+        open={isAddModalOpen}
+        onClose={closeAddModal}
+        onCreated={handleUserCreated}
+      />
     </div>
   );
 }
