@@ -2,14 +2,14 @@ import { Router } from "express";
 import { Ingredient } from "../../models/Ingredient.model.js";
 import { Product } from "../../models/Product.model.js";
 import { verifyToken, requireAdmin } from "./users.routes.js";
-import { getUnitFactor, roundQty } from "../../utils/units.js";
+import { convertQty } from "../../utils/units.js";
 
 const router = Router();
 
 /**
- * เมื่อหน่วยของวัตถุดิบเปลี่ยน ให้ปรับปริมาณในสูตรเมนูทุกเมนูที่ใช้วัตถุดิบนี้
- * - หน่วยกลุ่มเดียวกัน (g↔kg, ml↔l): แปลงปริมาณให้อัตโนมัติ
- * - คนละกลุ่ม (เช่น g → piece): แปลงไม่ได้ คืนรายชื่อเมนูให้แอดมินไปแก้สูตรเอง
+ * เมื่อหน่วยสต็อกของวัตถุดิบเปลี่ยน — สูตรเมนูเก็บปริมาณตามหน่วยที่เลือกเอง (เช่น 350 ml)
+ * และแปลงเป็นหน่วยสต็อกตอนเช็ก/ตัดสต็อกอยู่แล้ว จึงไม่ต้องแก้ตัวเลขในสูตร
+ * แค่คืนรายชื่อเมนูที่แปลงหน่วยไม่ได้ (เช่น สูตรใช้กรัม แต่สต็อกเปลี่ยนเป็นชิ้นโดยไม่ระบุน้ำหนักต่อชิ้น)
  */
 async function syncRecipeUnits(ingredient, oldUnit) {
   const newUnit = ingredient.unit || "g";
@@ -18,31 +18,18 @@ async function syncRecipeUnits(ingredient, oldUnit) {
   const id = String(ingredient._id);
   const products = await Product.find({
     $or: [{ "recipe.ingredient": ingredient._id }, { "recipe.ingredientId": id }],
-  }).select("recipe nameTh name");
+  }).select("recipe nameTh name").lean();
 
-  const factor = getUnitFactor(oldUnit, newUnit);
-  const affected = products.map((p) => p.nameTh || p.name);
+  const affected = products
+    .filter((p) =>
+      p.recipe.some((item) => {
+        const matches = String(item.ingredient || "") === id || String(item.ingredientId || "") === id;
+        return matches && convertQty(1, item.unit, newUnit, ingredient.gramsPerPiece ?? item.gramsPerPiece) === null;
+      }),
+    )
+    .map((p) => p.nameTh || p.name);
 
-  if (factor === null) {
-    return { from: oldUnit, to: newUnit, converted: false, affectedProducts: affected };
-  }
-
-  for (const product of products) {
-    const recipe = product.recipe.map((item) => {
-      const obj = item.toObject();
-      const matches = String(obj.ingredient || "") === id || String(obj.ingredientId || "") === id;
-      if (!matches) return obj;
-      return {
-        ...obj,
-        quantity: roundQty(Number(obj.quantity || 0) * factor),
-        unit: newUnit,
-      };
-    });
-    // updateOne ไม่รัน validator ของฟิลด์อื่นในเมนูเก่า
-    await Product.updateOne({ _id: product._id }, { $set: { recipe } });
-  }
-
-  return { from: oldUnit, to: newUnit, converted: true, factor, affectedProducts: affected };
+  return { from: oldUnit, to: newUnit, converted: affected.length === 0, affectedProducts: affected };
 }
 
 // =========================================================================

@@ -8,6 +8,7 @@ import { Cart } from "../../models/Cart.model.js";
 import { User } from "../../models/User.model.js";
 import { verifyToken, requireAdmin } from "./users.routes.js";
 import { priceOrder } from "../../utils/orderPricing.js";
+import { recipeQtyInStockUnit } from "../../utils/units.js";
 
 const router = Router();
 
@@ -58,21 +59,27 @@ async function adjustStockForOrder(items, direction = 1) {
 
         for (const recipeItem of product.recipe) {
           const ingId = recipeItem.ingredient || recipeItem.ingredientId;
-          const usedAmount = (Number(recipeItem.quantity) || 1) * qty;
-
-          const updateQuery = {
-            $inc: {
-              stockQuantity: -usedAmount,
-              currentStockGrams: -usedAmount,
-              [`regionalStocks.${targetRegion}`]: -usedAmount,
-            },
-          };
-
+          let ing = null;
           if (ingId && mongoose.Types.ObjectId.isValid(ingId)) {
-            await Ingredient.findByIdAndUpdate(ingId, updateQuery);
+            ing = await Ingredient.findById(ingId).select("unit gramsPerPiece").lean();
           } else if (recipeItem.nameTh) {
-            await Ingredient.findOneAndUpdate({ nameTh: recipeItem.nameTh }, updateQuery);
+            ing = await Ingredient.findOne({ nameTh: recipeItem.nameTh }).select("unit gramsPerPiece").lean();
           }
+          if (!ing) continue;
+
+          // ปริมาณในสูตรอาจเป็นคนละหน่วยกับสต็อก (เช่น สูตรใช้ ml แต่สต็อกเก็บเป็น g) → แปลงก่อนตัด
+          const usedAmount = recipeQtyInStockUnit(recipeItem, ing) * qty;
+
+          await Ingredient.updateOne(
+            { _id: ing._id },
+            {
+              $inc: {
+                stockQuantity: -usedAmount,
+                currentStockGrams: -usedAmount,
+                [`regionalStocks.${targetRegion}`]: -usedAmount,
+              },
+            },
+          );
         }
       }
     }

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { recipeQtyInStockUnit } from "../utils/units.js";
 
 const productSchema = new mongoose.Schema(
   {
@@ -104,7 +105,7 @@ const productSchema = new mongoose.Schema(
         ingredientId: { type: String },
         nameTh: { type: String },
         nameEn: { type: String },
-        // หน่วยตาม unit ของวัตถุดิบ (เช่น 0.5 kg) จึงรองรับทศนิยม
+        // หน่วยที่แอดมินเลือกในสูตร (อาจต่างจากหน่วยสต็อก เช่น 350 ml กับสต็อก g — แปลงตอนเช็ก/ตัดสต็อก) รองรับทศนิยม
         quantity: { type: Number, required: true, min: 0.001 },
         unit: { type: String, default: "g" },
         // น้ำหนักต่อ 1 ชิ้น (กรัม) กรณี unit = piece ใช้แปลงเป็นกรัมเพื่อคิดสารอาหารต่อ 100 g
@@ -223,7 +224,8 @@ productSchema.methods.checkStockAvailability = async function (orderQuantity = 1
       ing = await Ingredient.findOne({ nameTh: item.nameTh });
     }
 
-    const requiredAmount = (Number(item.quantity) || 1) * orderQuantity;
+    // แปลงปริมาณในสูตร (เช่น 350 ml) เป็นหน่วยสต็อกของวัตถุดิบ (เช่น g) ก่อนเทียบ
+    const requiredAmount = ing ? recipeQtyInStockUnit(item, ing) * orderQuantity : (Number(item.quantity) || 1) * orderQuantity;
     if (!ing) {
       missingOrInsufficient.push({
         ingredientName: item.nameTh || "ไม่ทราบชื่อ",
@@ -281,7 +283,8 @@ productSchema.methods.calculateAvailableKits = async function () {
     }
 
     // เดิม Math.max(1, ...) ทำให้ 0.05 kg ถูกนับเป็น 1 kg
-    const requiredPerKit = Number(item.quantity) > 0 ? Number(item.quantity) : 1;
+    const perKit = ing ? recipeQtyInStockUnit(item, ing) : Number(item.quantity);
+    const requiredPerKit = perKit > 0 ? perKit : 1;
     const regionStock = ing?.regionalStocks?.[targetRegion] !== undefined
       ? Number(ing.regionalStocks[targetRegion])
       : (ing?.stockQuantity ?? ing?.currentStockGrams ?? 0);

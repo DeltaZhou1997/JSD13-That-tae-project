@@ -17,3 +17,29 @@ export function getUnitFactor(from, to) {
   if (!a || !b || a.dimension !== b.dimension) return null;
   return a.toBase / b.toBase;
 }
+
+// น้ำหนักต่อ 1 หน่วย (กรัม) — ปริมาตรคิด 1 ml ≈ 1 g, ชิ้นใช้ gramsPerPiece
+const GRAMS_PER_UNIT = { g: 1, kg: 1000, ml: 1, l: 1000 };
+
+/**
+ * แปลงปริมาณในสูตรเมนู (หน่วยที่แอดมินเลือก) → หน่วยสต็อกของวัตถุดิบ
+ * ต้องตรงกับ convertQty ใน client/src/utils/units.js
+ * คืน null ถ้าแปลงไม่ได้ (เช่น ชิ้น ที่ไม่ทราบน้ำหนักต่อชิ้น)
+ */
+export function convertQty(qty, from, to, gramsPerPiece) {
+  const f = from || "g";
+  const t = to || "g";
+  if (f === t) return Number(qty) || 0;
+  const gpp = Number(gramsPerPiece) || 0;
+  const fromG = f === "piece" ? gpp : GRAMS_PER_UNIT[f];
+  const toG = t === "piece" ? gpp : GRAMS_PER_UNIT[t];
+  if (!fromG || !toG) return null;
+  return roundQty(((Number(qty) || 0) * fromG) / toG);
+}
+
+/** ปริมาณที่ต้องใช้ต่อ 1 ชุด ในหน่วยสต็อกของวัตถุดิบ (แปลงไม่ได้ → ใช้ตัวเลขเดิม) */
+export function recipeQtyInStockUnit(recipeItem, ingredient) {
+  const qty = Number(recipeItem?.quantity) || 0;
+  const converted = convertQty(qty, recipeItem?.unit, ingredient?.unit, ingredient?.gramsPerPiece ?? recipeItem?.gramsPerPiece);
+  return converted ?? qty;
+}

@@ -591,7 +591,7 @@ function IngredientForm() {
                 role="status"
               >
                 {unitConvertibleFromSaved
-                  ? `เปลี่ยนจาก ${getUnitInfo(originalUnit).label} เป็น ${unitInfo.label} — เมื่อบันทึก ระบบจะแปลงปริมาณในสูตรของทุกเมนูที่ใช้วัตถุดิบนี้ให้อัตโนมัติ`
+                  ? `เปลี่ยนจาก ${getUnitInfo(originalUnit).label} เป็น ${unitInfo.label} — สูตรเมนูที่ใช้วัตถุดิบนี้ยังใช้ได้ ระบบแปลงหน่วยให้อัตโนมัติตอนเช็กและตัดสต็อก`
                   : `เปลี่ยนจาก ${getUnitInfo(originalUnit).label} เป็น ${unitInfo.label} แปลงค่าให้ไม่ได้ — หลังบันทึกต้องไปแก้ปริมาณในสูตรของเมนูที่ใช้วัตถุดิบนี้เอง`}
               </p>
             )}

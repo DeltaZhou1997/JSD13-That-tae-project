@@ -8,7 +8,14 @@ import {
   regionMap,
   useProducts,
 } from "../../context/ProductsContext.js";
-import { NUTRIENT_BASIS_G, getUnitInfo, roundQty, toGrams } from "../../context/IngredientsContext.js";
+import {
+  NUTRIENT_BASIS_G,
+  convertQty,
+  getRecipeUnitOptions,
+  getUnitInfo,
+  roundQty,
+  toGrams,
+} from "../../context/IngredientsContext.js";
 import useToast from "../../hooks/useToast.js";
 
 // ปริมาณเริ่มต้นต่อชุดตามหน่วยของวัตถุดิบ
@@ -291,7 +298,12 @@ export default function ProductForm() {
           quantity: Number(r.quantity) || 100,
           unit: r.unit || "g",
           gramsPerPiece: Number(r.gramsPerPiece) || 0,
+          // เดิมโหลดแค่แคลอรี ทำให้แก้ไขเมนูแล้วโปรตีน/คาร์บ/ไขมัน/โซเดียมหายเป็น 0
           calories: Number(r.nutrientsPer100g?.calories) || 0,
+          protein: Number(r.nutrientsPer100g?.protein) || 0,
+          carbs: Number(r.nutrientsPer100g?.carbs) || 0,
+          fat: Number(r.nutrientsPer100g?.fat) || 0,
+          sodium: Number(r.nutrientsPer100g?.sodium) || 0,
           elements: r.elements || [],
           region: r.region || "ทั่วไป",
         }))
@@ -318,16 +330,23 @@ export default function ProductForm() {
 
     const targetId = target._id || target.id;
     const existingIndex = selectedIngredients.findIndex((s) => s.id === targetId);
+    const gramsPerPiece = Number(target.gramsPerPiece) || 0;
+
+    // หน่วยที่เลือกในสูตร ต้องแปลงกลับเป็นหน่วยสต็อกของวัตถุดิบได้
+    const allowedUnits = getRecipeUnitOptions(target.unit, gramsPerPiece).map((u) => u.value);
+    const unit = allowedUnits.includes(pickerUnit) ? pickerUnit : getUnitInfo(target.unit).value;
 
     // รองรับทศนิยม (เช่น 0.2 kg) — เดิม Math.max(1, ...) ทำให้ 0.2 kg กลายเป็น 1 kg
-    const qty = Number(pickerQty) > 0 ? roundQty(Number(pickerQty)) : (DEFAULT_QTY_BY_UNIT[target.unit] ?? 50);
+    const qty = Number(pickerQty) > 0 ? roundQty(Number(pickerQty)) : (DEFAULT_QTY_BY_UNIT[unit] ?? 50);
 
     if (existingIndex >= 0) {
-      // อัปเดตจำนวนถ้ามีอยู่แล้ว
+      // มีอยู่แล้ว → แปลงปริมาณที่เพิ่มเป็นหน่วยของรายการเดิมก่อนบวก
       setSelectedIngredients((prev) =>
-        prev.map((item, idx) =>
-          idx === existingIndex ? { ...item, quantity: roundQty(item.quantity + qty) } : item
-        )
+        prev.map((item, idx) => {
+          if (idx !== existingIndex) return item;
+          const added = convertQty(qty, unit, item.unit, item.gramsPerPiece) ?? 0;
+          return { ...item, quantity: roundQty(item.quantity + added) };
+        })
       );
     } else {
       // เพิ่มชิ้นใหม่
@@ -338,9 +357,11 @@ export default function ProductForm() {
           nameTh: target.nameTh,
           nameEn: target.nameEn,
           quantity: qty,
-          unit: target.unit || pickerUnit || "g",
+          unit,
+          // หน่วยสต็อกของวัตถุดิบ (ใช้แปลงปริมาณตอนเช็ก/ตัดสต็อก)
+          stockUnit: getUnitInfo(target.unit).value,
           // น้ำหนักต่อชิ้น (ใช้แปลงหน่วย "ชิ้น" เป็นกรัม)
-          gramsPerPiece: Number(target.gramsPerPiece) || 0,
+          gramsPerPiece,
           calories: Number(target.nutrientsPer100g?.calories) || 0,
           protein: Number(target.nutrientsPer100g?.protein) || 0,
           carbs: Number(target.nutrientsPer100g?.carbs) || 0,
@@ -352,7 +373,7 @@ export default function ProductForm() {
       ]);
     }
 
-    toast.success(`เพิ่ม "${target.nameTh}" ลงในเมนูแล้ว`);
+    toast.success(`เพิ่ม "${target.nameTh}" ${qty} ${getUnitInfo(unit).short} ลงในเมนูแล้ว`);
   };
 
   // ลบวัตถุดิบออกจากสูตร
@@ -400,11 +421,13 @@ export default function ProductForm() {
       const availableInRegion = Number(
         ing?.regionalStocks?.[targetRegion] ?? ing?.stockQuantity ?? ing?.currentStockGrams ?? 0,
       );
-      const requiredQty = Number(item.quantity) > 0 ? Number(item.quantity) : 1;
+      const stockUnit = ing?.unit || item.stockUnit || item.unit;
+      const converted = convertQty(item.quantity, item.unit, stockUnit, ing?.gramsPerPiece ?? item.gramsPerPiece);
+      const requiredQty = converted > 0 ? converted : 1;
       return {
         id: item.id,
         nameTh: item.nameTh,
-        unit: getUnitInfo(ing?.unit || item.unit).short,
+        unit: getUnitInfo(stockUnit).short,
         requiredQty,
         availableInRegion,
         possibleSets: Math.max(0, Math.floor(availableInRegion / requiredQty)),
@@ -551,7 +574,7 @@ export default function ProductForm() {
     // สร้าง text สำหรับ ingredients อัตโนมัติจากวัตถุดิบที่เลือก ถ้าไม่ได้พิมพ์เอง
     const ingredientsText =
       selectedIngredients.length > 0
-        ? selectedIngredients.map((i) => `${i.nameTh} ${i.quantity} ${i.unit}`).join("\n")
+        ? selectedIngredients.map((i) => `${i.nameTh} ${i.quantity} ${getUnitInfo(i.unit).short}`).join("\n")
         : formData.ingredients;
 
     // บันทึกธาตุเด่นที่คำนวณได้จากวัตถุดิบ (สอดคล้องกับ MenuDetail.jsx)
@@ -853,16 +876,22 @@ export default function ProductForm() {
                     />
                   </div>
 
-                  <div className="w-20">
+                  <div className="w-24">
                     <label className="block text-[11px] font-bold text-[#4c1f08] mb-1">
                       หน่วย
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={pickerUnit}
                       onChange={(e) => setPickerUnit(e.target.value)}
-                      className="w-full rounded-lg border border-[#d9cbbd] p-2 text-xs bg-gray-50"
-                    />
+                      className="w-full cursor-pointer rounded-lg border border-[#d9cbbd] bg-white p-2 text-xs text-[#4c1f08]"
+                    >
+                      {(() => {
+                        const target = availableIngredients.find((i) => (i._id || i.id) === pickerIngId);
+                        return getRecipeUnitOptions(target?.unit, target?.gramsPerPiece).map((u) => (
+                          <option key={u.value} value={u.value}>{u.short}</option>
+                        ));
+                      })()}
+                    </select>
                   </div>
 
                   <div className="flex items-end">
@@ -896,8 +925,13 @@ export default function ProductForm() {
                           <div className="flex items-center gap-2">
                             <span className="font-bold text-[#4c1f08]">{item.nameTh}</span>
                             <span className="rounded-md bg-[#f8ede3] px-2 py-0.5 text-[11px] font-semibold text-[#8b5e34]">
-                              {item.quantity} {item.unit}
+                              {item.quantity} {getUnitInfo(item.unit).short}
                             </span>
+                            {item.stockUnit && item.stockUnit !== item.unit && (
+                              <span className="text-[10px] text-stone-400">
+                                (≈ {convertQty(item.quantity, item.unit, item.stockUnit, item.gramsPerPiece) ?? "-"} {getUnitInfo(item.stockUnit).short} ในสต็อก)
+                              </span>
+                            )}
                             <span className="text-[11px] text-[#7a5c4d]">
                               (📍 {item.region})
                             </span>

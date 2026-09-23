@@ -25,6 +25,8 @@ export {
   getUnitInfo,
   roundQty,
   toGrams,
+  convertQty,
+  getRecipeUnitOptions,
 } from "../utils/units.js";
 import { NUTRIENT_BASIS_G, getUnitInfo } from "../utils/units.js";
 
