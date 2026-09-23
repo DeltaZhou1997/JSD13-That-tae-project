@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.js";
 import useToast from "../hooks/useToast.js";
 
@@ -7,8 +7,11 @@ function Login() {
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const toast = useToast();
+
+  const redirectPath = location.state?.from;
 
   const handleLogin = async (event) => { // จัดการ การเข้าระบบ และเทียบรหัสสผ่าน
     event.preventDefault();
@@ -38,8 +41,10 @@ function Login() {
         toast.success(
           `ยินดีต้อนรับคุณ ${data.user.firstName} (${data.user.role === "admin" ? "ผู้ดูแลระบบ" : "สมาชิก"})`,
         );
-        // หากเป็น Admin ให้นำทางตรงไปยังหน้าแผงควบคุม /admin/dashboard
-        navigate(data.user.role === "admin" ? "/admin/dashboard" : "/");
+        
+        // หากผู้ใช้เดิมตั้งใจไปหน้าที่ต้องล็อกอิน ให้นำทางกลับไปหน้านั้น หรือไปตาม Role
+        const destination = redirectPath || (data.user.role === "admin" ? "/admin/dashboard" : "/");
+        navigate(destination, { replace: true });
       } else {
         toast.error(data.message || "อีเมลหรือรหัสผ่านไม่ถูกต้อง");
       }
@@ -54,6 +59,17 @@ function Login() {
       <h2 className="text-2xl font-bold text-center text-[#4c1f08] mb-5">
         เข้าสู่ระบบ
       </h2>
+
+      {redirectPath && (
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-xl flex items-center gap-2">
+          <svg className="w-4 h-4 shrink-0 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <span>กรุณาเข้าสู่ระบบเพื่อดำเนินการต่อในหน้าที่ต้องการ</span>
+        </div>
+      )}
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
           <label className="block mb-1 font-medium text-[#4c1f08]">

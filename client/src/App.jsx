@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
-import { Layout } from './components/index.js'
+import { Layout, ProtectedRoute } from './components/index.js'
 
 import HomePage from "./pages/Home.jsx";
 
@@ -49,50 +49,58 @@ const router = createBrowserRouter([
         index: true,
         element: <HomePage />,
       },
+      // 🔒 โซนผู้ดูแลระบบ (Admin Only) — ป้องกันไม่ให้ลูกค้าทั่วไปหรือผู้ยังไม่ล็อกอินเข้าถึง
       {
         path: "admin",
-        element: <Navigate to="/admin/dashboard" replace />
+        element: <ProtectedRoute allowedRoles={["admin"]} />,
+        children: [
+          {
+            index: true,
+            element: <Navigate to="/admin/dashboard" replace />,
+          },
+          {
+            path: "dashboard",
+            element: <AdminDashboard />,
+          },
+          {
+            path: "orders",
+            element: <AdminOrderList />,
+          },
+          {
+            path: "users",
+            element: <AdminUserList />,
+          },
+          {
+            path: "products",
+            element: <AdminProductList />,
+          },
+          {
+            path: "products/new",
+            element: <ProductForm />,
+          },
+          {
+            path: "products/edit/:id",
+            element: <ProductForm />,
+          },
+          {
+            path: "ingredients",
+            element: <AdminIngredientList />,
+          },
+          {
+            path: "ingredients/new",
+            element: <IngredientForm />,
+          },
+          {
+            path: "ingredients/edit/:id",
+            element: <IngredientForm />,
+          },
+          {
+            path: "recipe-builder",
+            element: <AdminRecipeBuilder />,
+          },
+        ],
       },
-      {
-        path: "admin/dashboard",
-        element: <AdminDashboard />
-      },
-      {
-        path: "admin/orders",
-        element: <AdminOrderList />
-      },
-      {
-        path: "admin/users",
-        element: <AdminUserList />
-      },
-      {
-        path: "admin/products",
-        element: <AdminProductList />,
-      },
-      {
-        path: "admin/products/new",
-        element: <ProductForm />,
-      },
-      {
-        path: "admin/products/edit/:id",
-        element: <ProductForm />,
-      },
-      {
-        path: "admin/ingredients",
-        element: <AdminIngredientList />
-      },
-      {
-        path: "admin/ingredients/new",
-        element: <IngredientForm />
-      },
-      {
-        path: "admin/ingredients/edit/:id",
-        element: <IngredientForm />
-      },
-      {
-        path: "admin/recipe-builder",
-        element: <AdminRecipeBuilder />
-      },
+      // 🌐 เส้นทางสาธารณะ (Public Routes)
       {
         path: "login",
         element: <Login />,
@@ -101,9 +109,14 @@ const router = createBrowserRouter([
         path: "register",
         element: <Register />,
       },
+      // 🔒 เส้นทางสำหรับผู้ใช้งานที่เข้าสู่ระบบแล้วเท่านั้น (Protected User Routes)
       {
         path: "checkout",
-        element: <CheckoutPage />,
+        element: (
+          <ProtectedRoute>
+            <CheckoutPage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "order-success",
@@ -138,15 +151,27 @@ const router = createBrowserRouter([
       },
       {
         path: "orders",
-        element: <OrdersPage />,
+        element: (
+          <ProtectedRoute>
+            <OrdersPage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "profile",
-        element: <ProfilePage />,
+        element: (
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "profile/edit",
-        element: <ProfilePage />,
+        element: (
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "*",

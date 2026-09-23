@@ -292,7 +292,7 @@ export default function Navbar({ cartCount = 0 }) {
 
   const { currentUser, logout } = useAuth();
   const currentRole = currentUser?.role || "guest";
-  const isAdmin = currentRole === "admin" || location.pathname.startsWith("/admin");
+  const isAdmin = currentRole === "admin";
   const userElement = getUserElement(currentUser);
 
   const links = navigationByRole[currentRole] ?? navigationByRole.guest;

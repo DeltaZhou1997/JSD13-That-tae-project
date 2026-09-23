@@ -29,11 +29,6 @@ export function verifyToken(req, res, next) {
             : null) || req.cookies?.token;
 
     if (!token) {
-        // หากอยู่ในโหมด Dev และไม่ได้ส่ง token มา ให้ fallback เป็น admin เพื่อความราบรื่นในการทดสอบ
-        if (process.env.NODE_ENV !== "production") {
-            req.user = { id: "dev-admin", email: "admin@thattae.com", role: "admin", firstName: "DevAdmin" };
-            return next();
-        }
         return res.status(401).json({ message: "กรุณาเข้าสู่ระบบก่อนดำเนินการ" });
     }
 
@@ -42,10 +37,6 @@ export function verifyToken(req, res, next) {
         req.user = decoded; // { id, email, role, firstName }
         next();
     } catch (err) {
-        if (process.env.NODE_ENV !== "production") {
-            req.user = { id: "dev-admin", email: "admin@thattae.com", role: "admin", firstName: "DevAdmin" };
-            return next();
-        }
         return res.status(401).json({ message: "Token ไม่ถูกต้องหรือหมดอายุแล้ว" });
     }
 }
