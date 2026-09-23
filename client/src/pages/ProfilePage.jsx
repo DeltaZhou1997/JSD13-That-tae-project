@@ -284,27 +284,27 @@ export default function ProfilePage() {
       });
       const data = await res.json();
       if (res.ok && data.url) {
-        const fullAvatarUrl = data.url.startsWith("http") ? data.url : `${apiUrl}${data.url}`;
-        // บันทึกลง User model ใน MongoDB ทันที
-        const updateRes = await fetch(`${apiUrl}/api/v2/users/${userId}`, {
-          method: "PUT",
-          headers: getAuthHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify({ avatar: fullAvatarUrl }),
-        });
-        if (updateRes.ok) {
-          const updatedUserData = await updateRes.json();
-          updateUser(updatedUserData.user || { ...currentUser, avatar: fullAvatarUrl });
-          toast.success("อัปเดตรูปโปรไฟล์สำเร็จเรียบร้อย! 📸✨");
-        } else {
-          updateUser({ ...currentUser, avatar: fullAvatarUrl });
-          toast.success("อัปเดตรูปโปรไฟล์ชั่วคราวเรียบร้อย ✨");
+        // ลูกค้า: server บันทึก avatar ให้แล้วตอนอัปโหลด / admin: ต้องบันทึกเอง
+        // เก็บเป็น path relative ("/api/v2/images/<id>") ไม่ผูกกับโดเมน API
+        if (!data.avatarSaved) {
+          const updateRes = await fetch(`${apiUrl}/api/v2/users/${userId}`, {
+            method: "PUT",
+            headers: getAuthHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify({ avatar: data.url }),
+          });
+          if (!updateRes.ok) {
+            const errData = await updateRes.json().catch(() => ({}));
+            throw new Error(errData.message || "บันทึกรูปโปรไฟล์ลงระบบไม่สำเร็จ");
+          }
         }
+        updateUser({ avatar: data.url });
+        toast.success("อัปเดตรูปโปรไฟล์สำเร็จเรียบร้อย! 📸✨");
       } else {
         toast.error(data.message || "อัปโหลดรูปภาพไม่สำเร็จ");
       }
     } catch (err) {
       console.error("Avatar upload error:", err);
-      toast.error("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ");
+      toast.error(err.message || "เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ");
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -465,13 +465,10 @@ export default function ProfilePage() {
       setIsConfirmOpen(false);
       setIsEditModalOpen(false);
     } catch (err) {
-      console.warn("บันทึกลงเซิร์ฟเวอร์ไม่สำเร็จ ทำการอัปเดต Local State แทน:", err.message);
-      if (updateUser) {
-        updateUser({ ...currentUser, ...payload });
-      }
-      toast.success("บันทึกข้อมูลส่วนตัวเรียบร้อยแล้ว ✨");
+      // ไม่อัปเดตเฉพาะในเครื่อง — ไม่งั้นล็อกอินใหม่ข้อมูลจะกลับเป็นค่าเดิมจาก DB
+      console.warn("บันทึกลงเซิร์ฟเวอร์ไม่สำเร็จ:", err.message);
+      toast.error(err.message || "บันทึกข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
       setIsConfirmOpen(false);
-      setIsEditModalOpen(false);
     } finally {
       setSaving(false);
     }

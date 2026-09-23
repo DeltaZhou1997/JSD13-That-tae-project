@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+import { resolveImageField } from "../utils/imageUrl.js";
 export const CATEGORY_MAP = {
   meat: "เนื้อสัตว์ & โปรตีน",
   poultry: "สัตว์ปีก",
@@ -45,6 +46,7 @@ export function normalizeIngredient(item) {
         ? DEFAULT_LOW_STOCK_GRAMS
         : Number(item.lowStockThresholdGrams),
     isActive: item?.isActive !== false,
+    imageUrl: resolveImageField(item?.imageUrl),
   };
 }
 

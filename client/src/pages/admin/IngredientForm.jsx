@@ -37,6 +37,49 @@ const ELEMENT_COLORS = {
   ไฟ: "bg-red-600",
 };
 
+const ELEMENT_THEMES = {
+  ดิน: {
+    name: "ธาตุดิน",
+    title: "ปถวีธาตุ",
+    color: "text-amber-900",
+    badgeBg: "bg-amber-100 text-amber-900 border-amber-300",
+    gradient: "from-amber-500/20 via-amber-100/50 to-amber-50/80 border-amber-300",
+    iconBg: "bg-amber-700 text-white shadow-amber-700/20",
+    ring: "ring-amber-500/20",
+    desc: "บำรุงโครงสร้าง เนื้อ เอ็น ข้อกระดูก",
+  },
+  น้ำ: {
+    name: "ธาตุน้ำ",
+    title: "อาโปธาตุ",
+    color: "text-sky-900",
+    badgeBg: "bg-sky-100 text-sky-900 border-sky-300",
+    gradient: "from-sky-500/20 via-sky-100/50 to-sky-50/80 border-sky-300",
+    iconBg: "bg-sky-600 text-white shadow-sky-600/20",
+    ring: "ring-sky-500/20",
+    desc: "บำรุงเลือด น้ำดี ของเหลว ขับเสมหะ",
+  },
+  ลม: {
+    name: "ธาตุลม",
+    title: "วาโยธาตุ",
+    color: "text-emerald-900",
+    badgeBg: "bg-emerald-100 text-emerald-900 border-emerald-300",
+    gradient: "from-emerald-500/20 via-emerald-100/50 to-emerald-50/80 border-emerald-300",
+    iconBg: "bg-emerald-600 text-white shadow-emerald-600/20",
+    ring: "ring-emerald-500/20",
+    desc: "กระจายลม กระตุ้นไหลเวียน บำรุงหัวใจ",
+  },
+  ไฟ: {
+    name: "ธาตุไฟ",
+    title: "เตโชธาตุ",
+    color: "text-rose-900",
+    badgeBg: "bg-rose-100 text-rose-900 border-rose-300",
+    gradient: "from-rose-500/20 via-rose-100/50 to-rose-50/80 border-rose-300",
+    iconBg: "bg-rose-600 text-white shadow-rose-600/20",
+    ring: "ring-rose-500/20",
+    desc: "ปรับสมดุลความร้อน ดับพิษไข้ ถอนพิษร้อน",
+  },
+};
+
 function ElementIcon({ element, className = "h-10 w-10" }) {
   const paths = {
     ดิน: "m8 3 4 8 5-5 5 15H2L8 3z",
@@ -377,7 +420,7 @@ function IngredientForm() {
       expiryDate: formData.expiryDate || undefined,
       imageUrl: formData.imageUrl || "",
       imageId: formData.imageId || null,
-      isActive: formData.isActive,
+      isActive: formData.isActive !== false,
     };
 
     if (isEditMode) {
@@ -566,37 +609,210 @@ function IngredientForm() {
           </div>
 
 
-          <div>
-            <span className={labelClass}>
-              รสยา (เลือกได้หลายรส) <span className="text-red-500">*</span>
-            </span>
-            <div className="flex flex-wrap gap-3 rounded border border-[#f1ead7] p-3">
-              {MEDICINAL_TASTES.map((taste) => (
-                <label
-                  key={taste}
-                  className="flex cursor-pointer items-center gap-1.5 text-sm text-[#6b3215]"
-                >
-                  <input
-                    type="checkbox"
-                    checked={formData.medicinalTastes.includes(taste)}
-                    onChange={() => toggleInList("medicinalTastes", taste)}
-                  />
-                  {taste}
-                </label>
-              ))}
+          {/* ──────────────────────────────────────────────────────────
+              รสยา (Medicinal Tastes) - จัดกลุ่มตามธาตุพร้อมข้อมูลเภสัชกรรมไทย
+              ────────────────────────────────────────────────────────── */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className={labelClass}>
+                รสยาตามหลักเภสัชกรรมไทย (เลือกอย่างน้อย 1 รส) <span className="text-red-500">*</span>
+              </span>
+              <span className="text-xs text-[#8d593a] font-medium">
+                เลือกแล้ว: <strong className="text-[#4c1f08]">{formData.medicinalTastes.length}</strong> รส
+              </span>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                {
+                  element: "ดิน",
+                  icon: "ดิน",
+                  title: "ปถวีธาตุ (ธาตุดิน)",
+                  desc: "บำรุงโครงสร้าง เนื้อ เอ็น กระดูก สมานแผล",
+                  tastes: ["รสฝาด", "รสหวาน", "รสมัน", "รสเค็ม"],
+                  bgClass: "bg-amber-50/70 border-amber-200 hover:border-amber-400",
+                  headerColor: "text-amber-900",
+                  activeTasteBg: "bg-amber-700 text-white border-amber-700 shadow-xs",
+                  inactiveTasteBg: "bg-white text-amber-900 border-amber-200 hover:bg-amber-100/60",
+                },
+                {
+                  element: "น้ำ",
+                  icon: "น้ำ",
+                  title: "อาโปธาตุ (ธาตุน้ำ)",
+                  desc: "ของเหลว เลือด น้ำดี ขับเสมหะ ฟอกโลหิต",
+                  tastes: ["รสเปรี้ยว", "รสขม"],
+                  bgClass: "bg-sky-50/70 border-sky-200 hover:border-sky-400",
+                  headerColor: "text-sky-900",
+                  activeTasteBg: "bg-sky-700 text-white border-sky-700 shadow-xs",
+                  inactiveTasteBg: "bg-white text-sky-900 border-sky-200 hover:bg-sky-100/60",
+                },
+                {
+                  element: "ลม",
+                  icon: "ลม",
+                  title: "วาโยธาตุ (ธาตุลม)",
+                  desc: "กระจายลม กระตุ้นไหลเวียน บำรุงหัวใจ",
+                  tastes: ["รสเผ็ดร้อน", "รสหอมเย็น"],
+                  bgClass: "bg-emerald-50/70 border-emerald-200 hover:border-emerald-400",
+                  headerColor: "text-emerald-900",
+                  activeTasteBg: "bg-emerald-700 text-white border-emerald-700 shadow-xs",
+                  inactiveTasteBg: "bg-white text-emerald-900 border-emerald-200 hover:bg-emerald-100/60",
+                },
+                {
+                  element: "ไฟ",
+                  icon: "ไฟ",
+                  title: "เตโชธาตุ (ธาตุไฟ)",
+                  desc: "ลดความร้อน ดับพิษไข้ ถอนพิษร้อน",
+                  tastes: ["รสจืด"],
+                  bgClass: "bg-rose-50/70 border-rose-200 hover:border-rose-400",
+                  headerColor: "text-rose-900",
+                  activeTasteBg: "bg-rose-700 text-white border-rose-700 shadow-xs",
+                  inactiveTasteBg: "bg-white text-rose-900 border-rose-200 hover:bg-rose-100/60",
+                },
+              ].map((grp) => {
+                const isDominant = preview.dominantElement === grp.element;
+                return (
+                  <div
+                    key={grp.element}
+                    className={`rounded-2xl border p-3.5 transition-all flex flex-col justify-between ${grp.bgClass} ${
+                      isDominant ? "ring-2 ring-[#4c1f08]/30 shadow-xs" : ""
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="grid h-7 w-7 place-items-center rounded-lg bg-white/80 text-stone-700 shadow-2xs">
+                            <ElementIcon element={grp.icon} className="h-4 w-4" />
+                          </span>
+                          <span className={`text-xs font-bold ${grp.headerColor}`}>
+                            {grp.title}
+                          </span>
+                        </div>
+                        {isDominant && (
+                          <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-[#4c1f08] text-white">
+                            ธาตุเด่น
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-[#7a5c4d] mb-3 leading-snug">
+                        {grp.desc}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {grp.tastes.map((taste) => {
+                        const isChecked = formData.medicinalTastes.includes(taste);
+                        return (
+                          <button
+                            key={taste}
+                            type="button"
+                            onClick={() => toggleInList("medicinalTastes", taste)}
+                            className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
+                              isChecked ? grp.activeTasteBg : grp.inactiveTasteBg
+                            }`}
+                          >
+                            {isChecked ? "✓ " : ""}{taste}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
             {errors.medicinalTastes && (
-              <p className="mt-1 text-sm text-red-500">{errors.medicinalTastes}</p>
+              <p className="mt-1 text-sm text-red-500 font-medium">{errors.medicinalTastes}</p>
             )}
           </div>
 
-
-          <div className="rounded-2xl border border-dashed border-[#d9b78d] bg-[#fff9f0] p-4 text-sm text-[#6b3215]">
-            <div className="flex items-center gap-2 font-semibold text-[#4c1f08]">
-              <ElementIcon element={getElementFromMedicinalTastes(formData.medicinalTastes)} className="h-5 w-5" />
-              ธาตุคำนวณอัตโนมัติจากรสยา
+          {/* ──────────────────────────────────────────────────────────
+              การเลือก / ประเมินธาตุเจ้าเรือน (SVG Card Selector)
+              ────────────────────────────────────────────────────────── */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className={labelClass}>
+                ธาตุเจ้าเรือนของวัตถุดิบ (คำนวณจากรสยาอัตโนมัติ หรือคลิกเลือกธาตุ)
+              </span>
+              <span className="text-xs text-[#8d593a]">
+                ธาตุที่จะถูกบันทึกลงระบบ: <strong className="text-[#4c1f08]">ธาตุ{preview.dominantElement}</strong>
+              </span>
             </div>
-            <p className="mt-1 text-xs">ระบบจะบันทึกธาตุ{getElementFromMedicinalTastes(formData.medicinalTastes)} เป็นธาตุหลักเมื่อกดบันทึก ไม่ต้องเลือกเอง</p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {[
+                { key: "ดิน", label: "ธาตุดิน", sub: "ปถวีธาตุ", color: "from-amber-600 to-amber-800", border: "border-amber-400 bg-amber-50" },
+                { key: "น้ำ", label: "ธาตุน้ำ", sub: "อาโปธาตุ", color: "from-sky-500 to-sky-700", border: "border-sky-400 bg-sky-50" },
+                { key: "ลม", label: "ธาตุลม", sub: "วาโยธาตุ", color: "from-emerald-500 to-emerald-700", border: "border-emerald-400 bg-emerald-50" },
+                { key: "ไฟ", label: "ธาตุไฟ", sub: "เตโชธาตุ", color: "from-rose-500 to-rose-700", border: "border-rose-400 bg-rose-50" },
+              ].map(({ key, label, sub, border }) => {
+                const isSelected = preview.dominantElement === key;
+                const percent = previewPercentages[key] || 0;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => {
+                      // เมื่อคลิกธาตุ จะช่วยตั้งค่ารสยาเริ่มต้นของธาตุนั้นให้โดยอัตโนมัติหากยังไม่มี
+                      const defaultTastesByElem = {
+                        ดิน: "รสหวาน",
+                        น้ำ: "รสเปรี้ยว",
+                        ลม: "รสเผ็ดร้อน",
+                        ไฟ: "รสจืด",
+                      };
+                      if (!formData.medicinalTastes.some(t => {
+                        const elem = getElementFromMedicinalTastes([t]);
+                        return elem === key;
+                      })) {
+                        toggleInList("medicinalTastes", defaultTastesByElem[key]);
+                      }
+                    }}
+                    className={`group relative flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all cursor-pointer text-center ${
+                      isSelected
+                        ? `${border} shadow-md scale-[1.02] ring-2 ring-[#4c1f08]/20`
+                        : "border-[#f1ead7] bg-white hover:border-[#dfd1c1] hover:bg-[#fffbf7]"
+                    }`}
+                  >
+                    {/* SVG Icon พร้อมวงแหวนสีประจำธาตุ */}
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-2 transition-transform group-hover:scale-110 ${
+                      isSelected ? "bg-[#4c1f08] text-white shadow-xs" : "bg-[#f5ece2] text-[#8d593a]"
+                    }`}>
+                      <ElementIcon element={key} className="w-6 h-6" />
+                    </div>
+
+                    <div className="font-extrabold text-sm text-[#4c1f08]">{label}</div>
+                    <div className="text-[11px] text-[#8d593a]">{sub}</div>
+
+                    {/* Progress Bar คะแนนธาตุ */}
+                    <div className="w-full mt-2.5">
+                      <div className="flex justify-between text-[10px] text-stone-500 mb-0.5">
+                        <span>สัดส่วน</span>
+                        <span className="font-bold text-[#4c1f08]">{percent}%</span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-[#f1ead7] overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${ELEMENT_COLORS[key]}`}
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Badge แสดงสถานะธาตุเด่น */}
+                    {isSelected && (
+                      <span className="absolute -top-2.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-[#4c1f08] text-white shadow-xs">
+                        ✓ ธาตุประจำวัตถุดิบ
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="text-xs text-[#8d593a] bg-[#fffaf5] border border-[#f1ead7] rounded-xl p-2.5 flex items-center gap-2">
+              <span className="text-base">💡</span>
+              <span>
+                <strong>หลักเภสัชกรรมไทย:</strong> วัตถุดิบแต่ละชนิดจะมี <strong>ธาตุเด่นเพียง 1 ธาตุ</strong> โดยระบบคำนวณจากรสยาประธาน เมื่อกด <strong>บันทึกวัตถุดิบ</strong> ระบบจะบันทึกธาตุ <strong>{preview.dominantElement}</strong> ลงฐานข้อมูลจริงให้อัตโนมัติ
+              </span>
+            </p>
           </div>
 
 
@@ -746,16 +962,7 @@ function IngredientForm() {
           </div>
 
 
-          <label className="flex cursor-pointer items-center gap-2 text-[#4c1f08]">
-            <input
-              type="checkbox"
-              checked={formData.isActive}
-              onChange={(event) =>
-                setFormData((prev) => ({ ...prev, isActive: event.target.checked }))
-              }
-            />
-            เปิดใช้งานวัตถุดิบนี้ใน Recipe Builder
-          </label>
+
 
 
           <div className="flex gap-4 pt-4">
@@ -777,55 +984,97 @@ function IngredientForm() {
       </div>
 
 
-      <aside className="h-fit rounded-lg border border-[#f1ead7] bg-[#fff8f5] p-5 shadow-sm lg:sticky lg:top-28">
-        <h2 className="mb-1 font-bold text-[#4c1f08]">พรีวิวผลต่อสูตร</h2>
-        <p className="mb-4 text-xs text-[#6b3215]">
-          ถ้าใส่วัตถุดิบนี้ 100 กรัม ระบบจะประเมินธาตุและโภชนาการดังนี้
-        </p>
-
-        <div className="mb-4 rounded bg-white p-3">
-          <p className="text-sm text-[#6b3215]">ธาตุเด่นที่ประเมินได้</p>
-          <div className="mt-2 flex items-center gap-3">
-            <span
-              className="relative grid h-16 w-16 place-items-center rounded-full text-[#8b5e34]"
-              style={{ background: `conic-gradient(#b87945 ${previewPercentages[preview.dominantElement]}%, #f1ead7 0)` }}
-            >
-              <span className="grid h-11 w-11 place-items-center rounded-full bg-[#fffaf6]">
-              <ElementIcon element={preview.dominantElement} />
-              </span>
-            </span>
-            <div>
-              <p className="text-xl font-bold text-[#4c1f08]">ธาตุ{preview.dominantElement}</p>
-              <p className="text-xs text-[#8b5e34]">จากรสยา: {formData.medicinalTastes.join(" · ") || "ยังไม่ได้เลือกรสยา"}</p>
-            </div>
+      <aside className="h-fit rounded-2xl border border-[#f1ead7] bg-white p-5 shadow-sm lg:sticky lg:top-28">
+        <div className="flex items-center justify-between pb-3 border-b border-[#f5ede3] mb-4">
+          <div>
+            <h2 className="font-bold text-[#4c1f08] text-base">พรีวิววัตถุดิบ (ต่อ 100g)</h2>
+            <p className="text-xs text-[#8d593a]">ประเมินธาตุเดี่ยวจากรสยา & สรุปโภชนาการ</p>
           </div>
+          <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#f4ece3] text-[#6b3215]">
+            1 ชนิด : 1 ธาตุ
+          </span>
         </div>
 
-        <div className="mb-4 space-y-2">
-          {ELEMENTS.map((element) => (
-            <div key={element}>
-              <div className="mb-0.5 flex justify-between text-xs text-[#6b3215]">
-                <span>ธาตุ{element}</span>
-                <span>{previewPercentages[element]}%</span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-[#f1ead7]">
+        {/* ──────────────────────────────────────────────────────────
+            การ์ดแสดงผลธาตุเดี่ยว (Single Element Card) พร้อม Transition
+            ────────────────────────────────────────────────────────── */}
+        {(() => {
+          const domElem = preview.dominantElement || "ดิน";
+          const theme = ELEMENT_THEMES[domElem] || ELEMENT_THEMES.ดิน;
+          const tastesText = formData.medicinalTastes.join(" · ") || "ยังไม่ได้เลือกรสยา";
+          const hasTastes = formData.medicinalTastes.length > 0;
+
+          return (
+            <div
+              key={domElem}
+              className={`relative overflow-hidden rounded-2xl border-2 p-4 mb-4 transition-all duration-300 transform bg-gradient-to-br ${theme.gradient} shadow-xs ring-4 ${theme.ring}`}
+            >
+              <div className="flex items-start gap-3.5">
+                {/* SVG Icon ประจำธาตุเด่น */}
                 <div
-                  className={`h-full ${ELEMENT_COLORS[element]} transition-all`}
-                  style={{ width: `${previewPercentages[element]}%` }}
-                />
+                  className={`w-13 h-13 rounded-2xl flex items-center justify-center shrink-0 shadow-md transition-transform duration-300 hover:scale-105 ${theme.iconBg}`}
+                >
+                  <ElementIcon element={domElem} className="w-7 h-7" />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-[11px] font-bold text-[#8d593a]">{theme.title}</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${theme.badgeBg}`}>
+                      ธาตุเดี่ยว 100%
+                    </span>
+                  </div>
+
+                  <h3 className={`text-xl font-extrabold tracking-tight ${theme.color} leading-snug mt-0.5`}>
+                    {theme.name}
+                  </h3>
+
+                  <p className="text-xs text-[#6b3215]/90 mt-1 line-clamp-1 font-medium">
+                    {theme.desc}
+                  </p>
+                </div>
+              </div>
+
+              {/* แถบรสยาที่ส่งผลต่อธาตุนี้ */}
+              <div className="mt-3 pt-2.5 border-t border-black/5 flex items-center justify-between text-xs">
+                <span className="text-stone-500 font-medium">คำนวณจากรสยา:</span>
+                <span className={`font-bold truncate max-w-[150px] text-right ${hasTastes ? "text-[#4c1f08]" : "text-stone-400 italic"}`}>
+                  {tastesText}
+                </span>
               </div>
             </div>
-          ))}
-        </div>
+          );
+        })()}
 
-        <dl className="space-y-1 text-sm text-[#6b3215]">
-          {NUTRIENT_KEYS.map((key) => (
-            <div key={key} className="flex justify-between">
-              <dt>{NUTRIENT_LABELS[key]}</dt>
-              <dd className="font-medium text-[#4c1f08]">{preview.totals[key]}</dd>
-            </div>
-          ))}
-        </dl>
+        {/* ──────────────────────────────────────────────────────────
+            ตารางสรุปคุณค่าทางโภชนาการ (Clean & Compact)
+            ────────────────────────────────────────────────────────── */}
+        <div className="rounded-xl border border-[#f5ece3] bg-[#fffbf8] p-3">
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#f0e4d7] text-xs font-bold text-[#4c1f08]">
+            <span>สารอาหาร</span>
+            <span>ปริมาณ / 100g</span>
+          </div>
+
+          <dl className="space-y-1.5 text-xs text-[#6b3215]">
+            {NUTRIENT_KEYS.map((key) => {
+              const val = preview.totals[key] || 0;
+              const isCalories = key === "calories";
+              return (
+                <div
+                  key={key}
+                  className={`flex justify-between items-center py-0.5 ${
+                    isCalories ? "font-bold text-[#4c1f08] border-b border-[#f0e4d7]/60 pb-1" : ""
+                  }`}
+                >
+                  <dt className="text-stone-600">{NUTRIENT_LABELS[key]}</dt>
+                  <dd className={`font-medium ${isCalories ? "text-sm text-[#4c1f08]" : "text-stone-800"}`}>
+                    {val}
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
+        </div>
       </aside>
     </div>
   );

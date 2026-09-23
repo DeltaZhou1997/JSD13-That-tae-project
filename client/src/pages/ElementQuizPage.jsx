@@ -97,62 +97,63 @@ export default function ElementQuizPage() {
     setResultElement(topElement);
     setQuizStage("result");
 
-    // บันทึกลงใน localStorage เสมอ
-    try {
-      localStorage.setItem("userElement", elementTh);
-      localStorage.setItem(
-        "quizResult",
-        JSON.stringify({
-          id: topElement,
-          element: elementTh,
-          timestamp: new Date().toISOString(),
-          answers,
-        })
-      );
-    } catch (e) {
-      console.error("Failed to save quizResult to localStorage:", e);
+    // Guest: เก็บผลไว้ในเครื่อง (ล้างอัตโนมัติตอน logout)
+    if (!currentUser) {
+      try {
+        localStorage.setItem("userElement", elementTh);
+        localStorage.setItem(
+          "quizResult",
+          JSON.stringify({
+            id: topElement,
+            element: elementTh,
+            timestamp: new Date().toISOString(),
+            answers,
+          })
+        );
+      } catch (e) {
+        console.error("Failed to save quizResult to localStorage:", e);
+      }
+      return;
     }
 
-    // ถ้าผู้ใช้ล็อกอินอยู่ ให้บันทึกธาตุเจ้าเรือนลงระบบ (API + AuthContext)
-    if (currentUser) {
-      try {
-        updateUser({ element: elementTh, bodyElement: elementTh });
+    // ผู้ใช้ล็อกอินอยู่: บันทึกธาตุเจ้าเรือนลงฐานข้อมูล แล้วค่อยอัปเดต AuthContext ตามค่าที่ DB ยืนยัน
+    try {
+      const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
+      const userId = currentUser.id || currentUser._id;
+      const res = await fetch(`${apiUrl}/api/v2/users/${userId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({
+          element: elementTh,
+          bodyElement: elementTh,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
 
-        const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
-        const userId = currentUser.id || currentUser._id;
-        const res = await fetch(`${apiUrl}/api/v2/users/${userId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-          },
-          body: JSON.stringify({
-            element: elementTh,
-            bodyElement: elementTh,
-          }),
-        });
-
-        if (res.ok) {
-          setIsSavedToBackend(true);
-          toast.success(
-            `บันทึกธาตุเจ้าเรือน (ธาตุ${elementTh}) ลงในระบบของคุณเรียบร้อยแล้ว`
-          );
-        } else {
-          setIsSavedToBackend(true);
-          toast.success(`บันทึกธาตุเจ้าเรือน (ธาตุ${elementTh}) เรียบร้อยแล้ว`);
-        }
-
-        // สมาชิกใหม่จากการสมัคร (quiz ครั้งแรก) → redirect ไปหน้าเมนูอัตโนมัติ
-        // ถ้าเป็น retake (shouldRedirectAfterQuiz = false แล้ว) จะไม่ redirect
-        if (shouldRedirectAfterQuiz) {
-          setTimeout(() => {
-            navigate(`/menus?element=${topElement}`, { replace: true });
-          }, 2800);
-        }
-      } catch (err) {
-        console.error("Error saving element to backend:", err);
-        setIsSavedToBackend(false);
+      if (!res.ok) {
+        throw new Error(data.message || `HTTP ${res.status}`);
       }
+
+      updateUser(data.user || { element: elementTh, bodyElement: elementTh });
+      setIsSavedToBackend(true);
+      toast.success(
+        `บันทึกธาตุเจ้าเรือน (ธาตุ${elementTh}) ลงในระบบของคุณเรียบร้อยแล้ว`
+      );
+
+      // สมาชิกใหม่จากการสมัคร (quiz ครั้งแรก) → redirect ไปหน้าเมนูอัตโนมัติ
+      // ถ้าเป็น retake (shouldRedirectAfterQuiz = false แล้ว) จะไม่ redirect
+      if (shouldRedirectAfterQuiz) {
+        setTimeout(() => {
+          navigate(`/menus?element=${topElement}`, { replace: true });
+        }, 2800);
+      }
+    } catch (err) {
+      console.error("Error saving element to backend:", err);
+      setIsSavedToBackend(false);
+      toast.error(`บันทึกธาตุเจ้าเรือนลงระบบไม่สำเร็จ (${err.message}) กรุณาทำแบบทดสอบใหม่อีกครั้ง`);
     }
   };
 

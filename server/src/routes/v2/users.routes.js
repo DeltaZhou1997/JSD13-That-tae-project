@@ -20,6 +20,18 @@ function generateToken(user) {
     );
 }
 
+// ข้อมูลผู้ใช้ที่ส่งกลับให้ Frontend (ใช้รูปแบบเดียวกันทั้ง login / me / update)
+// เดิม login ส่งไปแค่บางฟิลด์ (ไม่มี avatar, bodyElement) ทำให้ล็อกอินใหม่แล้วรูป/ข้อมูลหาย
+function toPublicUser(user) {
+    if (!user) return null;
+    const obj = typeof user.toObject === "function" ? user.toObject() : { ...user };
+    delete obj.password;
+    return { ...obj, id: obj._id };
+}
+
+const ALLOWED_ELEMENTS = ["ดิน", "earth", "น้ำ", "water", "ลม", "wind", "air", "ไฟ", "fire", ""];
+const ELEMENT_TO_TH = { earth: "ดิน", water: "น้ำ", wind: "ลม", air: "ลม", fire: "ไฟ" };
+
 // Middleware 1: ตรวจสอบว่าล็อกอินหรือยัง
 export function verifyToken(req, res, next) {
     const authHeader = req.headers.authorization;
@@ -57,7 +69,7 @@ export function requireAdmin(req, res, next) {
 router.get("/", verifyToken, requireAdmin, async (req, res, next) => {
     try {
         const users = await User.find().select("-password").lean();
-        return res.status(200).json(users);
+        const mapped = users.map(u => ({ ...u, id: u._id, tierStatus: u.membership?.tier ? (u.membership.tier.charAt(0) + u.membership.tier.slice(1).toLowerCase()) : (u.tierStatus || "Bronze"), conditions: u.restrictions || u.conditions || [], biaPoints: u.points || 0 })); return res.status(200).json(mapped);
     } catch (err) {
         next(err);
     }
@@ -70,7 +82,7 @@ router.get("/me", verifyToken, async (req, res, next) => {
         if (!user) {
             return res.status(404).json({ message: "ไม่พบข้อมูลผู้ใช้ในระบบ" });
         }
-        return res.status(200).json({ user });
+        return res.status(200).json({ user: toPublicUser(user) });
     } catch (err) {
         next(err);
     }
@@ -288,15 +300,7 @@ router.post("/login", async (req, res, next) => {
         return res.status(200).json({
             message: "เข้าสู่ระบบสำเร็จ",
             token,
-            user: {
-                id: user._id,
-                email: user.email,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                role: user.role,
-                element: user.element,
-                points: user.points,
-            },
+            user: toPublicUser(user),
         });
     } catch (err) {
         next(err);
@@ -321,6 +325,17 @@ router.put("/:id", verifyToken, async (req, res, next) => {
         }
         delete updateData.password; // ถ้าจะเปลี่ยนรหัสผ่านควรแยก endpoint
 
+        // ธาตุเจ้าเรือน: ตรวจค่าและเก็บเป็นภาษาไทยเสมอ ให้ element กับ bodyElement ตรงกัน
+        if (updateData.element !== undefined || updateData.bodyElement !== undefined) {
+            const rawElement = String(updateData.element ?? updateData.bodyElement ?? "").trim();
+            if (!ALLOWED_ELEMENTS.includes(rawElement)) {
+                return res.status(400).json({ message: `ธาตุ "${rawElement}" ไม่ถูกต้อง` });
+            }
+            const elementTh = ELEMENT_TO_TH[rawElement] || rawElement;
+            updateData.element = elementTh;
+            updateData.bodyElement = elementTh;
+        }
+
         let query = mongoose.Types.ObjectId.isValid(targetId)
             ? { _id: targetId }
             : { $or: [{ email: targetId }, { phone: targetId }] };
@@ -331,13 +346,11 @@ router.put("/:id", verifyToken, async (req, res, next) => {
         }).select("-password");
 
         if (!updated) {
-            return res.status(200).json({
-                message: "อัปเดตข้อมูลสำเร็จ",
-                user: { id: targetId, _id: targetId, ...updateData },
-            });
+            // ห้ามตอบว่าสำเร็จ ไม่งั้น Frontend จะคิดว่าบันทึกแล้ว แต่ล็อกอินใหม่ข้อมูลจะกลับเป็นค่าเดิม
+            return res.status(404).json({ message: "ไม่พบผู้ใช้ที่ต้องการอัปเดต" });
         }
 
-        return res.status(200).json({ message: "อัปเดตข้อมูลสำเร็จ", user: { ...updated.toObject(), id: updated._id } });
+        return res.status(200).json({ message: "อัปเดตข้อมูลสำเร็จ", user: toPublicUser(updated) });
     } catch (err) {
         next(err);
     }

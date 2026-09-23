@@ -1,112 +1,131 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AuthContext } from "./AuthContext.js";
+import { getApiUrl } from "../utils/authHeader.js";
+import { resolveImageUrl } from "../utils/imageUrl.js";
+
+// ผลควิซของ guest ที่เก็บในเครื่อง — ต้องล้างตอน logout ไม่งั้นบัญชีถัดไปจะเห็นธาตุของคนก่อนหน้า
+const GUEST_QUIZ_KEYS = ["quizResult", "userElement"];
+
+function normalizeUser(user) {
+  if (!user) return null;
+  return {
+    ...user,
+    id: user.id || user._id,
+    avatar: resolveImageUrl(user.avatar) || "",
+  };
+}
+
+function getStoredToken() {
+  try {
+    return localStorage.getItem("accessToken") || localStorage.getItem("token") || null;
+  } catch {
+    return null;
+  }
+}
 
 export default function AuthProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem("currentUser");
-      return saved ? JSON.parse(saved) : null;
+      return saved ? normalizeUser(JSON.parse(saved)) : null;
     } catch {
       return null;
     }
   });
 
-  const [accessToken, setAccessToken] = useState(() => {
-    try {
-      return (
-        localStorage.getItem("accessToken") ||
-        localStorage.getItem("token") ||
-        null
-      );
-    } catch {
-      return null;
-    }
-  });
+  const [accessToken, setAccessToken] = useState(getStoredToken);
 
   const [isLoading, setIsLoading] = useState(true);
 
-  // ตรวจสอบความถูกต้องของ Token จริงกับเซิร์ฟเวอร์ (GET /api/v2/users/me)
-  useEffect(() => {
-    let isMounted = true;
-    async function verifySession() {
-      const token =
-        localStorage.getItem("accessToken") || localStorage.getItem("token");
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
+  // นับรอบการดึง /me — ใช้ผลเฉพาะรอบล่าสุด กันผลเก่ามาทับข้อมูลใหม่ (เช่น logout/login สลับบัญชีเร็ว ๆ)
+  const refreshSeqRef = useRef(0);
 
-      try {
-        const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
-        const res = await fetch(`${apiUrl}/api/v2/users/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data.user && isMounted) {
-            setCurrentUser(data.user);
-            localStorage.setItem("currentUser", JSON.stringify(data.user));
-          }
-        } else if (res.status === 401) {
-          // Token หมดอายุหรือไม่ถูกต้อง
-          if (isMounted) {
-            setCurrentUser(null);
-            setAccessToken(null);
-            localStorage.removeItem("currentUser");
-            localStorage.removeItem("accessToken");
-            localStorage.removeItem("token");
-          }
-        }
-      } catch (err) {
-        console.warn("⚠️ ไม่สามารถยืนยัน Token กับเซิร์ฟเวอร์ได้ ใช้ Local Session:", err.message);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    }
-
-    verifySession();
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const login = useCallback((user, token) => {
-    setCurrentUser(user);
+  const saveUser = useCallback((user) => {
+    const normalized = normalizeUser(user);
+    setCurrentUser(normalized);
     try {
-      localStorage.setItem("currentUser", JSON.stringify(user));
+      if (normalized) localStorage.setItem("currentUser", JSON.stringify(normalized));
+      else localStorage.removeItem("currentUser");
     } catch (e) {
       console.error("Failed to save user to localStorage", e);
     }
-
-    if (token) {
-      setAccessToken(token);
-      try {
-        localStorage.setItem("accessToken", token);
-        localStorage.setItem("token", token);
-      } catch (e) {
-        console.error("Failed to save accessToken to localStorage", e);
-      }
-    }
+    return normalized;
   }, []);
 
-  const logout = useCallback(() => {
+  const clearSession = useCallback(() => {
+    refreshSeqRef.current += 1;
     setCurrentUser(null);
     setAccessToken(null);
     try {
       localStorage.removeItem("currentUser");
       localStorage.removeItem("accessToken");
       localStorage.removeItem("token");
+      GUEST_QUIZ_KEYS.forEach((key) => localStorage.removeItem(key));
     } catch (e) {
       console.error("Failed to remove auth data from localStorage", e);
     }
   }, []);
 
+  // ดึงข้อมูลผู้ใช้ล่าสุดจากฐานข้อมูล (GET /api/v2/users/me) ให้ Frontend ตรงกับ Backend เสมอ
+  const refreshUser = useCallback(
+    async (token = getStoredToken()) => {
+      if (!token) return null;
+      const seq = ++refreshSeqRef.current;
+      try {
+        const res = await fetch(`${getApiUrl()}/api/v2/users/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (seq !== refreshSeqRef.current || getStoredToken() !== token) return null;
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) return saveUser(data.user);
+        } else if (res.status === 401) {
+          // Token หมดอายุหรือไม่ถูกต้อง
+          clearSession();
+        }
+      } catch (err) {
+        console.warn("⚠️ ไม่สามารถยืนยัน Token กับเซิร์ฟเวอร์ได้ ใช้ Local Session:", err.message);
+      }
+      return null;
+    },
+    [saveUser, clearSession],
+  );
+
+  // ตรวจสอบความถูกต้องของ Token จริงกับเซิร์ฟเวอร์ตอนเปิดเว็บ
+  useEffect(() => {
+    let isMounted = true;
+    refreshUser().finally(() => {
+      if (isMounted) setIsLoading(false);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [refreshUser]);
+
+  const login = useCallback(
+    (user, token) => {
+      if (token) {
+        setAccessToken(token);
+        try {
+          localStorage.setItem("accessToken", token);
+          localStorage.setItem("token", token);
+        } catch (e) {
+          console.error("Failed to save accessToken to localStorage", e);
+        }
+      }
+      saveUser(user);
+      // โหลดโปรไฟล์เต็มจาก DB (avatar, ธาตุ, ที่อยู่) ทับข้อมูลจาก response ของ login/register
+      refreshUser(token || getStoredToken());
+    },
+    [saveUser, refreshUser],
+  );
+
+  const logout = clearSession;
+
   const updateUser = useCallback((updatedData) => {
     setCurrentUser((prev) => {
-      const nextUser = { ...prev, ...updatedData };
+      const nextUser = normalizeUser({ ...prev, ...updatedData });
       try {
         localStorage.setItem("currentUser", JSON.stringify(nextUser));
       } catch (e) {
@@ -126,8 +145,9 @@ export default function AuthProvider({ children }) {
       login,
       logout,
       updateUser,
+      refreshUser,
     }),
-    [currentUser, accessToken, isLoading, login, logout, updateUser],
+    [currentUser, accessToken, isLoading, login, logout, updateUser, refreshUser],
   );
 
   return (

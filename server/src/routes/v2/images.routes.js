@@ -1,10 +1,9 @@
 import { Router } from "express";
 import multer from "multer";
 import mongoose from "mongoose";
-import { Readable } from "stream";
-import { getGridFSBucket } from "../../utils/gridfs.js";
+import { getGridFSBucket, extractGridFSId } from "../../utils/gridfs.js";
 import { User } from "../../models/User.model.js";
-import { verifyToken } from "./users.routes.js";
+import { verifyToken, requireAdmin } from "./users.routes.js";
 
 const router = Router();
 const upload = multer({
@@ -36,35 +35,41 @@ router.post("/upload", verifyToken, upload.single("image"), async (req, res) => 
       },
     });
 
-    const readable = new Readable();
-    readable.push(req.file.buffer);
-    readable.push(null);
+    // รอให้เขียนไฟล์ลง GridFS ครบก่อน แล้วค่อยตอบกลับ/บันทึก avatar
+    await new Promise((resolve, reject) => {
+      uploadStream.once("finish", resolve);
+      uploadStream.once("error", reject);
+      uploadStream.end(req.file.buffer);
+    });
 
-    readable
-      .pipe(uploadStream)
-      .on("error", (err) => {
-        return res.status(500).json({ message: "อัปโหลดรูปล้มเหลว", error: err.message });
-      })
-      .on("finish", async () => {
-        const fileId = uploadStream.id.toString();
-        const url = `/api/v2/images/${fileId}`;
-        // อัปโหลดจาก profile/register ให้บันทึก avatar ใน User ทันที
-        if (req.user?.id && req.user.role !== "admin") {
-          try {
-            await User.findByIdAndUpdate(req.user.id, { avatar: url });
-          } catch (err) {
-            console.error("บันทึก avatar ไม่สำเร็จ:", err.message);
-            return res.status(500).json({ message: "อัปโหลดสำเร็จแต่บันทึกรูปโปรไฟล์ไม่สำเร็จ" });
-          }
+    const fileId = uploadStream.id.toString();
+    // เก็บเป็น path แบบ relative เสมอ ให้ Frontend ต่อ API URL เอง
+    // (ถ้าเก็บ http://localhost:3001/... ไว้ พอเปิดจากเว็บจริงรูปจะหาย)
+    const url = `/api/v2/images/${fileId}`;
+
+    // อัปโหลดจาก profile/register ให้บันทึก avatar ใน User ทันที (admin ใช้ endpoint นี้อัปรูปสินค้า จึงข้าม)
+    const isAvatarUpload = Boolean(req.user?.id && req.user.role !== "admin");
+    if (isAvatarUpload) {
+      try {
+        const previous = await User.findByIdAndUpdate(req.user.id, { avatar: url }).select("avatar").lean();
+        // ลบรูปโปรไฟล์เก่าออกจาก GridFS ไม่ให้ค้างในฐานข้อมูล
+        const oldFileId = extractGridFSId(previous?.avatar);
+        if (oldFileId && oldFileId !== fileId) {
+          bucket.delete(new mongoose.Types.ObjectId(oldFileId)).catch(() => {});
         }
-        return res.status(201).json({
-          message: "อัปโหลดรูปภาพเข้า GridFS สำเร็จ",
-          fileId,
-          filename,
-          url,
-          avatarSaved: Boolean(req.user?.id && req.user.role !== "admin"),
-        });
-      });
+      } catch (err) {
+        console.error("บันทึก avatar ไม่สำเร็จ:", err.message);
+        return res.status(500).json({ message: "อัปโหลดสำเร็จแต่บันทึกรูปโปรไฟล์ไม่สำเร็จ" });
+      }
+    }
+
+    return res.status(201).json({
+      message: "อัปโหลดรูปภาพเข้า GridFS สำเร็จ",
+      fileId,
+      filename,
+      url,
+      avatarSaved: isAvatarUpload,
+    });
   } catch (error) {
     res.status(500).json({ message: "เกิดข้อผิดพลาดในการอัปโหลด", error: error.message });
   }
@@ -112,9 +117,9 @@ router.get("/:id", (req, res) => {
 
 /**
  * 3. DELETE /api/v2/images/:id
- * ลบรูปภาพออกจาก GridFS
+ * ลบรูปภาพออกจาก GridFS (เฉพาะ Admin — เดิมไม่มีการตรวจสิทธิ์ ใครก็ลบรูปได้)
  */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", verifyToken, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {

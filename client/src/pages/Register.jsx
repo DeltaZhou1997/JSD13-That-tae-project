@@ -231,21 +231,28 @@ function Register() {
       if (response.ok) {
         // Auto-login ทันที
         if (data.user && data.token) {
-          login({ ...data.user, deliveryAddress: data.user.deliveryAddress || payload.deliveryAddress }, data.token);
+          // อัปโหลดรูปก่อน แล้วค่อย login ครั้งเดียว (login จะดึงโปรไฟล์เต็มจาก DB รวม avatar ที่เพิ่งบันทึก)
+          let avatar = "";
           if (avatarFile && data.user.id) {
-            const uploadData = new FormData();
-            uploadData.append("image", avatarFile);
-            const uploadResponse = await fetch(`${apiUrl}/api/v2/images/upload`, {
-              method: "POST",
-              headers: { Authorization: `Bearer ${data.token}` },
-              body: uploadData,
-            });
-            const uploaded = await uploadResponse.json();
-            if (uploadResponse.ok && uploaded.url) {
-              const avatarUrl = uploaded.url.startsWith("http") ? uploaded.url : `${apiUrl}${uploaded.url}`;
-              login({ ...data.user, avatar: avatarUrl }, data.token);
+            try {
+              const uploadData = new FormData();
+              uploadData.append("image", avatarFile);
+              const uploadResponse = await fetch(`${apiUrl}/api/v2/images/upload`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${data.token}` },
+                body: uploadData,
+              });
+              const uploaded = await uploadResponse.json().catch(() => ({}));
+              if (uploadResponse.ok && uploaded.url) {
+                avatar = uploaded.url;
+              } else {
+                toast.error(uploaded.message || "อัปโหลดรูปโปรไฟล์ไม่สำเร็จ สามารถเปลี่ยนรูปได้ที่หน้าโปรไฟล์");
+              }
+            } catch {
+              toast.error("อัปโหลดรูปโปรไฟล์ไม่สำเร็จ สามารถเปลี่ยนรูปได้ที่หน้าโปรไฟล์");
             }
           }
+          login({ ...data.user, deliveryAddress: data.user.deliveryAddress || payload.deliveryAddress, avatar }, data.token);
         }
         toast.success(`ยินดีต้อนรับคุณ ${data.user?.firstName || formData.firstName}!`);
         // สมัครสมาชิค → quiz ทำธาตุเจ้าเรือน → landing page พร้อม token

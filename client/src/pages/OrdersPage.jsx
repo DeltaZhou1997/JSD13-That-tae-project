@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.js";
 import { getAuthHeaders } from "../utils/authHeader.js";
 import { formatDate } from "../utils/dateFormatter.js";
+import { resolveImageUrl } from "../utils/imageUrl.js";
 
 const CUSTOMER_STATUS_CONFIG = {
   PENDING: { label: "ยังไม่ชำระเงิน", color: "bg-amber-100 text-amber-800 border-amber-200" },
@@ -220,7 +221,7 @@ export default function OrdersPage() {
                         <div className="flex items-center gap-3 min-w-0">
                           <div className="w-12 h-12 rounded-xl bg-[#f6ede5] flex items-center justify-center text-[#8d593a] shrink-0 border border-[#e8dfd1] overflow-hidden">
                             {item.imageUrl ? (
-                              <img src={item.imageUrl} alt={item.productName || item.name} className="w-full h-full object-cover" />
+                              <img src={resolveImageUrl(item.imageUrl)} alt={item.productName || item.name} className="w-full h-full object-cover" />
                             ) : (
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6" aria-hidden="true">
                                 <path d="M12 2v3M8 3.5v2M16 3.5v2M3 11h18c0 4.97-4.03 9-9 9s-9-4.03-9-9z" />

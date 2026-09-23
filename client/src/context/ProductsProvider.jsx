@@ -3,6 +3,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ProductsContext } from "./ProductsContext.js";
 import { createTempObjectId } from "../utils/objectId.js";
 import { getAuthHeaders, getApiUrl } from "../utils/authHeader.js";
+import { resolveImageField } from "../utils/imageUrl.js";
+
+// ชี้ URL รูปจาก GridFS ไปที่ API server ปัจจุบัน (รูปที่อัปตอนรันในเครื่องจะได้ไม่หายบนเว็บจริง)
+const normalizeProductImage = (product) => ({
+  ...product,
+  imageUrl: resolveImageField(product.imageUrl),
+});
 
 export default function ProductsProvider({ children }) {
   const [products, setProducts] = useState([]);
@@ -20,7 +27,7 @@ export default function ProductsProvider({ children }) {
           const items = Array.isArray(data) ? data : data.products || data.data || [];
           if (isMounted) {
             // Always sync with DB — even if empty (never fall back to mock data)
-            setProducts(items);
+            setProducts(items.map(normalizeProductImage));
           }
         }
       } catch (err) {
@@ -52,7 +59,7 @@ export default function ProductsProvider({ children }) {
           body: JSON.stringify(data),
         });
         const json = await res.json();
-        const serverProduct = json?.product;
+        const serverProduct = json?.product && normalizeProductImage(json.product);
 
         if (res.ok && serverProduct?._id && serverProduct._id !== tempId) {
           setProducts((prev) =>

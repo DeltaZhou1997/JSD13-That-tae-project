@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
+import { resolveImageUrl } from "../../utils/imageUrl.js";
 
 export default function CartItem({
   item,
@@ -153,7 +154,7 @@ export default function CartItem({
         <div className="w-12 h-12 rounded-xl bg-[#f6ede5] flex items-center justify-center shrink-0 border border-[#e8dfd1] overflow-hidden shadow-2xs">
           {item.imageUrl ? (
             <img
-              src={item.imageUrl}
+              src={resolveImageUrl(item.imageUrl)}
               alt={displayName}
               className="w-full h-full object-cover select-none pointer-events-none"
             />

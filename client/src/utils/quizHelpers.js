@@ -64,20 +64,25 @@ export const ELEMENT_TH_TO_EN = {
 };
 
 /**
- * คำนวณหรือดึงธาตุประจำตัวของผู้ใช้ที่ล็อกอิน หรือผลทดสอบในเครื่อง
+ * ดึงธาตุประจำตัวของผู้ใช้ที่ล็อกอิน (จากฐานข้อมูล) หรือผลทดสอบในเครื่องของ guest
  * @param {Object} user - ข้อมูลผู้ใช้
  * @returns {string|null} ธาตุเป็นภาษาไทย ('ดิน', 'น้ำ', 'ลม', 'ไฟ') หรือ null ถ้ายังไม่ทราบธาตุ
  */
 export const getUserElement = (user) => {
-  // 1. ตรวจสอบจากฟิลด์ใน user object
-  if (user?.element && ELEMENT_EN_TO_TH[user.element]) {
-    return ELEMENT_EN_TO_TH[user.element];
-  }
-  if (user?.bodyElement && ELEMENT_EN_TO_TH[user.bodyElement]) {
-    return ELEMENT_EN_TO_TH[user.bodyElement];
+  // 1. ผู้ใช้ที่ล็อกอิน: ใช้ค่าจากฐานข้อมูลเท่านั้น
+  //    (ห้าม fallback ไป localStorage/เดือนเกิด เพราะทำให้ธาตุ "เปลี่ยนเอง" หลังล็อกอินใหม่
+  //     — localStorage อาจเป็นผลของบัญชีอื่น และ birthDate ค่าเริ่มต้น 2000-01-01 จะได้ธาตุน้ำทุกคน)
+  if (user) {
+    if (user.element && ELEMENT_EN_TO_TH[user.element]) {
+      return ELEMENT_EN_TO_TH[user.element];
+    }
+    if (user.bodyElement && ELEMENT_EN_TO_TH[user.bodyElement]) {
+      return ELEMENT_EN_TO_TH[user.bodyElement];
+    }
+    return null;
   }
 
-  // 2. ตรวจสอบจากผลทดสอบที่เซฟไว้ใน localStorage
+  // 2. Guest: ใช้ผลทดสอบที่เซฟไว้ใน localStorage
   try {
     const saved =
       localStorage.getItem("quizResult") ||
@@ -89,18 +94,6 @@ export const getUserElement = (user) => {
       if (val && ELEMENT_EN_TO_TH[val]) return ELEMENT_EN_TO_TH[val];
     }
   } catch {}
-
-  // 3. คำนวณจากเดือนเกิด (birthDate) ถ้ามีระบุไว้ในโปรไฟล์
-  if (user?.birthDate) {
-    const d = new Date(user.birthDate);
-    if (!isNaN(d.getTime())) {
-      const month = d.getMonth() + 1; // 1 - 12
-      if (month >= 1 && month <= 3) return "น้ำ";
-      if (month >= 4 && month <= 6) return "ลม";
-      if (month >= 7 && month <= 9) return "ไฟ";
-      if (month >= 10 && month <= 12) return "ดิน";
-    }
-  }
 
   // ถ้ายังไม่เคยทำควิซ และไม่มีข้อมูลธาตุ คืนค่า null (ไม่ทราบธาตุ)
   return null;

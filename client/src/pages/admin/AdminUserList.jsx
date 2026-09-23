@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import useToast from "../../hooks/useToast.js";
-import defaultUsers from "../../mock-data/users.js";
 import { getAuthHeaders } from "../../utils/authHeader.js";
 
 const PRESET_CONDITIONS = [
@@ -15,7 +14,7 @@ const PRESET_CONDITIONS = [
 
 export default function AdminUserList() {
   const toast = useToast();
-  const [users, setUsers] = useState(defaultUsers);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -55,12 +54,13 @@ export default function AdminUserList() {
       });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setUsers(data);
-        }
+        setUsers(Array.isArray(data) ? data : data.users || data.data || []);
+      } else {
+        throw new Error("ไม่สามารถโหลดข้อมูลผู้ใช้งานได้");
       }
     } catch (err) {
-      console.warn("⚠️ เซิร์ฟเวอร์ออฟไลน์ ใช้ mockUsers เริ่มต้น:", err.message);
+      setUsers([]);
+      toast.error(err.message || "ไม่สามารถโหลดข้อมูลผู้ใช้งานได้");
     } finally {
       setLoading(false);
     }
@@ -128,12 +128,8 @@ export default function AdminUserList() {
       );
       toast.success(`อัปเดตข้อมูลคุณ "${editFormData.firstName}" เรียบร้อยแล้ว`);
       setEditingUser(null);
-    } catch {
-      // Fallback ปรับปรุงใน State หน้าบ้าน
-      setUsers((prev) =>
-        prev.map((u) => (u.id === userId || u._id === userId ? { ...u, ...editFormData } : u))
-      );
-      toast.success(`บันทึกการแก้ไขข้อมูลเรียบร้อยแล้ว (Local Sync)`);
+    } catch (err) {
+      toast.error(err.message || "ไม่สามารถบันทึกข้อมูลได้");
       setEditingUser(null);
     } finally {
       setIsSaving(false);
@@ -172,13 +168,8 @@ export default function AdminUserList() {
         gender: "female",
         conditions: [],
       });
-    } catch {
-      // Local fallback
-      const mockId = `USR-${String(users.length + 1).padStart(3, "0")}`;
-      const fallbackUser = { ...newUserData, id: mockId, _id: mockId, createdAt: new Date().toISOString() };
-      setUsers((prev) => [fallbackUser, ...prev]);
-      toast.success(`เพิ่มสมาชิกเรียบร้อยแล้ว (Local Sync)`);
-      setIsAddModalOpen(false);
+    } catch (err) {
+      toast.error(err.message || "ไม่สามารถสร้างผู้ใช้ใหม่ได้");
     } finally {
       setIsSaving(false);
     }
@@ -200,11 +191,8 @@ export default function AdminUserList() {
       setUsers((prev) => prev.filter((u) => (u.id || u._id) !== id));
       toast.success("ลบบัญชีผู้ใช้เรียบร้อยแล้ว");
       setPendingDeleteId(null);
-    } catch {
-      // Fallback ลบใน state
-      setUsers((prev) => prev.filter((u) => (u.id || u._id) !== id));
-      toast.success("ลบบัญชีผู้ใช้เรียบร้อยแล้ว (Local Sync)");
-      setPendingDeleteId(null);
+    } catch (err) {
+      toast.error(err.message || "ลบผู้ใช้ไม่สำเร็จ");
     }
   };
 
