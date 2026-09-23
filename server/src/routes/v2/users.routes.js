@@ -107,30 +107,50 @@ router.get("/:id", verifyToken, async (req, res, next) => {
 // 4. REGISTER (POST /api/v2/users/register หรือ /api/v2/users)
 const handleRegister = async (req, res, next) => {
     try {
-        const { firstName, lastName, email, password, phone, birthDate, gender, bloodType } = req.body;
+        const { firstName, lastName, name, email, password, phone, birthDate, gender, bloodType } = req.body;
 
-        if (!firstName || !lastName || !email || !password || !phone || !birthDate || !bloodType) {
+        // แยกชื่อ-นามสกุล ถ้าส่ง name มาตัวเดียว
+        let userFirstName = firstName?.trim();
+        let userLastName = lastName?.trim();
+        if (!userFirstName && name) {
+            const parts = name.trim().split(/\s+/);
+            userFirstName = parts[0];
+            userLastName = parts.slice(1).join(" ") || "สมาชิกใหม่";
+        }
+        if (!userLastName) {
+            userLastName = "สมาชิกใหม่";
+        }
+
+        if (!userFirstName || !email || !password) {
             return res.status(400).json({
-                message: "กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน",
+                message: "กรุณากรอกชื่อ, อีเมล และรหัสผ่านให้ครบถ้วน",
             });
         }
 
-        const isEmailUsed = await User.findOne({ email: email.toLowerCase() });
+        if (password.length < 6) {
+            return res.status(400).json({
+                message: "รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร",
+            });
+        }
+
+        const isEmailUsed = await User.findOne({ email: email.toLowerCase().trim() });
         if (isEmailUsed) {
             return res.status(400).json({ message: "อีเมลนี้มีผู้ใช้งานแล้ว" });
         }
 
+        const cleanPhone = phone ? String(phone).replace(/\D/g, "") : "08" + Math.floor(10000000 + Math.random() * 90000000);
+
         const newUser = new User({
-            firstName,
-            lastName,
-            email: email.toLowerCase(),
+            firstName: userFirstName,
+            lastName: userLastName,
+            email: email.toLowerCase().trim(),
             password, // User.model.js จะ hash ด้วย bcrypt ให้อัตโนมัติใน pre('save')
-            phone,
-            birthDate,
+            phone: cleanPhone,
+            birthDate: birthDate ? new Date(birthDate) : new Date("2000-01-01"),
             gender: gender || "not_specified",
-            bloodType,
+            bloodType: bloodType || "O",
             element: "ดิน",
-            role: "customer",
+            role: req.body.role === "admin" ? "admin" : "customer",
         });
 
         await newUser.save();
@@ -141,11 +161,13 @@ const handleRegister = async (req, res, next) => {
             token,
             user: {
                 id: newUser._id,
+                _id: newUser._id,
                 email: newUser.email,
                 firstName: newUser.firstName,
                 lastName: newUser.lastName,
                 role: newUser.role,
                 element: newUser.element,
+                points: newUser.points,
             },
         });
     } catch (err) {

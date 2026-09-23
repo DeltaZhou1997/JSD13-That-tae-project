@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext.js";
 import useToast from "../hooks/useToast.js";
 import customerAvatar from "../mock-data/assets/reviews/praew.jpg";
 import { getUserElement, ELEMENT_TH_TO_EN } from "../utils/quizHelpers.js";
+import { getAuthHeaders } from "../utils/authHeader.js";
 
 // =========================================================================
 // 🌟 SVGs & Visual Icons (User-friendly & Premium)
@@ -223,7 +224,7 @@ const ELEMENT_DETAILS = {
 export default function ProfilePage() {
   const { currentUser, updateUser } = useAuth();
   const toast = useToast();
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+  const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
 
   const userElement = getUserElement(currentUser);
   const elementEn = userElement ? ELEMENT_TH_TO_EN[userElement] : null;
@@ -342,7 +343,7 @@ export default function ProfilePage() {
     try {
       const res = await fetch(`${apiUrl}/api/v1/users/${userId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(payload),
       });
 

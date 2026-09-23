@@ -113,7 +113,7 @@ export default function ElementQuizPage() {
       try {
         updateUser({ element: elementTh, bodyElement: elementTh });
 
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+        const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
         const userId = currentUser.id || currentUser._id;
         const res = await fetch(`${apiUrl}/api/v1/users/${userId}`, {
           method: "PUT",

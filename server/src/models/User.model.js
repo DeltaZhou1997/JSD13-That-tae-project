@@ -60,26 +60,12 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
-    validate: {
-      validator: function (v) {
-        // ต้องมี พิมพ์เล็ก + พิมพ์ใหญ่ + ตัวเลข + สัญลักษณ์ อย่างน้อยอย่างละ 1 ตัว และยาว 8-20 ตัว
-        return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]{8,20}$/.test(
-          v,
-        );
-      },
-      message:
-        "รหัสผ่านต้องมีความยาว 8-20 ตัวอักษร และประกอบด้วยตัวพิมพ์ใหญ่ ตัวพิมพ์เล็ก ตัวเลข และสัญลักษณ์พิเศษ",
-    },
+    minlength: [6, "รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร"],
   },
   phone: {
     type: String,
-    required: true,
-    validate: {
-      validator: function (v) {
-        return /^0[2-9]\d{7,8}$/.test(v);
-      },
-      message: (props) => `${props.value} ไม่ใช่เบอร์โทรศัพท์ที่ถูกต้อง`,
-    },
+    default: "0800000000",
+    trim: true,
   },
   role: {
     type: String,
@@ -88,14 +74,7 @@ const userSchema = new mongoose.Schema({
   },
   birthDate: {
     type: Date,
-    required: [true, "กรุณากรอกวันเกิด"],
-    validate: {
-      validator: function (v) {
-        // ต้องไม่เป็นวันในอนาคต (v ต้องน้อยกว่าหรือเท่ากับวันปัจจุบัน)
-        return v <= new Date();
-      },
-      message: "วันเกิดต้องไม่เป็นวันที่ในอนาคต",
-    },
+    default: () => new Date("2000-01-01"),
   },
   gender: {
     type: String,
@@ -104,7 +83,7 @@ const userSchema = new mongoose.Schema({
   },
   bloodType: {
     type: String,
-    required: true,
+    default: "O",
     enum: {
       values: [
         "A",
@@ -130,6 +109,10 @@ const userSchema = new mongoose.Schema({
     enum: ["ดิน", "earth", "น้ำ", "water", "ลม", "wind", "ไฟ", "fire", ""],
     default: "ดิน",
   },
+  bodyElement: {
+    type: String,
+    default: "ดิน",
+  },
   avatar: {
     type: String,
     default: "",
@@ -138,6 +121,12 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0,
+  },
+  deliveryAddress: {
+    street: { type: String, default: "" },
+    district: { type: String, default: "" },
+    province: { type: String, default: "" },
+    postalCode: { type: String, default: "" },
   },
   addresses: [addressSchema],
   membership: {
