@@ -143,7 +143,7 @@ export default function CheckoutPage() {
 
   // ส่งข้อมูลคำสั่งซื้อและนำทางไปหน้าสำเร็จ (v1)
   const finalizeOrder = async (orderPayload) => {
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+    const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
     try {
       const response = await fetch(`${apiUrl}/api/v1/checkout`, {
         method: "POST",
@@ -204,7 +204,7 @@ export default function CheckoutPage() {
     }
     setErrors({});
 
-    const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+    const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
 
     const orderPayload = {
       orderId: `ORD-${Math.floor(100000 + Math.random() * 900000)}`,

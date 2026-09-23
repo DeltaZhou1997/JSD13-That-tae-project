@@ -141,7 +141,7 @@ export default function MenuDetail() {
   const [viewMode, setViewMode] = useState('table'); // 'table' as default | 'cards'
 
 
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+  const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
   const cleanUrl = (url) => {
     if (!url || typeof url !== 'string') return '';
     if (url.startsWith('file://')) {

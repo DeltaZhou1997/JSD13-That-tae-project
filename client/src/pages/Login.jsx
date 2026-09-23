@@ -14,7 +14,7 @@ function Login() {
     event.preventDefault();
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
       const response = await fetch(`${apiUrl}/api/v1/users/login`, {
           method: "POST",
           headers: {
@@ -26,7 +26,12 @@ function Login() {
           }),
         });
 
-      const data = await response.json();
+      let data = {};
+      try {
+        data = await response.json();
+      } catch {
+        data = { message: `เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง (HTTP ${response.status})` };
+      }
 
       if (response.ok) {
         login(data.user, data.token);

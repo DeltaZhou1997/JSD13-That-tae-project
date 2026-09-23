@@ -44,7 +44,7 @@ export default function AdminUserList() {
   // State ยืนยันการลบ
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+  const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
 
   // โหลดข้อมูลผู้ใช้ทั้งหมดจาก API
   const fetchUsers = useCallback(async () => {

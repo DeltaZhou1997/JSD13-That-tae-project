@@ -34,6 +34,14 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// ป้องกันปัญหา Double Slash (//api/v1/...) จาก Client Base URL
+app.use((req, res, next) => {
+  if (req.url && req.url.includes("//")) {
+    req.url = req.url.replace(/\/{2,}/g, "/");
+  }
+  next();
+});
 /********************************************************************* */
 
 

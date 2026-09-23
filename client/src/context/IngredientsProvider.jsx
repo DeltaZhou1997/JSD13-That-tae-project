@@ -7,11 +7,11 @@ import {
   normalizeIngredient,
 } from "./IngredientsContext.js";
 import { createTempObjectId } from "../utils/objectId.js";
-import { getAuthHeaders } from "../utils/authHeader.js";
+import { getAuthHeaders, getApiUrl } from "../utils/authHeader.js";
 
 export default function IngredientsProvider({ children }) {
   const [ingredients, setIngredients] = useState(createInitialIngredients);
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+  const apiUrl = getApiUrl();
 
   useEffect(() => {
     let isMounted = true;

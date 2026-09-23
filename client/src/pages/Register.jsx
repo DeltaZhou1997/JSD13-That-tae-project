@@ -46,7 +46,7 @@ function Register() {
     setErrorMsg("");
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
       const response = await fetch(`${apiUrl}/api/v1/users`, {
         method: "POST",
         headers: {
@@ -62,7 +62,12 @@ function Register() {
         }),
       });
 
-      const data = await response.json();
+      let data = {};
+      try {
+        data = await response.json();
+      } catch {
+        data = { message: `เซิร์ฟเวอร์ตอบกลับไม่ถูกต้อง (HTTP ${response.status})` };
+      }
 
       if (response.ok) {
         if (data.user && data.token) {

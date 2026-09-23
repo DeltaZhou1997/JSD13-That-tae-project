@@ -82,7 +82,7 @@ export default function MenuCard({ menu, index = 0 }) {
   const normalizedElement = ELEMENT_MAP[rawElement.toLowerCase()] || rawElement;
   const elConfig = ELEMENT_CONFIG[normalizedElement] || null;
 
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+  const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
   const rawImg = Array.isArray(menu.imageUrl) ? (menu.imageUrl[0] || '') : (menu.imageUrl || '');
   let imageUrl = rawImg;
   if (typeof rawImg === 'string' && rawImg.startsWith('file://')) {

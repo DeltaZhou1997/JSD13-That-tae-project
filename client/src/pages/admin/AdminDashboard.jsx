@@ -130,7 +130,7 @@ export default function AdminDashboard() {
   const [ordersList, setOrdersList] = useState(DEFAULT_ORDERS);
   const [loading, setLoading] = useState(true);
 
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+  const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
 
   // ดึงข้อมูลผู้ใช้งานและคำสั่งซื้อจริงพร้อม Skeleton Loading
   const loadDashboardData = useCallback(async () => {

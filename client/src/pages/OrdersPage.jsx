@@ -9,7 +9,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [_error, setError] = useState(null);
 
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+  const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
   const userId = currentUser?.id || currentUser?._id || "USR-001";
 
   useEffect(() => {

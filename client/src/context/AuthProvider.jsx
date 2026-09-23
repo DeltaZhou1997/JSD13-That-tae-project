@@ -37,7 +37,7 @@ export default function AuthProvider({ children }) {
       }
 
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+        const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
         const res = await fetch(`${apiUrl}/api/v1/users/me`, {
           headers: {
             Authorization: `Bearer ${token}`,

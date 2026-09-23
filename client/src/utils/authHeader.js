@@ -21,3 +21,12 @@ export function getAuthHeaders(customHeaders = {}) {
   }
   return headers;
 }
+
+/**
+ * ดึง API URL พร้อมตัดเครื่องหมาย / ท้ายสุดออก ป้องกันปัญหา Double Slash (//api/...)
+ */
+export function getApiUrl() {
+  const url = import.meta.env.VITE_API_URL || "http://localhost:3001";
+  return url.replace(/\/+$/, "");
+}
+

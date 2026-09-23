@@ -5,11 +5,11 @@ import {
   createInitialProducts,
 } from "./ProductsContext.js";
 import { createTempObjectId } from "../utils/objectId.js";
-import { getAuthHeaders } from "../utils/authHeader.js";
+import { getAuthHeaders, getApiUrl } from "../utils/authHeader.js";
 
 export default function ProductsProvider({ children }) {
   const [products, setProducts] = useState(createInitialProducts);
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+  const apiUrl = getApiUrl();
 
   useEffect(() => {
     let isMounted = true;
