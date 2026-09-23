@@ -78,7 +78,7 @@ const ingredientSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: {
-      value: Object.keys(INGREDIENT_CATEGORIES),
+      values: Object.keys(INGREDIENT_CATEGORIES),
       message: "หมวดหมู่ไม่ถูกต้อง",
     },
   },
@@ -135,7 +135,10 @@ const ingredientSchema = new mongoose.Schema({
   unit: {
     type: String,
     required: true,
-    enum: { value: INGREDIENT_UNIT, message: "หน่วยต้องตรงตามมาตรฐาน g / kg / ml / l / piece" },
+    enum: {
+      values: INGREDIENT_UNIT,
+      message: "หน่วยต้องตรงตามมาตรฐาน g / kg / ml / l / piece",
+    },
     default: "g",
     trim: true,
   },
@@ -144,34 +147,50 @@ const ingredientSchema = new mongoose.Schema({
     default: 1,
     min: 1,
   },
+  // วัตถุดิบ 1 ชนิดสามารถมีได้หลายภูมิภาค (เช่น ข่า ตะไคร้ มีทั้ง เหนือ กลาง ใต้ อีสาน)
+  regions: [
+    {
+      type: String,
+      enum: {
+        values: [...Object.keys(REGION), "all"],
+        message: "ภูมิภาคไม่ถูกต้อง",
+      },
+    },
+  ],
   region: {
     type: String,
     enum: {
       values: [...Object.keys(REGION), "all"],
       message: "ภูมิภาคไม่ถูกต้อง",
     },
-    default: "all"
+    default: "all",
   },
   regionNameTh: {
     type: String,
     trim: true,
   },
-
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
 });
 
-
-
-
-// Middleware auto-fill categoryTh และ regionNameTh ก่อน validate
+// Middleware auto-fill categoryTh และ sync regions ก่อน validate
 ingredientSchema.pre("validate", function () {
   if (this.category && !this.categoryTh) {
     this.categoryTh = INGREDIENT_CATEGORIES[this.category] || "อื่น ๆ";
+  }
+  // Sync region และ regions array
+  if (this.region && (!this.regions || this.regions.length === 0)) {
+    this.regions = [this.region];
+  } else if (this.regions && this.regions.length > 0 && !this.region) {
+    this.region = this.regions[0];
   }
   if (this.region && !this.regionNameTh) {
     this.regionNameTh = REGION[this.region] || (this.region === "all" ? "ทุกภูมิภาค (ทั่วไป)" : "ทั่วไป");
   }
 });
-export const Ingredient = mongoose.model("Ingredient", ingredientSchema)
 
+export const Ingredient = mongoose.model("Ingredient", ingredientSchema);
 
 export default Ingredient;

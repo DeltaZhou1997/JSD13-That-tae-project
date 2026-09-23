@@ -3,6 +3,10 @@ import gsap from 'gsap'
 import { useApp } from '../../context/AppContext'
 import { useAuth } from '../../context/AuthContext.js'
 import { getUserElement, ELEMENT_EN_TO_TH } from '../../utils/quizHelpers.js'
+import {
+  POPULAR_FOOD_RESTRICTIONS,
+  RESTRICTION_CATEGORIES,
+} from '../../constants/foodRestrictions.js'
 
 const regionOptions = [
   {
@@ -235,14 +239,32 @@ export default function MenuFilters({ filters, setFilters }) {
     }
   }, [selectedElements])
 
+  const selectedRestrictions = useMemo(() => {
+    return Array.isArray(filters.restrictions) ? filters.restrictions : []
+  }, [filters.restrictions])
+
+  const toggleRestriction = (restrictionId) => {
+    setFilters((prev) => {
+      const current = Array.isArray(prev.restrictions) ? prev.restrictions : []
+      const exists = current.includes(restrictionId)
+      return {
+        ...prev,
+        restrictions: exists
+          ? current.filter((id) => id !== restrictionId)
+          : [...current, restrictionId],
+      }
+    })
+  }
+
   const hasActiveFilters = Boolean(
     filters.search ||
     (filters.region && filters.region.length > 0) ||
-    selectedElements.length > 0
+    selectedElements.length > 0 ||
+    selectedRestrictions.length > 0
   )
 
   const handleClearAll = () => {
-    setFilters({ search: '', region: [], health: [], element: [] })
+    setFilters({ search: '', region: [], health: [], element: [], restrictions: [] })
   }
 
   const regionChipClass = (active) =>
@@ -517,7 +539,7 @@ export default function MenuFilters({ filters, setFilters }) {
       {/* ===================================================================== */}
       {/* 4. ภูมิภาค (Region Filters): สบายตา กะทัดรัด พร้อมสปริงเด้ง            */}
       {/* ===================================================================== */}
-      <div>
+      <div className="mb-3">
         <div className="flex items-center justify-between mb-1.5">
           <div className="flex items-center gap-1.5">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-[#8b5e34] shrink-0">
@@ -558,6 +580,66 @@ export default function MenuFilters({ filters, setFilters }) {
               <span>{item[language]}</span>
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* ===================================================================== */}
+      {/* 5. ข้อจำกัดทางอาหาร & สุขภาพ (Food Restrictions & Allergies)          */}
+      {/* ===================================================================== */}
+      <div className="pt-2 border-t border-[#d4c5b0]/60 dark:border-[#6b4e33]">
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs">🏷️</span>
+            <span className="text-xs font-bold text-[#3d2c2e] dark:text-[#dcb37b]">
+              {language === 'th' ? 'โรค & ข้อจำกัดอาหาร' : 'Dietary & Restrictions'}
+            </span>
+          </div>
+
+          <div className={`transition-all duration-200 ${
+            selectedRestrictions.length > 0 ? 'opacity-100 scale-100' : 'opacity-0 scale-75 pointer-events-none w-0'
+          }`}>
+            <button
+              type="button"
+              onClick={() => setFilters((prev) => ({ ...prev, restrictions: [] }))}
+              className="text-[10px] font-semibold text-[#8b5e34] hover:text-[#5c371f] dark:text-[#dcb37b] cursor-pointer transition-all duration-200 hover:scale-110 active:scale-90 flex items-center gap-0.5 group"
+            >
+              <span>{language === 'th' ? 'ล้าง' : 'Clear'}</span>
+              <span className="transition-transform duration-200 group-hover:rotate-90">✕</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-2 mt-1">
+          {Object.entries(RESTRICTION_CATEGORIES).map(([catKey, catInfo]) => {
+            const items = POPULAR_FOOD_RESTRICTIONS.filter((r) => r.category === catKey);
+            return (
+              <div key={catKey}>
+                <span className="text-[10px] font-semibold text-[#7a6b63] dark:text-[#a89685] block mb-1">
+                  {catInfo.label}
+                </span>
+                <div className="flex flex-wrap gap-1">
+                  {items.map((r) => {
+                    const isSelected = selectedRestrictions.includes(r.id);
+                    return (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => toggleRestriction(r.id)}
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-medium transition-all duration-200 cursor-pointer flex items-center gap-1 select-none ${
+                          isSelected
+                            ? 'bg-[#8b5e34] text-white shadow-xs ring-1 ring-[#8b5e34]/30 scale-[1.02]'
+                            : 'border border-[#d4c5b0] hover:border-[#8b5e34] text-[#3d2c2e] dark:text-[#f0e6d8] dark:border-[#6b4e33] bg-white dark:bg-[#483421]'
+                        }`}
+                      >
+                        <span>{isSelected ? '✓' : ''}</span>
+                        <span>{r.shortLabel || r.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </aside>

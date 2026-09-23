@@ -34,6 +34,7 @@ export default function MenuOverview() {
       region: initialRegion ? [initialRegion] : [],
       health: [],
       element: defaultElements,
+      restrictions: [],
     };
   });
 
@@ -82,6 +83,29 @@ export default function MenuOverview() {
 
       if (filters.region.length > 0) {
         if (!filters.region.includes(menu.region) && !filters.region.includes(menu.regionNameTh)) {
+          return false;
+        }
+      }
+
+      // ตรวจสอบข้อจำกัดทางอาหาร/โรค/การแพ้ (Food Restrictions & Health Conditions)
+      if (Array.isArray(filters.restrictions) && filters.restrictions.length > 0) {
+        const menuRestrictions = Array.isArray(menu.foodRestrictions)
+          ? menu.foodRestrictions
+          : [];
+        const menuTags = Array.isArray(menu.tags) ? menu.tags : [];
+        const combinedMenuTags = [...menuRestrictions, ...menuTags].map((t) =>
+          String(t).toLowerCase().trim()
+        );
+
+        // เมนูต้องรองรับทุก restriction ที่เลือก หรือมีแท็กที่ตรงกัน
+        const matchesAllRestrictions = filters.restrictions.every((req) => {
+          const reqLower = req.toLowerCase();
+          return combinedMenuTags.some(
+            (tag) => tag === reqLower || tag.includes(reqLower) || reqLower.includes(tag)
+          );
+        });
+
+        if (!matchesAllRestrictions) {
           return false;
         }
       }

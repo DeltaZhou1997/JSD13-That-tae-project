@@ -9,6 +9,10 @@ import {
   useProducts,
 } from "../../context/ProductsContext.js";
 import useToast from "../../hooks/useToast.js";
+import {
+  POPULAR_FOOD_RESTRICTIONS,
+  RESTRICTION_CATEGORIES,
+} from "../../constants/foodRestrictions.js";
 
 // Preset ภาพตัวอย่างอาหารไทยยอดนิยม
 const PRESET_DISH_IMAGES = [
@@ -42,6 +46,11 @@ export default function ProductForm() {
   const [pickerIngId, setPickerIngId] = useState("");
   const [pickerQty, setPickerQty] = useState(100);
   const [pickerUnit, setPickerUnit] = useState("g");
+
+  const [foodRestrictions, setFoodRestrictions] = useState([
+    "gerd_friendly",
+    "low_sodium",
+  ]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -134,6 +143,10 @@ export default function ProductForm() {
         : product.cookingSteps || "",
       imageUrl: Array.isArray(product.imageUrl) ? product.imageUrl[0] : product.imageUrl || "",
     });
+
+    if (Array.isArray(product.foodRestrictions)) {
+      setFoodRestrictions(product.foodRestrictions);
+    }
 
     // ถ้ามี recipe ใน product ให้โหลดเข้ามาใน selectedIngredients
     if (Array.isArray(product.recipe) && product.recipe.length > 0) {
@@ -323,7 +336,15 @@ export default function ProductForm() {
       quantity: Number(formData.quantity),
       stock: Number(formData.quantity),
       calories: formData.calories === "" ? calculatedNutrition.calories : Number(formData.calories),
-      tags: splitTags(formData.tags),
+      foodRestrictions: foodRestrictions,
+      tags: [
+        ...new Set([
+          ...splitTags(formData.tags),
+          ...foodRestrictions.map(
+            (id) => POPULAR_FOOD_RESTRICTIONS.find((r) => r.id === id)?.shortLabel || id
+          ),
+        ]),
+      ],
       ingredients: ingredientsText,
       recipe: selectedIngredients.map((s) => ({
         ingredientId: s.id,
@@ -815,21 +836,80 @@ export default function ProductForm() {
             />
           </div>
 
-          {/* แท็กสุขภาพ / กลุ่มเป้าหมาย */}
-          <div>
-            <label className={labelClass}>
-              แท็กสุขภาพ / ภูมิภาค / ธาตุเจ้าเรือน (คั่นด้วยเครื่องหมายจุลภาค ,){" "}
-              <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="tags"
-              value={formData.tags}
-              onChange={handleChange}
-              placeholder="เช่น ภาคเหนือ, GERD Friendly, โซเดียมต่ำ, ธาตุไฟ"
-              className={inputClass}
-            />
-            {errors.tags && <p className="mt-1 text-xs text-red-500">{errors.tags}</p>}
+          {/* ข้อจำกัดทางอาหาร / โรคประจำตัว / การแพ้อาหาร (Food Restrictions) */}
+          <div className="rounded-2xl border border-[#d9cbbd] bg-[#fdfbf7] p-4">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <label className="text-xs font-bold text-[#4c1f08] flex items-center gap-1.5">
+                  <span className="text-base">🏷️</span>
+                  <span>ข้อจำกัดทางอาหาร & โภชนาการเฉพาะ (Food Restrictions)</span>
+                  <span className="text-xs text-[#8d593a] font-normal">(เลือกได้หลายแบบ ให้ลูกค้ากรองหาได้)</span>
+                </label>
+                <p className="text-[11px] text-[#7a5c4d] mt-0.5">
+                  เลือกโรคประจำตัว, การแพ้อาหาร หรือประเภทอาหารที่เมนูนี้รองรับอย่างปลอดภัย
+                </p>
+              </div>
+              <span className="text-[11px] font-bold text-[#4c1f08] bg-white px-2.5 py-1 rounded-full border border-[#d9cbbd]">
+                เลือกแล้ว {foodRestrictions.length} แท็ก
+              </span>
+            </div>
+
+            {/* หมวดหมู่ให้เลือกแบบปุ่มคลิกหลายแท็ก */}
+            <div className="space-y-3 mt-3">
+              {Object.entries(RESTRICTION_CATEGORIES).map(([catKey, catInfo]) => {
+                const itemsInCat = POPULAR_FOOD_RESTRICTIONS.filter((r) => r.category === catKey);
+                return (
+                  <div key={catKey}>
+                    <div className="text-[11px] font-bold text-[#6f5647] mb-1.5 flex items-center gap-1">
+                      <span>•</span>
+                      <span>{catInfo.label}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {itemsInCat.map((item) => {
+                        const isSelected = foodRestrictions.includes(item.id);
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => {
+                              setFoodRestrictions((prev) =>
+                                isSelected
+                                  ? prev.filter((id) => id !== item.id)
+                                  : [...prev, item.id]
+                              );
+                            }}
+                            className={`rounded-xl px-2.5 py-1.5 text-xs font-medium transition-all duration-200 cursor-pointer flex items-center gap-1.5 select-none ${
+                              isSelected
+                                ? "bg-[#4c1f08] text-white shadow-xs scale-[1.02]"
+                                : "bg-white border border-[#d9cbbd] text-[#4c1f08] hover:border-[#8d593a] hover:bg-[#f8ede3]"
+                            }`}
+                          >
+                            <span>{isSelected ? "✓" : "+"}</span>
+                            <span>{item.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* แท็กกำหนดเองเพิ่มเติม */}
+            <div className="mt-4 pt-3 border-t border-[#e8dfd1]">
+              <label className={labelClass}>
+                แท็กเพิ่มเติมอื่นๆ (คั่นด้วยเครื่องหมายจุลภาค ,)
+              </label>
+              <input
+                type="text"
+                name="tags"
+                value={formData.tags}
+                onChange={handleChange}
+                placeholder="เช่น เมนูล้านนาโบราณ, ไม่ใส่ผงชูรส, แคลเซียมสูง"
+                className={inputClass}
+              />
+              {errors.tags && <p className="mt-1 text-xs text-red-500">{errors.tags}</p>}
+            </div>
           </div>
 
           {/* ขั้นตอนการปรุงอาหาร */}

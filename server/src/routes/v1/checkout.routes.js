@@ -1,7 +1,7 @@
 import express from "express";
 import mongoose from "mongoose";
-import Cart from "../../models/Cart.js";
-import Order from "../../models/Order.js";
+import Cart from "../../models/Cart.model.js";
+import Order from "../../models/Order.model.js";
 import { getAllProducts, getProductById } from "../../data/products.js";
 import { getMemoryCart } from "./cart.routes.js";
 

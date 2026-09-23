@@ -7,8 +7,9 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
+    "start": "node src/server.js",
     "dev": "node --env-file=.env --watch src/server.js",
-    "seed": "node --env-file=.env src/scripts/seedProducts.js"
+    "seed": "node --env-file=.env src/scripts/seedDatabase.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -17,6 +18,7 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.5",
+    "multer": "^2.4.0",
     "stripe": "^22.6.2"
   }
 }

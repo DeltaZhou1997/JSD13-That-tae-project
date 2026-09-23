@@ -128,9 +128,38 @@ export default function MenuCard({ menu, index = 0 }) {
           <h4 className="text-[0.92rem] sm:text-[1.1rem] font-semibold text-[#3b2a1a] dark:text-[#f8f5f0] mb-1 line-clamp-1 group-hover:text-[#8b5e34] dark:group-hover:text-[#dcb37b] transition-colors">
             {title}
           </h4>
-          <p className="text-[11px] sm:text-sm opacity-70 mb-2 sm:mb-3 line-clamp-1 sm:line-clamp-2">
+          <p className="text-[11px] sm:text-sm opacity-70 mb-2 line-clamp-1 sm:line-clamp-2">
             {menu.description}
           </p>
+          {/* แท็กข้อจำกัดทางอาหาร/โรค/การแพ้ */}
+          {(Array.isArray(menu.foodRestrictions) && menu.foodRestrictions.length > 0) ? (
+            <div className="flex flex-wrap gap-1 mb-2">
+              {menu.foodRestrictions.slice(0, 3).map((r, i) => (
+                <span
+                  key={i}
+                  className="rounded-md bg-[#f6ede5] dark:bg-[#483421] text-[#8d593a] dark:text-[#dcb37b] px-1.5 py-0.5 text-[9px] font-semibold"
+                >
+                  {r.replace(/_/g, ' ')}
+                </span>
+              ))}
+              {menu.foodRestrictions.length > 3 && (
+                <span className="text-[9px] text-[#8d593a] font-bold">
+                  +{menu.foodRestrictions.length - 3}
+                </span>
+              )}
+            </div>
+          ) : Array.isArray(menu.tags) && menu.tags.length > 0 ? (
+            <div className="flex flex-wrap gap-1 mb-2">
+              {menu.tags.slice(0, 2).map((t, i) => (
+                <span
+                  key={i}
+                  className="rounded-md bg-[#f6ede5] dark:bg-[#483421] text-[#8d593a] dark:text-[#dcb37b] px-1.5 py-0.5 text-[9px] font-medium"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
         
         <div className="flex justify-between items-center sm:items-end border-t border-[#d4c5b0]/60 dark:border-[#755535]/60 pt-2 sm:pt-3 mt-auto">
