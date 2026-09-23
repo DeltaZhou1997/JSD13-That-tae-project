@@ -124,7 +124,8 @@ const userSchema = new mongoose.Schema({
   },
   deliveryAddress: {
     street: { type: String, default: "" },
-    district: { type: String, default: "" },
+    subdistrict: { type: String, default: "" },   // ตำบล / แขวง
+    district: { type: String, default: "" },       // อำเภอ / เขต
     province: { type: String, default: "" },
     postalCode: { type: String, default: "" },
   },

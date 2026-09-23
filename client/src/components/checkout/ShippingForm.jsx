@@ -1,4 +1,5 @@
 import React from "react";
+import { THAI_PROVINCES } from "../../constants/thaiProvinces";
 
 const DELIVERY_SCHEDULES = [
   { day: "SUN", date: "12", month: "พ.ย." },
@@ -15,6 +16,10 @@ export default function ShippingForm({ formData, onChange, onDateChange }) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs font-semibold text-[#6f675f] mb-1">ตำบล / แขวง</label>
+          <input type="text" name="subdistrict" value={formData.subdistrict || ""} onChange={onChange} className="w-full bg-white border border-[#e8dfd1] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8d593a]" required />
+        </div>
         <div>
           <label className="block text-xs font-semibold text-[#6f675f] mb-1">
             ชื่อ - นามสกุล
@@ -71,14 +76,13 @@ export default function ShippingForm({ formData, onChange, onDateChange }) {
           <label className="block text-xs font-semibold text-[#6f675f] mb-1">
             จังหวัด
           </label>
-          <input
-            type="text"
+          <select
             name="province"
             value={formData.province}
             onChange={onChange}
             className="w-full bg-white border border-[#e8dfd1] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8d593a]"
             required
-          />
+          ><option value="">-- เลือกจังหวัด --</option>{THAI_PROVINCES.map((p) => <option key={p} value={p}>{p}</option>)}</select>
         </div>
         <div className="sm:col-span-2">
           <label className="block text-xs font-semibold text-[#6f675f] mb-1">

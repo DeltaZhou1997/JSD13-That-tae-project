@@ -161,6 +161,7 @@ const handleRegister = async (req, res, next) => {
             bodyElement: req.body.bodyElement || assignedElement,
             deliveryAddress: req.body.deliveryAddress || {
                 street: req.body.street || "",
+                subdistrict: req.body.subdistrict || "",
                 district: req.body.district || "",
                 province: req.body.province || "",
                 postalCode: req.body.postalCode || "",

@@ -6,6 +6,7 @@ import useToast from "../hooks/useToast.js";
 import customerAvatar from "../mock-data/assets/reviews/praew.jpg";
 import { getUserElement, ELEMENT_TH_TO_EN } from "../utils/quizHelpers.js";
 import { getAuthHeaders, getApiUrl } from "../utils/authHeader.js";
+import { THAI_PROVINCES } from "../constants/thaiProvinces";
 
 // =========================================================================
 // 🌟 SVGs & Visual Icons (User-friendly & Premium)
@@ -239,6 +240,7 @@ export default function ProfilePage() {
     bloodType: currentUser?.bloodType || "O",
     gender: currentUser?.gender || "female",
     street: currentUser?.deliveryAddress?.street || "",
+    subdistrict: currentUser?.deliveryAddress?.subdistrict || "",
     district: currentUser?.deliveryAddress?.district || "",
     province: currentUser?.deliveryAddress?.province || "",
     postalCode: currentUser?.deliveryAddress?.postalCode || "",
@@ -308,6 +310,7 @@ export default function ProfilePage() {
         bloodType: currentUser.bloodType || "O",
         gender: currentUser.gender || "female",
         street: currentUser.deliveryAddress?.street || "",
+        subdistrict: currentUser.deliveryAddress?.subdistrict || "",
         district: currentUser.deliveryAddress?.district || "",
         province: currentUser.deliveryAddress?.province || "",
         postalCode: currentUser.deliveryAddress?.postalCode || "",
@@ -383,6 +386,7 @@ export default function ProfilePage() {
       }),
       deliveryAddress: {
         street: formData.street.trim(),
+        subdistrict: formData.subdistrict.trim(),
         district: formData.district.trim(),
         province: formData.province.trim(),
         postalCode: formData.postalCode.trim(),
@@ -970,28 +974,31 @@ export default function ProfilePage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
-                    <label className="block text-xs font-bold text-[#7A6B63] mb-1">แขวง/ตำบล, เขต/อำเภอ</label>
+                    <label className="block text-xs font-bold text-[#7A6B63] mb-1">แขวง/ตำบล</label>
                     <input
                       type="text"
-                      name="district"
-                      value={formData.district}
+                      name="subdistrict"
+                      value={formData.subdistrict}
                       onChange={handleChange}
                       placeholder="บางซื่อ"
                       className="w-full rounded-xl border border-[#E8DFD1] px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#8D593A] bg-[#FAF8F5]"
                     />
                   </div>
                   <div>
+                    <label className="block text-xs font-bold text-[#7A6B63] mb-1">เขต/อำเภอ</label>
+                    <input type="text" name="district" value={formData.district} onChange={handleChange} placeholder="บางซื่อ" className="w-full rounded-xl border border-[#E8DFD1] px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#8D593A] bg-[#FAF8F5]" />
+                  </div>
+                  <div>
                     <label className="block text-xs font-bold text-[#7A6B63] mb-1">จังหวัด</label>
-                    <input
-                      type="text"
+                    <select
                       name="province"
                       value={formData.province}
                       onChange={handleChange}
                       placeholder="กรุงเทพมหานคร"
                       className="w-full rounded-xl border border-[#E8DFD1] px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-[#8D593A] bg-[#FAF8F5]"
-                    />
+                    ><option value="">เลือกจังหวัด</option>{THAI_PROVINCES.map((p) => <option key={p} value={p}>{p}</option>)}</select>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-[#7A6B63] mb-1">รหัสไปรษณีย์</label>

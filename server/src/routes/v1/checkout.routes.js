@@ -146,6 +146,7 @@ const handleCheckout = async (req, res) => {
           shippingAddress.fullName || shippingAddress.recipientName || "",
         phone: shippingAddress.phone || "",
         address: shippingAddress.address || shippingAddress.fullAddress || "",
+        subdistrict: shippingAddress.subdistrict || "",
         district: shippingAddress.district || "",
         province: shippingAddress.province || "",
         zipcode: shippingAddress.zipcode || "",

@@ -71,11 +71,31 @@ export default function CheckoutPage() {
     fullName: `${currentUser.firstName} ${currentUser.lastName}`,
     phone: currentUser.phone || "",
     address: "123/45 ถนนวงศ์สว่าง",
+    subdistrict: "",
     district: "บางซื่อ",
     province: "กรุงเทพมหานคร",
     zipcode: "10800",
     deliveryDate: "12",
   });
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+
+  useEffect(() => {
+    const a = authUser?.deliveryAddress;
+    if (a) setFormData((prev) => ({ ...prev, address: a.street || "", subdistrict: a.subdistrict || "", district: a.district || "", province: a.province || "", zipcode: a.postalCode || "", phone: authUser.phone || prev.phone, fullName: `${authUser.firstName || ""} ${authUser.lastName || ""}`.trim() }));
+  }, [authUser]);
+
+  const saveAddress = async () => {
+    const userId = authUser?.id || authUser?._id;
+    if (!userId) return;
+    setIsSavingAddress(true);
+    try {
+      const res = await fetch(`${getApiUrl()}/api/v2/users/${userId}`, { method: "PUT", headers: getAuthHeaders({ "Content-Type": "application/json" }), body: JSON.stringify({ deliveryAddress: { street: formData.address, subdistrict: formData.subdistrict, district: formData.district, province: formData.province, postalCode: formData.zipcode }, phone: formData.phone }) });
+      if (!res.ok) throw new Error("บันทึกไม่สำเร็จ");
+      setIsAddressModalOpen(false);
+    } catch (e) { setErrors((prev) => ({ ...prev, address: "บันทึกที่อยู่ไม่สำเร็จ กรุณาลองใหม่" })); }
+    finally { setIsSavingAddress(false); }
+  };
 
   const [cardData, setCardData] = useState({
     cardNumber: "",
@@ -499,6 +519,7 @@ export default function CheckoutPage() {
           className="grid grid-cols-1 lg:grid-cols-12 gap-8"
         >
           <div className="lg:col-span-7 flex flex-col gap-6">
+            <div className="mb-3 flex justify-end"><button type="button" onClick={() => setIsAddressModalOpen(true)} className="text-sm font-bold text-[#8d593a] underline">แก้ไขที่อยู่จัดส่งในโปรไฟล์</button></div>
             <ShippingForm
               formData={formData}
               onChange={handleInputChange}
@@ -533,7 +554,8 @@ export default function CheckoutPage() {
               paymentVersion={paymentVersion}
             />
           </div>
-        </form>
+          </form>
+          {isAddressModalOpen && <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"><div className="bg-[#fcf8f2] rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-4"><div className="flex justify-between items-center mb-2"><h2 className="font-bold">แก้ไขที่อยู่จัดส่ง</h2><button type="button" onClick={() => setIsAddressModalOpen(false)}>✕</button></div><ShippingForm formData={formData} onChange={handleInputChange} onDateChange={(date) => setFormData((p) => ({ ...p, deliveryDate: date }))} /><div className="flex justify-end gap-2 mt-3"><button type="button" onClick={() => setIsAddressModalOpen(false)} className="px-4 py-2">ยกเลิก</button><button type="button" disabled={isSavingAddress} onClick={saveAddress} className="px-4 py-2 rounded-xl bg-[#3d2c2e] text-white">{isSavingAddress ? "กำลังบันทึก..." : "บันทึกที่อยู่"}</button></div></div></div>}
       </div>
 
       {/* Modal พร้อมเพย์ของ v1 */}

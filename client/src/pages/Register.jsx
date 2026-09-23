@@ -67,7 +67,7 @@ const sectionTitle = "flex items-center gap-2 text-sm font-bold text-[#4c1f08] m
 function SectionHeader({ icon, label }) {
   return (
     <div className={sectionTitle}>
-      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-[#f0e8da] text-[#8b5e34]">
+      <span className="flex items-center justify-center w-6 h-6 rounded-full  text-[#8b5e34]">
         {icon}
       </span>
       <span>{label}</span>
@@ -96,8 +96,9 @@ function PasswordInput({ name, value, onChange, placeholder, label, required }) 
         <button
           type="button"
           onClick={() => setShow((s) => !s)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9e8070] hover:text-[#4c1f08] transition"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9e8070] hover:text-[#4c1f08] transition cursor-pointer"
           tabIndex={-1}
+
           aria-label={show ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
         >
           <IconEye open={show} />
@@ -106,6 +107,26 @@ function PasswordInput({ name, value, onChange, placeholder, label, required }) 
     </div>
   );
 }
+
+// ─── รายชื่อจังหวัดในประเทศไทย 77 จังหวัด ──────────────────────────────────
+const THAI_PROVINCES = [
+  "กรุงเทพมหานคร", "กระบี่", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร",
+  "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ชัยนาท",
+  "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง",
+  "ตราด", "ตาก", "นครนายก", "นครปฐม", "นครพนม",
+  "นครราชสีมา", "นครศรีธรรมราช", "นครสวรรค์", "นนทบุรี", "นราธิวาส",
+  "น่าน", "บึงกาฬ", "บุรีรัมย์", "ปทุมธานี", "ประจวบคีรีขันธ์",
+  "ปราจีนบุรี", "ปัตตานี", "พระนครศรีอยุธยา", "พะเยา", "พังงา",
+  "พัทลุง", "พิจิตร", "พิษณุโลก", "เพชรบุรี", "เพชรบูรณ์",
+  "แพร่", "ภูเก็ต", "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน",
+  "ยโสธร", "ยะลา", "ร้อยเอ็ด", "ระนอง", "ระยอง",
+  "ราชบุรี", "ลพบุรี", "ลำปาง", "ลำพูน", "เลย",
+  "ศรีสะเกษ", "สกลนคร", "สงขลา", "สตูล", "สมุทรปราการ",
+  "สมุทรสงคราม", "สมุทรสาคร", "สระแก้ว", "สระบุรี", "สิงห์บุรี",
+  "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย",
+  "หนองบัวลำภู", "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์",
+  "อุทัยธานี", "อุบลราชธานี",
+];
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 function Register() {
@@ -121,6 +142,7 @@ function Register() {
     bloodType: "O",
     // ที่อยู่จัดส่ง
     street: "",
+    subdistrict: "",
     district: "",
     province: "",
     postalCode: "",
@@ -171,8 +193,9 @@ function Register() {
         bloodType: formData.bloodType,
         deliveryAddress: {
           street: formData.street.trim(),
+          subdistrict: formData.subdistrict.trim(),
           district: formData.district.trim(),
-          province: formData.province.trim(),
+          province: formData.province,
           postalCode: formData.postalCode.trim(),
         },
         role: "customer",
@@ -211,13 +234,6 @@ function Register() {
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#4c1f08] text-white mb-4 shadow-lg">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="w-7 h-7">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#3a1f08] tracking-tight">
             สมัครสมาชิก That Tae
           </h1>
@@ -368,6 +384,17 @@ function Register() {
                 />
               </div>
               <div>
+                <label className={labelBase}>ตำบล / แขวง</label>
+                <input
+                  type="text"
+                  name="subdistrict"
+                  value={formData.subdistrict}
+                  onChange={handleChange}
+                  placeholder="เช่น คลองเตย"
+                  className={inputBase}
+                />
+              </div>
+              <div>
                 <label className={labelBase}>อำเภอ / เขต</label>
                 <input
                   type="text"
@@ -380,14 +407,17 @@ function Register() {
               </div>
               <div>
                 <label className={labelBase}>จังหวัด</label>
-                <input
-                  type="text"
+                <select
                   name="province"
                   value={formData.province}
                   onChange={handleChange}
-                  placeholder="เช่น กรุงเทพมหานคร"
                   className={inputBase}
-                />
+                >
+                  <option value="">-- เลือกจังหวัด --</option>
+                  {THAI_PROVINCES.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className={labelBase}>รหัสไปรษณีย์</label>
