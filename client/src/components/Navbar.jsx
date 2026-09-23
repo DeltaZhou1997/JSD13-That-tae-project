@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import logo from "../assets/logo_brown_choc.png";
-import customerAvatar from "../mock-data/assets/reviews/praew.jpg";
+import defaultAvatar from "../assets/default-avatar.svg";
 import { useAuth } from "../context/AuthContext.js";
 import useToast from "../hooks/useToast.js";
 import { getUserElement } from "../utils/quizHelpers.js";
@@ -499,7 +499,8 @@ export default function Navbar({ cartCount = 0 }) {
                   </span>
                 ) : (
                   <img
-                    src={currentUser?.avatar || customerAvatar}
+                    src={currentUser?.avatar || defaultAvatar}
+                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = defaultAvatar; }}
                     alt=""
                     className="h-8 w-8 rounded-full border border-white/70 object-cover"
                   />
@@ -686,7 +687,8 @@ export default function Navbar({ cartCount = 0 }) {
                       </span>
                     ) : (
                       <img
-                        src={currentUser?.avatar || customerAvatar}
+                        src={currentUser?.avatar || defaultAvatar}
+                        onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = defaultAvatar; }}
                         alt=""
                         className="h-9 w-9 shrink-0 rounded-full border border-white/70 object-cover"
                       />

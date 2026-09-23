@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.js";
 import useToast from "../hooks/useToast.js";
-import customerAvatar from "../mock-data/assets/reviews/praew.jpg";
+import defaultAvatar from "../assets/default-avatar.svg";
 import { getUserElement, ELEMENT_TH_TO_EN } from "../utils/quizHelpers.js";
 import { getAuthHeaders, getApiUrl } from "../utils/authHeader.js";
 import { THAI_PROVINCES } from "../constants/thaiProvinces";
@@ -248,6 +248,7 @@ export default function ProfilePage() {
 
   // Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isDraggingAvatar, setIsDraggingAvatar] = useState(false);
@@ -476,7 +477,8 @@ export default function ProfilePage() {
                   className="hidden"
                 />
                 <img
-                  src={currentUser.avatar || customerAvatar}
+                  src={currentUser.avatar || defaultAvatar}
+                  onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = defaultAvatar; }}
                   alt="Avatar"
                   className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white shadow-md ring-2 transition-all ${
                     isDraggingAvatar ? "ring-[#8D593A] scale-105" : "ring-[#EAE2D5] group-hover:ring-[#8D593A]"

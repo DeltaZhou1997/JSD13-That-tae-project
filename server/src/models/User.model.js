@@ -107,11 +107,11 @@ const userSchema = new mongoose.Schema({
   element: {
     type: String,
     enum: ["ดิน", "earth", "น้ำ", "water", "ลม", "wind", "ไฟ", "fire", ""],
-    default: "ดิน",
+    default: "",
   },
   bodyElement: {
     type: String,
-    default: "ดิน",
+    default: "",
   },
   avatar: {
     type: String,

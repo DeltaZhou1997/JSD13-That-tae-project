@@ -146,7 +146,8 @@ const handleRegister = async (req, res, next) => {
 
         const cleanPhone = phone ? String(phone).replace(/\D/g, "") : "08" + Math.floor(10000000 + Math.random() * 90000000);
 
-        const assignedElement = req.body.element || "ดิน";
+        // ผู้สมัครใหม่ยังไม่ทำแบบทดสอบธาตุ จึงต้องเว้นค่าว่างไว้ก่อน
+        const assignedElement = req.body.element || "";
 
         const newUser = new User({
             firstName: userFirstName,
