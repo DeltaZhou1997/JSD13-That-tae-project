@@ -132,6 +132,17 @@ const ingredientSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  // alias ที่ frontend form ใช้ (เก็บเป็น gram)
+  currentStockGrams: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  lowStockThresholdGrams: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
   unit: {
     type: String,
     required: true,
@@ -169,6 +180,7 @@ const ingredientSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  // รูปภาพวัตถุดิบ — ไม่บังคับ (optional)
   imageUrl: {
     type: String,
     default: "",
@@ -185,7 +197,7 @@ const ingredientSchema = new mongoose.Schema({
   },
 });
 
-// Middleware auto-fill categoryTh และ sync regions ก่อน validate
+// Middleware auto-fill categoryTh, sync regions, sync stock fields และ sync สารอาหาร ก่อน validate
 ingredientSchema.pre("validate", function () {
   if (this.category && !this.categoryTh) {
     this.categoryTh = INGREDIENT_CATEGORIES[this.category] || "อื่น ๆ";
@@ -198,6 +210,13 @@ ingredientSchema.pre("validate", function () {
   }
   if (this.region && !this.regionNameTh) {
     this.regionNameTh = REGION[this.region] || (this.region === "all" ? "ทุกภูมิภาค (ทั่วไป)" : "ทั่วไป");
+  }
+
+  // Sync stock: currentStockGrams ↔ stockQuantity (ให้ frontend form และ DB ใช้ field เดียวกันได้)
+  if (this.currentStockGrams !== undefined && this.currentStockGrams !== null) {
+    this.stockQuantity = Number(this.currentStockGrams) || 0;
+  } else if (this.stockQuantity !== undefined && this.stockQuantity !== null) {
+    this.currentStockGrams = Number(this.stockQuantity) || 0;
   }
 
   // ซิงค์สารอาหารให้ครบทั้ง 7 ชนิดตาม Model

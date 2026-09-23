@@ -145,6 +145,13 @@ router.put("/:id", verifyToken, requireAdmin, async (req, res, next) => {
       req.body.nutritionPer100G = completeNutrients;
     }
 
+    // Sync stock fields: currentStockGrams ↔ stockQuantity
+    if (req.body.currentStockGrams !== undefined) {
+      req.body.stockQuantity = Number(req.body.currentStockGrams) || 0;
+    } else if (req.body.stockQuantity !== undefined) {
+      req.body.currentStockGrams = Number(req.body.stockQuantity) || 0;
+    }
+
     const updated = await Ingredient.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,

@@ -76,6 +76,8 @@ export default function ProductForm() {
   const [isDragging, setIsDragging] = useState(false);
   const [errors, setErrors] = useState({});
   const [notFound, setNotFound] = useState(false);
+  // computed fields จาก RecipeBuilder (สารอาหาร, elements, recipe)
+  const [computed, setComputed] = useState(null);
   const fileInputRef = useRef(null);
 
   const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
@@ -667,14 +669,9 @@ export default function ProductForm() {
                  ========================================================================= */}
               <button
                 type="button"
-                onClick={() => {
-                  /* TODO: เมื่อเพื่อนทำหน้าเสร็จแล้ว ให้เปิดใช้งานคำสั่งด้านล่าง:
-                     // navigate("/admin/ingredients"); หรือเปิดแท็บใหม่
-                  */
-                  alert("ปุ่มเพิ่มวัตถุดิบใหม่เข้าสต็อก: อยู่ระหว่างการพัฒนาโดยเพื่อนในทีม (รอเชื่อมต่อไปยังหน้ารายการ/เพิ่มวัตถุดิบ)");
-                }}
+                onClick={() => navigate("/admin/ingredients/new")}
                 className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-lg border border-[#d9cbbd] bg-white px-3 py-1.5 text-xs font-semibold text-[#4c1f08] hover:bg-[#f8ede3] cursor-pointer shadow-sm transition-colors"
-                title="รอเชื่อมต่อกับหน้าเพิ่มวัตถุดิบของเพื่อนร่วมทีม"
+                title="ไปยังหน้าเพิ่มวัตถุดิบใหม่"
               >
                 <svg className="h-3.5 w-3.5 text-[#3d7a36]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />

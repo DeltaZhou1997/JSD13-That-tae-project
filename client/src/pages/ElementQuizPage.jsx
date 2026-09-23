@@ -1,6 +1,6 @@
 // client/src/pages/ElementQuizPage.jsx
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import QuizForm from "../components/element-quiz/QuizForm";
 import QuizResult from "../components/element-quiz/QuizResult";
 import { useAuth } from "../context/AuthContext.js";
@@ -28,12 +28,17 @@ const ELEMENT_TH_MAP = {
 
 export default function ElementQuizPage() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { currentUser, accessToken, updateUser } = useAuth();
   const toast = useToast();
   const stageContainerRef = useRef(null);
 
-  // ตรวจสอบว่ามาจากการสมัครสมาชิกหรือไม่
-  const isFromRegister = Boolean(location.state?.fromRegister);
+  // ตรวจสอบว่ามาจากการสมัครสมาชิกหรือไม่ (อ่านค่าครั้งเดียวจาก location.state)
+  const isFromRegister = Boolean(location.state?.fromRegister || location.state?.autoStart);
+
+  // shouldRedirectAfterQuiz = true เฉพาะควิซแรกหลังสมัครสมาชิก
+  // จะถูกตั้งเป็น false ทันทีที่กด "ทำแบบทดสอบใหม่" ดังนั้น retake จะไม่ redirect
+  const [shouldRedirectAfterQuiz, setShouldRedirectAfterQuiz] = useState(isFromRegister);
 
   // ตรวจสอบว่าผู้ใช้เคยทำแบบทดสอบไปแล้วหรือไม่ (จาก currentUser หรือ localStorage)
   const existingElementTh = useMemo(() => getUserElement(currentUser), [currentUser]);
@@ -136,6 +141,14 @@ export default function ElementQuizPage() {
           setIsSavedToBackend(true);
           toast.success(`บันทึกธาตุเจ้าเรือน (ธาตุ${elementTh}) เรียบร้อยแล้ว`);
         }
+
+        // สมาชิกใหม่จากการสมัคร (quiz ครั้งแรก) → redirect ไปหน้าเมนูอัตโนมัติ
+        // ถ้าเป็น retake (shouldRedirectAfterQuiz = false แล้ว) จะไม่ redirect
+        if (shouldRedirectAfterQuiz) {
+          setTimeout(() => {
+            navigate(`/menus?element=${topElement}`, { replace: true });
+          }, 2800);
+        }
       } catch (err) {
         console.error("Error saving element to backend:", err);
         setIsSavedToBackend(false);
@@ -143,11 +156,12 @@ export default function ElementQuizPage() {
     }
   };
 
-  // รีเซ็ตเพื่อทำแบบทดสอบใหม่อีกครั้งทันที
+  // รีเซ็ตเพื่อทำแบบทดสอบใหม่อีกครั้งทันที — ล้าง redirect flag ด้วย
   const handleReset = () => {
     setAnswers({});
     setResultElement(null);
     setIsSavedToBackend(false);
+    setShouldRedirectAfterQuiz(false); // retake → ไม่ redirect
     setQuizStage("quiz");
   };
 
