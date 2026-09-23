@@ -61,6 +61,8 @@ export const SUBSCRIPTION_PLANS = {
 };
 
 export const PAYMENT_METHODS = {
+  // ชำระผ่าน Stripe Checkout (ThaiQR PromptPay / บัตร / Apple Pay / Google Pay)
+  STRIPE: "STRIPE",
   PROMPTPAY: "PROMPTPAY",
   CREDIT_CARD: "CREDIT_CARD",
   COD: "COD",

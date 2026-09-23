@@ -37,7 +37,8 @@ export default function OrdersPage() {
           items: order.items || [],
           grandTotal: order.grandTotal,
           shippingAddress: order.shippingAddress,
-          paymentMethod: "CREDIT_CARD",
+          paymentMethod: "STRIPE",
+          clientUrl: window.location.origin,
         }),
       });
       const data = await res.json();

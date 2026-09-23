@@ -17,6 +17,33 @@ const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripe = stripeSecretKey && stripeSecretKey.startsWith("sk_") ? new Stripe(stripeSecretKey) : null;
 
 const isAdmin = (req) => req.user?.role === "admin";
+
+// ช่องทางที่เปิดในหน้า Stripe Checkout: บัตรเครดิต/เดบิต (รวม Apple Pay / Google Pay อัตโนมัติ) + ThaiQR PromptPay
+const STRIPE_PAYMENT_METHODS = ["card", "promptpay"];
+
+/**
+ * URL หน้าเว็บที่ Stripe จะ redirect กลับ
+ * เดิมใช้ CLIENT_URL (ค่า localhost) → จ่ายเสร็จแล้วเด้งไป localhost
+ * ตอนนี้ใช้ origin ของหน้าเว็บที่ลูกค้ากดจ่ายจริง ถ้าอยู่ในรายชื่อที่อนุญาต
+ */
+function resolveClientUrl(req) {
+  const allowed = [
+    ...(process.env.CLIENT_URL || "").split(","),
+    ...(process.env.CLIENT_URLS || "").split(","),
+  ]
+    .map((u) => u.trim().replace(/\/+$/, ""))
+    .filter(Boolean);
+  const candidates = [req.body?.clientUrl, req.headers.origin]
+    .map((u) => String(u || "").trim().replace(/\/+$/, ""))
+    .filter((u) => /^https?:\/\/[^/]+$/i.test(u));
+
+  const isAllowed = (u) =>
+    allowed.includes(u) ||
+    /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(u) || // preview/production บน Vercel
+    /^http:\/\/localhost:\d+$/i.test(u); // ทดสอบในเครื่อง
+
+  return candidates.find(isAllowed) || allowed[0] || "http://localhost:5173";
+}
 const canAccessOrder = (req, order) => isAdmin(req) || String(order.userId) === String(req.user?.id);
 
 function orderQuery(id) {
@@ -223,11 +250,10 @@ const handleCreateStripeSession = async (req, res, next) => {
       orderId,
       planType,
       shippingAddress = {},
-      clientUrl: customClientUrl,
     } = req.body;
     const userId = String(req.user.id);
 
-    const clientUrl = customClientUrl || process.env.CLIENT_URL || "http://localhost:5173";
+    const clientUrl = resolveClientUrl(req);
     const finalOrderId = orderId || `ORD-${Date.now()}`;
 
     // 1. ตรวจสอบว่าคำสั่งซื้อนี้มีอยู่ในระบบแล้วหรือไม่ (เช่น กดชำระเงินอีกครั้งจากหน้าคำสั่งซื้อ)
@@ -258,7 +284,7 @@ const handleCreateStripeSession = async (req, res, next) => {
         planDetails: pricing.planDetails,
         items: pricing.items,
         shippingAddress,
-        paymentMethod: "CREDIT_CARD",
+        paymentMethod: "STRIPE",
         paymentStatus: "PENDING",
         orderStatus: "PENDING",
         status: "PENDING",
@@ -280,8 +306,11 @@ const handleCreateStripeSession = async (req, res, next) => {
         .map((i) => `${i.productName} x${i.quantity}`)
         .join(", ")
         .slice(0, 480);
+      const customer = await User.findById(existingOrder.userId).select("email").lean().catch(() => null);
       const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
+        payment_method_types: STRIPE_PAYMENT_METHODS,
+        locale: "th",
+        ...(customer?.email ? { customer_email: customer.email } : {}),
         line_items: [
           {
             price_data: {
@@ -363,12 +392,28 @@ const handleConfirmStripePayment = async (req, res, next) => {
       if (!stripeSessionId) {
         return res.status(400).json({ message: "ไม่พบ Stripe Session ของคำสั่งซื้อนี้" });
       }
-      const session = await stripe.checkout.sessions.retrieve(stripeSessionId);
-      if (session.metadata?.orderId !== order.orderId || session.payment_status !== "paid") {
-        return res.status(400).json({ success: false, message: "ยังไม่ได้รับการชำระเงินจาก Stripe" });
+      const session = await stripe.checkout.sessions.retrieve(stripeSessionId, {
+        expand: ["payment_intent.payment_method"],
+      });
+      if (session.metadata?.orderId !== order.orderId) {
+        return res.status(400).json({ success: false, message: "Stripe Session ไม่ตรงกับคำสั่งซื้อ" });
+      }
+      if (session.payment_status !== "paid") {
+        // PromptPay อาจยืนยันช้ากว่าบัตรเล็กน้อย → ให้หน้าเว็บลองใหม่
+        return res.status(202).json({
+          success: false,
+          pending: session.status === "complete",
+          message: "ยังไม่ได้รับการยืนยันการชำระเงินจาก Stripe",
+        });
       }
       order.stripeSessionId = stripeSessionId;
-      if (session.payment_intent) order.stripePaymentIntentId = String(session.payment_intent);
+      const intent = session.payment_intent;
+      if (intent) order.stripePaymentIntentId = String(intent.id || intent);
+      // ช่องทางจริงที่ลูกค้าใช้ (card / promptpay) + wallet (apple_pay / google_pay)
+      const pm = intent?.payment_method;
+      if (pm?.type) {
+        order.paymentChannel = pm.card?.wallet?.type || pm.type;
+      }
     }
 
     // อัปเดตสถานะเป็น PAID

@@ -47,9 +47,7 @@ export default function OrderSuccess() {
   const orderData = {
     ...baseOrder,
     orderId: urlOrderId || baseOrder.orderId,
-    paymentMethod: sessionId
-      ? "STRIPE (CREDIT_CARD / PROMPTPAY)"
-      : baseOrder.paymentMethod,
+    paymentMethod: sessionId ? "STRIPE" : baseOrder.paymentMethod,
     isFallbackPayment: false,
   };
 
@@ -64,17 +62,24 @@ export default function OrderSuccess() {
   React.useEffect(() => {
     async function confirmPaymentOnServer() {
       if (urlOrderId || sessionId) {
-        try {
-          const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
-          await fetch(`${apiUrl}/api/v2/checkout/confirm-stripe`, {
-            method: "POST",
-            headers: getAuthHeaders({ "Content-Type": "application/json" }),
-            body: JSON.stringify({ orderId: urlOrderId, sessionId }),
-          });
-          sessionStorage.removeItem("last_v2_order");
-          if (handleClearCart) handleClearCart();
-        } catch (err) {
-          console.warn("Auto-confirm payment error:", err);
+        const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+          try {
+            const res = await fetch(`${apiUrl}/api/v2/checkout/confirm-stripe`, {
+              method: "POST",
+              headers: getAuthHeaders({ "Content-Type": "application/json" }),
+              body: JSON.stringify({ orderId: urlOrderId, sessionId }),
+            });
+            if (res.ok && res.status !== 202) {
+              sessionStorage.removeItem("last_v2_order");
+              if (handleClearCart) handleClearCart();
+              return;
+            }
+            if (res.status !== 202) return; // จ่ายไม่สำเร็จ/ไม่พบ — ไม่ต้องลองซ้ำ
+          } catch (err) {
+            console.warn("Auto-confirm payment error:", err);
+          }
+          await new Promise((r) => setTimeout(r, 2000));
         }
       }
     }

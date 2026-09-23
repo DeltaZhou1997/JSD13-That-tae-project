@@ -178,7 +178,7 @@ export default function CheckoutPage() {
     cvc: "",
   });
 
-  const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS.PROMPTPAY);
+  const [paymentMethod, setPaymentMethod] = useState(PAYMENT_METHODS.STRIPE);
 
   // คำนวณราคา & สิทธิ์
   const totalKitsCount = cartItems.reduce(
@@ -367,7 +367,8 @@ export default function CheckoutPage() {
         const res = await fetch(`${apiUrl}/api/v2/checkout/create-session`, {
           method: "POST",
           headers: getAuthHeaders({ "Content-Type": "application/json" }),
-          body: JSON.stringify(orderPayload),
+          // clientUrl = โดเมนเว็บที่ลูกค้าใช้อยู่ ให้ Stripe redirect กลับมาถูกที่ (ไม่ใช่ localhost)
+          body: JSON.stringify({ ...orderPayload, clientUrl: window.location.origin }),
         });
         const data = await res.json();
 

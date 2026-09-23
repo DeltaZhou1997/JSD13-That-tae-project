@@ -6,184 +6,117 @@ import { verifyToken } from "./users.routes.js";
 
 const router = Router();
 
-// Helper คำนวณยอดรวมและจำนวนชิ้น
-function calculateCartTotals(items) {
-  const totalItems = items.reduce((sum, item) => sum + (Number(item.quantity) || 1), 0);
-  const subtotal = items.reduce(
-    (sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 1),
-    0
+// ตะกร้าผูกกับผู้ใช้ที่ล็อกอิน (userId มาจาก token เท่านั้น ไม่รับจาก body)
+router.use(verifyToken);
+
+const MAX_QTY_PER_ITEM = 99;
+
+function firstImage(imageUrl) {
+  return (Array.isArray(imageUrl) ? imageUrl[0] : imageUrl) || "";
+}
+
+// รวมรายการที่ซ้ำ + จำกัดจำนวน
+function normalizeLines(rawItems = []) {
+  const map = new Map();
+  for (const raw of Array.isArray(rawItems) ? rawItems : []) {
+    const id = String(raw?.productId || raw?.id || raw?._id || "");
+    const qty = Math.floor(Number(raw?.quantity) || 0);
+    if (!mongoose.Types.ObjectId.isValid(id) || qty <= 0) continue;
+    map.set(id, Math.min(MAX_QTY_PER_ITEM, (map.get(id) || 0) + qty));
+  }
+  return map;
+}
+
+// สร้างรายการตะกร้าจากข้อมูลสินค้าใน DB (ราคา/ชื่อ/รูปจาก DB เสมอ ไม่เชื่อ client)
+async function buildCartItems(lineMap) {
+  if (lineMap.size === 0) return [];
+  const products = await Product.find({ _id: { $in: [...lineMap.keys()] }, isActive: { $ne: false } })
+    .select("name nameTh price imageUrl")
+    .lean();
+  return products.map((p) => ({
+    product: p._id,
+    productId: String(p._id),
+    name: p.nameTh || p.name || "Cooking Kit",
+    price: Number(p.price) || 0,
+    quantity: lineMap.get(String(p._id)),
+    imageUrl: firstImage(p.imageUrl),
+  }));
+}
+
+function toResponse(cart) {
+  const items = (cart?.items || []).map((i) => ({
+    productId: i.productId || String(i.product || ""),
+    name: i.name,
+    price: i.price,
+    quantity: i.quantity,
+    imageUrl: i.imageUrl,
+  }));
+  const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
+  const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  return { items, totalItems, subtotal };
+}
+
+async function saveCart(userId, items) {
+  return Cart.findOneAndUpdate(
+    { userId },
+    { $set: { items } },
+    { new: true, upsert: true, setDefaultsOnInsert: true },
   );
-  return { totalItems, subtotal };
 }
 
 // =========================================================================
-// 1. GET /api/v2/cart/:userId — ดึงตะกร้าสินค้าของผู้ใช้
+// GET /api/v2/cart — ดึงตะกร้าของผู้ใช้ (อัปเดตราคา/ชื่อจาก DB ล่าสุด)
 // =========================================================================
-router.get("/:userId", async (req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
-    const { userId } = req.params;
-    let cart = await Cart.findOne({ userId });
-
-    if (!cart) {
-      cart = await Cart.create({ userId, items: [] });
-    }
-
-    const { totalItems, subtotal } = calculateCartTotals(cart.items);
-    return res.status(200).json({ ...cart.toObject(), totalItems, subtotal });
+    const userId = String(req.user.id);
+    const cart = await Cart.findOne({ userId }).lean();
+    const lines = normalizeLines(cart?.items || []);
+    const items = await buildCartItems(lines);
+    const saved = await saveCart(userId, items);
+    return res.status(200).json(toResponse(saved));
   } catch (err) {
     next(err);
   }
 });
 
 // =========================================================================
-// 2. POST /api/v2/cart/items — เพิ่มสินค้าลงตะกร้า (พร้อมเช็กสต็อกสินค้า & วัตถุดิบ)
+// PUT /api/v2/cart — แทนที่ตะกร้าทั้งใบ { items: [{ productId, quantity }] }
 // =========================================================================
-router.post("/items", async (req, res, next) => {
+router.put("/", async (req, res, next) => {
   try {
-    const { userId = "USR-001", productId, quantity = 1 } = req.body;
-
-    if (!productId) {
-      return res.status(400).json({ message: "กรุณาระบุรหัสสินค้า (productId)" });
-    }
-
-    const qty = Math.max(1, parseInt(quantity, 10) || 1);
-
-    // ตรวจสอบสินค้าในฐานข้อมูล
-    let product = null;
-    if (mongoose.Types.ObjectId.isValid(productId)) {
-      product = await Product.findById(productId);
-    }
-
-    // ตรวจสอบความพร้อมของวัตถุดิบในสูตรอาหาร
-    if (product) {
-      const stockCheck = await product.checkStockAvailability(qty);
-      if (!stockCheck.isAvailable) {
-        return res.status(400).json({
-          message: `ไม่สามารถเพิ่ม "${product.nameTh || product.name}" ลงตะกร้าได้เนื่องจากวัตถุดิบไม่พอ`,
-          details: stockCheck.details,
-        });
-      }
-    }
-
-    let cart = await Cart.findOne({ userId });
-    if (!cart) {
-      cart = new Cart({ userId, items: [] });
-    }
-
-    const existingIndex = cart.items.findIndex(
-      (item) => String(item.productId || item.product || item._id) === String(productId)
-    );
-
-    if (existingIndex > -1) {
-      cart.items[existingIndex].quantity += qty;
-    } else {
-      cart.items.push({
-        product: product?._id || (mongoose.Types.ObjectId.isValid(productId) ? productId : undefined),
-        productId: String(productId),
-        name: product?.nameTh || product?.name || req.body.name || "Cooking Kit",
-        price: Number(product?.price ?? req.body.price ?? 0),
-        quantity: qty,
-        imageUrl: product?.imageUrl || req.body.imageUrl || "",
-      });
-    }
-
-    await cart.save();
-    const { totalItems, subtotal } = calculateCartTotals(cart.items);
-
-    return res.status(200).json({
-      message: "เพิ่มสินค้าลงตะกร้าเรียบร้อยแล้ว",
-      cart: { ...cart.toObject(), totalItems, subtotal },
-    });
+    const userId = String(req.user.id);
+    const items = await buildCartItems(normalizeLines(req.body?.items));
+    const saved = await saveCart(userId, items);
+    return res.status(200).json(toResponse(saved));
   } catch (err) {
     next(err);
   }
 });
 
 // =========================================================================
-// 3. PUT /api/v2/cart/items/:itemId — ปรับจำนวนสินค้าในตะกร้า
+// POST /api/v2/cart/merge — รวมตะกร้า guest (จากคุกกี้) เข้าตะกร้าของบัญชี ตอนล็อกอิน/สมัคร
 // =========================================================================
-router.put("/items/:itemId", async (req, res, next) => {
+router.post("/merge", async (req, res, next) => {
   try {
-    const { itemId } = req.params;
-    const { userId = "USR-001", quantity, delta } = req.body;
-
-    const cart = await Cart.findOne({ userId });
-    if (!cart) {
-      return res.status(404).json({ message: "ไม่พบตะกร้าสินค้า" });
-    }
-
-    const item = cart.items.find(
-      (i) => String(i.productId || i._id) === String(itemId)
-    );
-
-    if (!item) {
-      return res.status(404).json({ message: "ไม่พบสินค้าชิ้นนี้ในตะกร้า" });
-    }
-
-    if (typeof quantity === "number") {
-      item.quantity = Math.max(1, quantity);
-    } else if (typeof delta === "number") {
-      item.quantity = Math.max(1, item.quantity + delta);
-    }
-
-    await cart.save();
-    const { totalItems, subtotal } = calculateCartTotals(cart.items);
-
-    return res.status(200).json({
-      message: "อัปเดตจำนวนสินค้าสำเร็จ",
-      cart: { ...cart.toObject(), totalItems, subtotal },
-    });
+    const userId = String(req.user.id);
+    const existing = await Cart.findOne({ userId }).lean();
+    const lines = normalizeLines([...(existing?.items || []), ...(req.body?.items || [])]);
+    const items = await buildCartItems(lines);
+    const saved = await saveCart(userId, items);
+    return res.status(200).json(toResponse(saved));
   } catch (err) {
     next(err);
   }
 });
 
 // =========================================================================
-// 4. DELETE /api/v2/cart/items/:itemId — ลบสินค้าชิ้นหนึ่งออกจากตะกร้า
+// DELETE /api/v2/cart — ล้างตะกร้า
 // =========================================================================
-router.delete("/items/:itemId", async (req, res, next) => {
+router.delete("/", async (req, res, next) => {
   try {
-    const { itemId } = req.params;
-    const userId = req.body.userId || req.query.userId || "USR-001";
-
-    const cart = await Cart.findOne({ userId });
-    if (!cart) {
-      return res.status(404).json({ message: "ไม่พบตะกร้าสินค้า" });
-    }
-
-    const prevLength = cart.items.length;
-    cart.items = cart.items.filter(
-      (i) => String(i.productId || i._id) !== String(itemId)
-    );
-
-    if (cart.items.length === prevLength) {
-      return res.status(404).json({ message: "ไม่พบสินค้านี้ในตะกร้าเพื่อทำการลบ" });
-    }
-
-    await cart.save();
-    const { totalItems, subtotal } = calculateCartTotals(cart.items);
-
-    return res.status(200).json({
-      message: "ลบสินค้าออกจากตะกร้าเรียบร้อยแล้ว",
-      cart: { ...cart.toObject(), totalItems, subtotal },
-    });
-  } catch (err) {
-    next(err);
-  }
-});
-
-// =========================================================================
-// 5. DELETE /api/v2/cart/:userId/clear — ล้างตะกร้าทั้งหมด
-// =========================================================================
-router.delete("/:userId/clear", async (req, res, next) => {
-  try {
-    const { userId } = req.params;
-    await Cart.findOneAndUpdate({ userId }, { $set: { items: [] } });
-
-    return res.status(200).json({
-      message: "ล้างตะกร้าสินค้าเรียบร้อยแล้ว",
-      cart: { userId, items: [], totalItems: 0, subtotal: 0 },
-    });
+    const saved = await saveCart(String(req.user.id), []);
+    return res.status(200).json(toResponse(saved));
   } catch (err) {
     next(err);
   }

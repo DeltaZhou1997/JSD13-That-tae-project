@@ -1,205 +1,108 @@
 import React from "react";
 import { PAYMENT_METHODS } from "../../constants/checkout";
-import {
-  CardNumberElement,
-  CardExpiryElement,
-  CardCvcElement,
-} from "@stripe/react-stripe-js";
 
-// สไตล์ตกแต่งภายในช่อง Stripe Elements
-const ELEMENT_STYLE = {
-  style: {
-    base: {
-      fontSize: "14px",
-      color: "#2f2119",
-      fontFamily: '"Noto Sans Thai", sans-serif',
-      "::placeholder": {
-        color: "#9ca3af",
-      },
-    },
-    invalid: {
-      color: "#dc2626",
-    },
-  },
-};
+// ป้ายช่องทางที่ Stripe Checkout รองรับ (แสดงในหน้า Stripe ตามอุปกรณ์/เบราว์เซอร์ของลูกค้า)
+const STRIPE_CHANNELS = ["ThaiQR PromptPay", "Visa", "Mastercard", "JCB", "Apple Pay", "Google Pay"];
 
-export default function PaymentMethodSelector({
-  paymentMethod,
-  setPaymentMethod,
-  promptPayQrUrl,
-  cardData,
-  onCardInputChange,
-  paymentError,
-  paymentVersion = "v1", // 🌟 รับ paymentVersion เพื่อแยกการแสดงผล v1 กับ v2
-}) {
-  const isCreditCard = paymentMethod === PAYMENT_METHODS.CREDIT_CARD;
+function OptionCard({ checked, onSelect, title, subtitle, badge, children }) {
+  return (
+    <div
+      className={`rounded-2xl border-2 transition-all duration-200 ${
+        checked ? "border-[#3d2c2e] bg-white shadow-md" : "border-[#e8dfd1] bg-white/70 hover:border-[#c9b6a4]"
+      }`}
+    >
+      <label className="flex cursor-pointer items-start justify-between gap-3 p-4">
+        <span className="flex items-start gap-3">
+          <input
+            type="radio"
+            name="paymentMethod"
+            checked={checked}
+            onChange={onSelect}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-[#3d2c2e]"
+          />
+          <span>
+            <span className="block text-sm font-bold text-[#3d2c2e]">{title}</span>
+            {subtitle && <span className="mt-0.5 block text-xs text-[#6f675f]">{subtitle}</span>}
+          </span>
+        </span>
+        {badge}
+      </label>
+      {checked && children && <div className="px-4 pb-4">{children}</div>}
+    </div>
+  );
+}
+
+export default function PaymentMethodSelector({ paymentMethod, setPaymentMethod, paymentError }) {
   const isCOD = paymentMethod === PAYMENT_METHODS.COD;
-  const isPromptPay = paymentMethod === PAYMENT_METHODS.PROMPTPAY;
+  const isStripe = !isCOD;
 
   return (
-    <div className="bg-[#fcf8f2] border border-[#e8dfd1] rounded-3xl p-6 shadow-sm">
-      {/* หัวข้อ */}
-      <div className="flex items-center gap-2 mb-5">
-        <span className="text-xl">💳</span>
+    <div className="bg-[#fcf8f2] border border-[#e8dfd1] rounded-3xl p-5 sm:p-6 shadow-sm">
+      <div className="mb-5 flex items-center gap-2.5">
+        <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#3d2c2e] text-white">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5" aria-hidden="true">
+            <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+            <path strokeLinecap="round" d="M2.5 10h19M6.5 15h4" />
+          </svg>
+        </span>
         <h2 className="text-xl font-bold text-[#3d2c2e]">ช่องทางการชำระเงิน</h2>
       </div>
 
       <div className="space-y-3">
-        {/* ==================== 1. PromptPay ==================== */}
-        <label
-          className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
-            isPromptPay
-              ? "border-[#8d593a] bg-[#f6ede5]"
-              : "border-[#e8dfd1] bg-white"
-          }`}
+        {/* 1. Stripe: ThaiQR PromptPay + บัตรเดบิต/เครดิต + Apple Pay / Google Pay */}
+        <OptionCard
+          checked={isStripe}
+          onSelect={() => setPaymentMethod(PAYMENT_METHODS.STRIPE)}
+          title="ชำระผ่าน Stripe ที่รองรับ ThaiQR PromptPay - Debit - Credit"
+          subtitle="เลือกช่องทางที่สะดวกในหน้าชำระเงินของ Stripe"
+          badge={
+            <span className="shrink-0 rounded-full bg-[#635bff]/10 px-2.5 py-1 text-[11px] font-bold text-[#635bff]">
+              Stripe
+            </span>
+          }
         >
-          <div className="flex items-center gap-3">
-            <input
-              type="radio"
-              name="paymentMethod"
-              value={PAYMENT_METHODS.PROMPTPAY}
-              checked={isPromptPay}
-              onChange={() => setPaymentMethod(PAYMENT_METHODS.PROMPTPAY)}
-              className="accent-[#8d593a] w-4 h-4"
-            />
-            <span className="font-semibold text-sm">
-              สแกน QR Code พร้อมเพย์
-            </span>
+          <div className="flex flex-wrap gap-1.5">
+            {STRIPE_CHANNELS.map((c) => (
+              <span key={c} className="rounded-full border border-[#e8dfd1] bg-[#fcf8f2] px-2.5 py-1 text-[11px] font-semibold text-[#6f675f]">
+                {c}
+              </span>
+            ))}
           </div>
-          <span className="text-xs bg-[#8d593a]/10 text-[#8d593a] px-2.5 py-1 rounded font-bold">
-            PromptPay
-          </span>
-        </label>
-
-        {/* แสดง QR Code ในหน้าเว็บเฉพาะตอนเป็น v1 */}
-        {isPromptPay && paymentVersion === "v1" && (
-          <div className="p-5 bg-white border border-[#e8dfd1] rounded-2xl text-center my-2">
-            <span className="inline-block text-xs bg-[#f6ede5] text-[#8d593a] px-3 py-1 rounded-full font-medium mb-3">
-              สแกน QR Code เพื่อชำระเงินผ่าน PromptPay
+          <p className="mt-3 flex items-start gap-2 rounded-xl bg-emerald-50 p-3 text-xs leading-relaxed text-emerald-900">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true">
+              <rect x="4" y="11" width="16" height="10" rx="2" />
+              <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+            </svg>
+            <span>
+              กดยืนยันแล้วระบบจะพาไปหน้าชำระเงินที่ปลอดภัยของ Stripe (PCI-DSS) — สแกน QR พร้อมเพย์ด้วยแอปธนาคาร
+              หรือใช้บัตร / Apple Pay / Google Pay เมื่อชำระสำเร็จจะกลับมาที่หน้าคำสั่งซื้อสำเร็จอัตโนมัติ
             </span>
-            <div className="flex justify-center mb-3">
-              <img
-                src={promptPayQrUrl}
-                alt="PromptPay QR Code"
-                className="w-48 h-48 border p-2 rounded-xl bg-white shadow-inner"
-              />
-            </div>
-            <p className="text-xs text-[#6f675f]">
-              เมื่อชำระเงินเสร็จสิ้น ระบบจะทำการยืนยันให้อัตโนมัติใน 1-2 นาที
+          </p>
+          {import.meta.env.DEV && (
+            <p className="mt-2 text-[11px] text-stone-500">
+              โหมดทดสอบ: ใช้บัตร <code className="rounded bg-stone-100 px-1 font-mono">4242 4242 4242 4242</code> วันหมดอายุใดก็ได้ในอนาคต
             </p>
-          </div>
-        )}
+          )}
+        </OptionCard>
 
-        {/* กล่องแจ้งเตือนของ v2 (ไม่แสดง QR ที่นี่ ให้ไปสแกนที่ Stripe) */}
-        {isPromptPay && paymentVersion === "v2" && (
-          <div className="p-4 bg-sky-50 border border-sky-200 rounded-2xl text-left my-2 flex items-start gap-3">
-            <span className="text-xl mt-0.5">📱</span>
-            <div>
-              <p className="text-xs font-bold text-sky-900">
-                ชำระเงินผ่าน PromptPay QR Code บนหน้า Stripe
-              </p>
-              <p className="text-xs text-sky-700 mt-0.5 leading-relaxed">
-                เมื่อกดยืนยันการสั่งซื้อ ระบบจะนำท่านไปยังหน้าชำระเงินของ Stripe
-                เพื่อแสดง QR Code พร้อมเพย์ที่สามารถบันทึกหรือสแกนจ่ายได้ทันที
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* ==================== 2. Credit Card ==================== */}
-        <label
-          className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
-            isCreditCard
-              ? "border-[#8d593a] bg-[#f6ede5]"
-              : "border-[#e8dfd1] bg-white"
-          }`}
+        {/* 2. เก็บเงินปลายทาง */}
+        <OptionCard
+          checked={isCOD}
+          onSelect={() => setPaymentMethod(PAYMENT_METHODS.COD)}
+          title="เก็บเงินปลายทาง (COD)"
+          subtitle="จ่ายเงินสดหรือสแกนจ่ายกับพนักงานจัดส่ง"
         >
-          <div className="flex items-center gap-3">
-            <input
-              type="radio"
-              name="paymentMethod"
-              value={PAYMENT_METHODS.CREDIT_CARD}
-              checked={isCreditCard}
-              onChange={() => setPaymentMethod(PAYMENT_METHODS.CREDIT_CARD)}
-              className="accent-[#8d593a] w-4 h-4"
-            />
-            <span className="font-semibold text-sm">บัตรเครดิต / เดบิต (Stripe Payment Gateway)</span>
-          </div>
-          <span className="text-xs text-[#6f675f] flex items-center gap-1">
-            💳 Visa / Mastercard / JCB
-          </span>
-        </label>
-
-        {/* ข้อมูลการชำระเงินผ่าน Stripe Hosted Gateway */}
-        {isCreditCard && (
-          <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl text-left my-2 space-y-2">
-            <div className="flex items-start gap-2.5">
-              <span className="text-xl mt-0.5">🔒</span>
-              <div>
-                <p className="text-xs font-bold text-emerald-900">
-                  ชำระเงินผ่าน Stripe Payment Gateway ปลอดภัยระดับโลก (PCI-DSS)
-                </p>
-                <p className="text-xs text-emerald-800 mt-0.5 leading-relaxed">
-                  เมื่อกดยืนยันการสั่งซื้อ ระบบจะนำท่านไปยังหน้าชำระเงินของ Stripe โดยตรง สามารถใช้เลขบัตรจริง หรือเลขบัตรทดสอบสำหรับจำลองสถานการณ์ต่างๆ ได้ทันที
-                </p>
-              </div>
-            </div>
-            <div className="bg-white/80 p-2.5 rounded-xl border border-emerald-100 text-[11px] text-stone-600">
-              <span className="font-bold text-emerald-900">💡 การจำลองสถานะชำระเงิน: </span>
-              ใส่เลขบัตรทดสอบ <code className="bg-emerald-100/70 px-1.5 py-0.5 rounded font-mono font-bold text-emerald-950">4242 4242 4242 4242</code> ในหน้า Stripe เพื่อจำลองการชำระสำเร็จ
-            </div>
-          </div>
-        )}
-
-        {/* ==================== 3. COD ==================== */}
-        <label
-          className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${
-            isCOD
-              ? "border-[#8d593a] bg-[#f6ede5]"
-              : "border-[#e8dfd1] bg-white"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            <input
-              type="radio"
-              name="paymentMethod"
-              value={PAYMENT_METHODS.COD}
-              checked={isCOD}
-              onChange={() => setPaymentMethod(PAYMENT_METHODS.COD)}
-              className="accent-[#8d593a] w-4 h-4"
-            />
-            <span className="font-semibold text-sm">เก็บเงินปลายทาง (COD)</span>
-          </div>
-          <span className="text-xs text-[#6f675f] flex items-center gap-1.5">
-            <span>💵 เงินสด</span>
-            <span className="opacity-40">|</span>
-            <span>📱 สแกนจ่าย</span>
-          </span>
-        </label>
-
-        {isCOD && (
-          <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl my-2">
-            <div className="flex items-start gap-2.5">
-              <span className="text-xl mt-0.5">📦</span>
-              <div>
-                <p className="text-sm font-bold text-amber-900">
-                  ชำระเงินเมื่อได้รับสินค้า (เงินสด หรือ สแกนจ่าย)
-                </p>
-                <p className="text-xs text-amber-700 mt-1 leading-relaxed">
-                  ท่านสามารถเตรียม{" "}
-                  <span className="font-semibold text-amber-900">เงินสด</span>{" "}
-                  ให้พอดี หรือเลือก{" "}
-                  <span className="font-semibold text-amber-900">
-                    สแกน QR Code
-                  </span>{" "}
-                  เพื่อโอนเงินผ่าน Mobile Banking
-                  กับพนักงานจัดส่งได้โดยตรงเมื่อสินค้าถึงบ้าน
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+          <p className="rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
+            เตรียม<strong>เงินสด</strong>ให้พอดี หรือ<strong>สแกน QR Code</strong>โอนผ่าน Mobile Banking กับพนักงานได้เมื่อสินค้าถึงบ้าน
+          </p>
+        </OptionCard>
       </div>
+
+      {paymentError && (
+        <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+          {paymentError}
+        </p>
+      )}
     </div>
   );
 }

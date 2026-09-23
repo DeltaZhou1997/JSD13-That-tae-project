@@ -12,7 +12,7 @@ export default function CheckoutSummary({
   requiredKits = 0,
   kitsDifference = 0,
   isProcessingPayment = false,
-  paymentMethod = "PROMPTPAY",
+  paymentMethod = "STRIPE",
 }) {
   const navigate = useNavigate();
 
@@ -25,6 +25,8 @@ export default function CheckoutSummary({
     switch (paymentMethod) {
       case PAYMENT_METHODS.COD:
         return "ยืนยันสั่งซื้อ (เก็บเงินปลายทาง)";
+      case PAYMENT_METHODS.STRIPE:
+        return "ไปหน้าชำระเงิน Stripe";
       case PAYMENT_METHODS.CREDIT_CARD:
         return "ชำระเงินด้วยบัตรเครดิต";
       case PAYMENT_METHODS.PROMPTPAY:

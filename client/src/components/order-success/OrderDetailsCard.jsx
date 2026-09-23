@@ -3,6 +3,7 @@ import { formatDate } from "../../utils/dateFormatter.js";
 
 // แมปชื่อ paymentMethod ให้เป็นภาษาไทยที่อ่านง่าย
 const PAYMENT_METHOD_LABELS = {
+  STRIPE: "ชำระผ่าน Stripe (PromptPay / บัตร / Wallet)",
   PROMPTPAY: "สแกน QR Code พร้อมเพย์",
   CREDIT_CARD: "บัตรเครดิต / เดบิต",
   COD: "เก็บเงินปลายทาง (เงินสด / สแกนโอน)",

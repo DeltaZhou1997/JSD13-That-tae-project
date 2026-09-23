@@ -4,9 +4,11 @@ import Navbar from './Navbar.jsx'
 import Footer from './Footer.jsx'
 import AIAdvisorWidget from './ai/AIAdvisorWidget.jsx'
 import useToast from '../hooks/useToast.js'
+import useCartSync from '../hooks/useCartSync.js'
 
 function Layout({ context }) {
-  const [cartItems, setCartItems] = useState([])
+  // ตะกร้าจำสถานะ: guest เก็บในคุกกี้ / ล็อกอินแล้วซิงก์กับ DB (ย้ายตะกร้า guest เข้าบัญชีตอนล็อกอิน)
+  const [cartItems, setCartItems] = useCartSync()
   const location = useLocation()
   const toast = useToast()
 
@@ -40,6 +42,7 @@ function Layout({ context }) {
         {
           _id: targetId,
           id: targetId,
+          productId: targetId,
           name: displayName,
           nameTh: displayName,
           price: Number(product.price) || 0,

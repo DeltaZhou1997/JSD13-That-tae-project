@@ -75,7 +75,7 @@ const orderSchema = new mongoose.Schema(
     shippingAddress: shippingAddressSchema,
     paymentMethod: {
       type: String,
-      enum: ["PROMPTPAY", "CREDIT_CARD", "COD", "promptpay", "card", "cod"],
+      enum: ["STRIPE", "PROMPTPAY", "CREDIT_CARD", "COD", "promptpay", "card", "cod"],
       required: true,
     },
     paymentStatus: {
@@ -111,6 +111,11 @@ const orderSchema = new mongoose.Schema(
     earnedPoints: {
       type: Number,
       default: 0,
+    },
+    // ช่องทางที่จ่ายจริงผ่าน Stripe: card / promptpay / apple_pay / google_pay
+    paymentChannel: {
+      type: String,
+      default: "",
     },
     // กันให้แต้มซ้ำ (เช่น เรียก confirm-stripe หลายครั้ง)
     // ไม่มี default: ออเดอร์เก่าที่ไม่มีฟิลด์นี้ได้แต้มไปแล้วตอนสร้าง จึงห้ามให้ซ้ำ
