@@ -110,13 +110,20 @@ const productSchema = new mongoose.Schema(
         unit: { type: String, default: "g" },
         // น้ำหนักต่อ 1 ชิ้น (กรัม) กรณี unit = piece ใช้แปลงเป็นกรัมเพื่อคิดสารอาหารต่อ 100 g
         gramsPerPiece: { type: Number },
+        // snapshot ข้อมูลวัตถุดิบ ใช้แสดงในหน้าเมนู (รสยา หมวดหมู่)
+        medicinalTaste: { type: String, default: "" },
+        category: { type: String, default: "" },
+        categoryTh: { type: String, default: "" },
         elements: [{ type: String }],
+        // ค่าสารอาหารต่อ 100 (กรัม / ml) — คิดตามปริมาณจริงตอนแสดงผล
         nutrientsPer100g: {
           calories: { type: Number, default: 0 },
           protein: { type: Number, default: 0 },
           carbs: { type: Number, default: 0 },
           fat: { type: Number, default: 0 },
           sodium: { type: Number, default: 0 },
+          sugar: { type: Number, default: 0 },
+          fiber: { type: Number, default: 0 },
         },
       },
     ],

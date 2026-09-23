@@ -3,6 +3,9 @@ import { Link, useParams, useOutletContext } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.js';
 import { useApp } from '../context/AppContext';
 import { useProducts } from '../context/ProductsContext.js';
+import { useIngredients } from '../context/IngredientsContext.js';
+import { getUnitInfo } from '../utils/units.js';
+import { buildRecipeRows, formatTastes } from '../utils/recipeRows.js';
 import RecipePieCharts from '../components/Menu/RecipePieChart.jsx';
 
 const CATEGORY_LABELS = {
@@ -136,6 +139,8 @@ export default function MenuDetail() {
   const { language } = useApp() || { language: 'th' };
   const { handleAddToCart } = useOutletContext() || {};
   const { getProductById } = useProducts();
+  // ใช้ข้อมูลวัตถุดิบล่าสุดจากคลัง (รสยา หมวดหมู่ ธาตุ สารอาหาร) แทน snapshot ที่อาจไม่ครบในสูตร
+  const { ingredients = [] } = useIngredients() || {};
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'admin';
   const [menu, setMenu] = useState(null);
@@ -196,8 +201,13 @@ export default function MenuDetail() {
     : [menu.imageUrl].filter(Boolean);
   const images = (rawImages.length > 0 ? rawImages : (menu.images || [])).map(cleanUrl);
 
-  const recipe = Array.isArray(menu.recipe) ? menu.recipe : [];
-  const nutrition = menu.nutritionCache || null;
+  // สารอาหารของแต่ละวัตถุดิบคิดตาม "ปริมาณจริง" (ค่าต่อ 100 × ปริมาณเป็นกรัม ÷ 100)
+  const { rows: recipe, totals: recipeTotals } = buildRecipeRows(
+    Array.isArray(menu.recipe) ? menu.recipe : [],
+    ingredients,
+  );
+  // สรุปรวมทั้งชุดคำนวณสดจากสูตร (nutritionCache เดิมไม่ถูกอัปเดตเมื่อแก้สูตร)
+  const nutrition = recipe.length > 0 ? { totals: recipeTotals } : menu.nutritionCache || null;
   const perServing = nutrition?.perServing || null;
   const dominantElement = menu.dominantElement || 'ดิน';
   const elementStyle = ELEMENT_BADGES[dominantElement] || ELEMENT_BADGES['ดิน'];
@@ -458,7 +468,7 @@ export default function MenuDetail() {
             {viewMode === 'cards' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 mt-6">
                 {recipe.map((item, idx) => {
-                  const n = item.nutrientsPer100g || {};
+                  const n = item.actual;
                   const catBadge = getCategoryBadge(item.category, item.categoryTh);
                   return (
                     <div
@@ -472,7 +482,7 @@ export default function MenuDetail() {
                             {item.nameTh}
                           </h4>
                           <span className="shrink-0 bg-stone-200/80 text-stone-800 text-xs font-extrabold px-2.5 py-0.5 rounded-md whitespace-nowrap">
-                            {item.quantity} {item.unit || 'g'}
+                            {item.quantity} {getUnitInfo(item.unit).short}
                           </span>
                         </div>
 
@@ -483,7 +493,7 @@ export default function MenuDetail() {
                           </span>
                           {item.medicinalTaste && (
                             <span className="text-[11px] bg-stone-100 text-stone-700 border border-stone-200 px-2 py-0.5 rounded-md font-medium whitespace-nowrap">
-                              รส{item.medicinalTaste.replace(/^รส/, '')}
+                              {formatTastes(item.medicinalTaste)}
                             </span>
                           )}
                           {Array.isArray(item.elements) && item.elements.length > 0 && (
@@ -504,23 +514,26 @@ export default function MenuDetail() {
                         </div>
                       </div>
 
-                      {/* Nutrient Micronutrient Strip (per 100g) */}
+                      {/* Nutrient Strip — ตามปริมาณจริงในชุด */}
+                      <p className="mb-1 text-[10px] text-stone-400">
+                        สารอาหารตามปริมาณในชุด ({item.quantity} {getUnitInfo(item.unit).short})
+                      </p>
                       <div className="pt-2.5 border-t border-stone-200/60 grid grid-cols-4 gap-1 text-center text-[10px]">
                         <div>
                           <span className="block text-stone-600 font-medium">แคลอรี</span>
-                          <span className="font-bold text-stone-800">{n.calories ?? '-'}</span>
+                          <span className="font-bold text-stone-800">{n.calories} kcal</span>
                         </div>
                         <div>
                           <span className="block text-stone-600 font-medium">โปรตีน</span>
-                          <span className="font-bold text-stone-800">{n.protein ?? '-'}g</span>
+                          <span className="font-bold text-stone-800">{n.protein}g</span>
                         </div>
                         <div>
                           <span className="block text-stone-600 font-medium">คาร์บ</span>
-                          <span className="font-bold text-stone-800">{n.carbs ?? '-'}g</span>
+                          <span className="font-bold text-stone-800">{n.carbs}g</span>
                         </div>
                         <div>
                           <span className="block text-stone-600 font-medium">ไขมัน</span>
-                          <span className="font-bold text-stone-800">{n.fat ?? '-'}g</span>
+                          <span className="font-bold text-stone-800">{n.fat}g</span>
                         </div>
                       </div>
                     </div>
@@ -540,15 +553,16 @@ export default function MenuDetail() {
                       <th className="py-3.5 px-3 text-center min-w-[120px]">รสยา (แพทย์แผนไทย)</th>
                       <th className="py-3.5 px-3 text-center min-w-[110px]">ธาตุที่ควรกิน</th>
                       <th className="py-3.5 px-3 text-right min-w-[100px]">ปริมาณในชุด</th>
-                      <th className="py-3.5 px-3 text-right min-w-[100px]">พลังงาน (/100g)</th>
-                      <th className="py-3.5 px-3 text-right min-w-[80px]">โปรตีน (/100g)</th>
-                      <th className="py-3.5 px-3 text-right min-w-[80px]">คาร์บ (/100g)</th>
-                      <th className="py-3.5 px-4 text-right min-w-[80px]">ไขมัน (/100g)</th>
+                      <th className="py-3.5 px-3 text-right min-w-[100px]">พลังงาน (ตามปริมาณ)</th>
+                      <th className="py-3.5 px-3 text-right min-w-[80px]">โปรตีน (ตามปริมาณ)</th>
+                      <th className="py-3.5 px-3 text-right min-w-[80px]">คาร์บ (ตามปริมาณ)</th>
+                      <th className="py-3.5 px-4 text-right min-w-[80px]">ไขมัน (ตามปริมาณ)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-100">
                     {recipe.map((item, index) => {
-                      const n = item.nutrientsPer100g || {};
+                      const n = item.actual;
+                      const p = item.nutrientsPer100g || {};
                       const catBadge = getCategoryBadge(item.category, item.categoryTh);
                       return (
                         <tr key={item.ingredientId || index} className="hover:bg-amber-50/30 transition-colors">
@@ -562,7 +576,7 @@ export default function MenuDetail() {
                           </td>
                           <td className="py-3.5 px-3 text-center whitespace-nowrap">
                             <span className="text-xs text-stone-700 font-medium bg-stone-50 border border-stone-200/80 px-2 py-0.5 rounded-md">
-                              {item.medicinalTaste ? `รส${item.medicinalTaste.replace(/^รส/, '')}` : '-'}
+                              {formatTastes(item.medicinalTaste) || '-'}
                             </span>
                           </td>
                           <td className="py-3.5 px-3 text-center whitespace-nowrap">
@@ -585,19 +599,23 @@ export default function MenuDetail() {
                             </div>
                           </td>
                           <td className="py-3.5 px-3 text-right font-bold text-[#8b5e34] whitespace-nowrap">
-                            {item.quantity} {item.unit || 'g'}
+                            {item.quantity} {getUnitInfo(item.unit).short}
                           </td>
                           <td className="py-3.5 px-3 text-right font-mono font-medium text-stone-700 whitespace-nowrap">
-                            {n.calories !== undefined ? `${n.calories} kcal` : '-'}
+                            {n.calories} kcal
+                            <span className="block text-[10px] font-normal text-stone-400">{p.calories ?? 0}/100g</span>
                           </td>
                           <td className="py-3.5 px-3 text-right font-mono font-medium text-stone-700 whitespace-nowrap">
-                            {n.protein !== undefined ? `${n.protein}g` : '-'}
+                            {n.protein}g
+                            <span className="block text-[10px] font-normal text-stone-400">{p.protein ?? 0}g/100g</span>
                           </td>
                           <td className="py-3.5 px-3 text-right font-mono font-medium text-stone-700 whitespace-nowrap">
-                            {n.carbs !== undefined ? `${n.carbs}g` : '-'}
+                            {n.carbs}g
+                            <span className="block text-[10px] font-normal text-stone-400">{p.carbs ?? 0}g/100g</span>
                           </td>
                           <td className="py-3.5 px-4 text-right font-mono font-medium text-stone-700 whitespace-nowrap">
-                            {n.fat !== undefined ? `${n.fat}g` : '-'}
+                            {n.fat}g
+                            <span className="block text-[10px] font-normal text-stone-400">{p.fat ?? 0}g/100g</span>
                           </td>
                         </tr>
                       );
