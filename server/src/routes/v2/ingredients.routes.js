@@ -109,6 +109,18 @@ router.post("/", verifyToken, requireAdmin, async (req, res, next) => {
     req.body.nutrientsPer100g = completeNutrients;
     req.body.nutritionPer100G = completeNutrients;
 
+    if (req.body.regionalStocks) {
+      const reg = req.body.regionalStocks;
+      const north = Math.max(0, Number(reg.north) || 0);
+      const northeast = Math.max(0, Number(reg.northeast) || 0);
+      const central = Math.max(0, Number(reg.central) || 0);
+      const south = Math.max(0, Number(reg.south) || 0);
+      req.body.regionalStocks = { north, northeast, central, south };
+      const sum = north + northeast + central + south;
+      req.body.stockQuantity = sum;
+      req.body.currentStockGrams = sum;
+    }
+
     const newIngredient = new Ingredient(req.body);
     const saved = await newIngredient.save();
 
@@ -145,8 +157,18 @@ router.put("/:id", verifyToken, requireAdmin, async (req, res, next) => {
       req.body.nutritionPer100G = completeNutrients;
     }
 
-    // Sync stock fields: currentStockGrams ↔ stockQuantity
-    if (req.body.currentStockGrams !== undefined) {
+    // Sync stock fields: regionalStocks ↔ currentStockGrams ↔ stockQuantity
+    if (req.body.regionalStocks) {
+      const reg = req.body.regionalStocks;
+      const north = Math.max(0, Number(reg.north) || 0);
+      const northeast = Math.max(0, Number(reg.northeast) || 0);
+      const central = Math.max(0, Number(reg.central) || 0);
+      const south = Math.max(0, Number(reg.south) || 0);
+      req.body.regionalStocks = { north, northeast, central, south };
+      const sum = north + northeast + central + south;
+      req.body.stockQuantity = sum;
+      req.body.currentStockGrams = sum;
+    } else if (req.body.currentStockGrams !== undefined) {
       req.body.stockQuantity = Number(req.body.currentStockGrams) || 0;
     } else if (req.body.stockQuantity !== undefined) {
       req.body.currentStockGrams = Number(req.body.stockQuantity) || 0;
@@ -177,17 +199,54 @@ router.put("/:id", verifyToken, requireAdmin, async (req, res, next) => {
 // =========================================================================
 router.patch("/:id/stock", verifyToken, requireAdmin, async (req, res, next) => {
   try {
-    const { delta, stockQuantity } = req.body;
+    const { delta, stockQuantity, region = "central", regionalStocks } = req.body;
     const ingredient = await Ingredient.findById(req.params.id);
 
     if (!ingredient) {
       return res.status(404).json({ success: false, message: "ไม่พบวัตถุดิบ" });
     }
 
-    if (typeof stockQuantity === "number") {
-      ingredient.stockQuantity = Math.max(0, stockQuantity);
+    if (regionalStocks && typeof regionalStocks === "object") {
+      ingredient.regionalStocks = {
+        north: Math.max(0, Number(regionalStocks.north) || 0),
+        northeast: Math.max(0, Number(regionalStocks.northeast) || 0),
+        central: Math.max(0, Number(regionalStocks.central) || 0),
+        south: Math.max(0, Number(regionalStocks.south) || 0),
+      };
+      const sum =
+        ingredient.regionalStocks.north +
+        ingredient.regionalStocks.northeast +
+        ingredient.regionalStocks.central +
+        ingredient.regionalStocks.south;
+      ingredient.stockQuantity = sum;
+      ingredient.currentStockGrams = sum;
+    } else if (typeof stockQuantity === "number") {
+      // ปรับสต็อกในภูมิภาคที่ระบุ
+      const validRegion = ["north", "northeast", "central", "south"].includes(region) ? region : "central";
+      if (!ingredient.regionalStocks) {
+        ingredient.regionalStocks = { north: 0, northeast: 0, central: 0, south: 0 };
+      }
+      ingredient.regionalStocks[validRegion] = Math.max(0, stockQuantity);
+      const sum =
+        (ingredient.regionalStocks.north || 0) +
+        (ingredient.regionalStocks.northeast || 0) +
+        (ingredient.regionalStocks.central || 0) +
+        (ingredient.regionalStocks.south || 0);
+      ingredient.stockQuantity = sum;
+      ingredient.currentStockGrams = sum;
     } else if (typeof delta === "number") {
-      ingredient.stockQuantity = Math.max(0, ingredient.stockQuantity + delta);
+      const validRegion = ["north", "northeast", "central", "south"].includes(region) ? region : "central";
+      if (!ingredient.regionalStocks) {
+        ingredient.regionalStocks = { north: 0, northeast: 0, central: 0, south: 0 };
+      }
+      ingredient.regionalStocks[validRegion] = Math.max(0, (ingredient.regionalStocks[validRegion] || 0) + delta);
+      const sum =
+        (ingredient.regionalStocks.north || 0) +
+        (ingredient.regionalStocks.northeast || 0) +
+        (ingredient.regionalStocks.central || 0) +
+        (ingredient.regionalStocks.south || 0);
+      ingredient.stockQuantity = sum;
+      ingredient.currentStockGrams = sum;
     }
 
     await ingredient.save();

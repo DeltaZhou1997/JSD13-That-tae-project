@@ -2,11 +2,55 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.js";
 import { getAuthHeaders } from "../utils/authHeader.js";
+import { formatDate } from "../utils/dateFormatter.js";
+
+const CUSTOMER_STATUS_CONFIG = {
+  PENDING: { label: "ยังไม่ชำระเงิน", color: "bg-amber-100 text-amber-800 border-amber-200" },
+  PAID: { label: "ชำระเงินแล้ว", color: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  PREPARING: { label: "กำลังเตรียมจัดส่ง", color: "bg-sky-100 text-sky-800 border-sky-200" },
+  SHIPPED: { label: "จัดส่งแล้ว", color: "bg-blue-100 text-blue-800 border-blue-200" },
+  DELIVERED: { label: "จัดส่งสำเร็จ", color: "bg-purple-100 text-purple-800 border-purple-200" },
+  CANCELLED: { label: "ยกเลิกแล้ว", color: "bg-rose-100 text-rose-800 border-rose-200" },
+};
 
 export default function OrdersPage() {
   const { currentUser } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [retryingOrderId, setRetryingOrderId] = useState(null);
+
+  // ตรวจสอบว่ากดย้อนกลับมาจากหน้า Stripe หรือไม่ (?canceled=true)
+  const isCanceled = new URLSearchParams(window.location.search).get("canceled") === "true";
+  const canceledOrderId = new URLSearchParams(window.location.search).get("order_id");
+
+  const handleRetryPayment = async (order) => {
+    const orderId = order.orderId || order._id;
+    setRetryingOrderId(orderId);
+    try {
+      const res = await fetch(`${apiUrl}/api/v2/checkout/create-session`, {
+        method: "POST",
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          orderId,
+          userId: order.userId || userId,
+          items: order.items || [],
+          grandTotal: order.grandTotal,
+          shippingAddress: order.shippingAddress,
+          paymentMethod: "CREDIT_CARD",
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.message || "ไม่สามารถเปิดหน้าชำระเงิน Stripe ได้ กรุณาลองใหม่อีกครั้ง");
+        setRetryingOrderId(null);
+      }
+    } catch (err) {
+      alert("เกิดข้อผิดพลาดในการเชื่อมต่อ Stripe Gateway");
+      setRetryingOrderId(null);
+    }
+  };
   const [_error, setError] = useState(null);
 
   const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
@@ -28,15 +72,10 @@ export default function OrdersPage() {
           setError(null);
         }
       } catch (err) {
-        console.warn("⚠️ เซิร์ฟเวอร์ออฟไลน์ ดึงข้อมูลจากคำสั่งซื้อสำรอง:", err.message);
+        console.warn("⚠️ ไม่สามารถโหลดรายการคำสั่งซื้อจาก API:", err.message);
         if (isMounted) {
-          // ดึงจาก localStorage ถ้ามี
-          try {
-            const savedOrders = JSON.parse(localStorage.getItem("recent_orders") || "[]");
-            setOrders(savedOrders);
-          } catch {
-            setOrders([]);
-          }
+          setOrders([]);
+          setError("ไม่สามารถโหลดรายการคำสั่งซื้อจากฐานข้อมูลได้ในขณะนี้");
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -92,6 +131,19 @@ export default function OrdersPage() {
           </p>
         </div>
 
+        {/* แจ้งเตือนเมื่อลูกค้ายกเลิก/ออกจากหน้าชำระเงิน Stripe */}
+        {isCanceled && (
+          <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5 text-amber-900 shadow-sm flex items-start gap-3">
+            <span className="text-2xl mt-0.5">⚠️</span>
+            <div className="flex-1">
+              <h3 className="font-bold text-sm">การชำระเงินผ่าน Stripe ยังไม่เสร็จสิ้น</h3>
+              <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+                คำสั่งซื้อหมายเลข <span className="font-mono font-bold text-amber-950">{canceledOrderId || "ของคุณ"}</span> ถูกบันทึกไว้ในสถานะ <span className="font-bold bg-amber-200/80 px-2 py-0.5 rounded text-amber-950">ยังไม่ชำระเงิน</span> คุณสามารถกดปุ่ม <span className="font-bold">"ชำระเงินต่อ (ทำรายการใหม่)"</span> ในรายการด้านล่างเพื่อทำรายการชำระเงินใหม่ได้ทันที
+              </p>
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20">
             <div className="w-10 h-10 border-4 border-[#8d593a] border-t-transparent rounded-full animate-spin"></div>
@@ -123,13 +175,7 @@ export default function OrdersPage() {
             {orders.map((order, idx) => {
               const orderId = order.orderId || order.id || `ORD-${order._id?.slice(-6) || idx + 1}`;
               const orderDate = order.createdAt
-                ? new Date(order.createdAt).toLocaleDateString("th-TH", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
+                ? formatDate(order.createdAt, { showTime: true })
                 : "เมื่อเร็วๆ นี้";
 
               const items = order.items || [];
@@ -146,9 +192,15 @@ export default function OrdersPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-[#3d2c2e] text-base">{orderId}</span>
-                        <span className="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded-full">
-                          {order.status === "PAID" ? "ชำระเงินแล้ว" : order.status || "สำเร็จ"}
-                        </span>
+                        {(() => {
+                          const stKey = (order.status || "PENDING").toUpperCase();
+                          const st = CUSTOMER_STATUS_CONFIG[stKey] || { label: order.status || "สำเร็จ", color: "bg-emerald-100 text-emerald-800 border-emerald-200" };
+                          return (
+                            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${st.color}`}>
+                              {st.label}
+                            </span>
+                          );
+                        })()}
                       </div>
                       <span className="text-xs text-[#6f675f]">สั่งซื้อเมื่อ {orderDate}</span>
                     </div>
@@ -191,6 +243,37 @@ export default function OrdersPage() {
                       </div>
                     ))}
                   </div>
+
+                  {/* กล่องแจ้งและปุ่มชำระเงินต่อ หากสถานะเป็น PENDING */}
+                  {(order.status || "").toUpperCase() === "PENDING" && (
+                    <div className="bg-amber-50/80 px-6 py-3 border-t border-amber-200 flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 text-xs text-amber-900">
+                        <span className="text-base">🕒</span>
+                        <div>
+                          <strong className="block font-bold">ออเดอร์นี้ยังไม่ชำระเงิน</strong>
+                          <span className="text-[11px] text-amber-700">สามารถกดทำรายการใหม่ผ่าน Stripe Payment Gateway ได้ทันที</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={retryingOrderId === (order.orderId || order._id)}
+                        onClick={() => handleRetryPayment(order)}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-[#8d593a] px-4 py-2 text-xs font-bold text-white hover:bg-[#6b3215] transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                      >
+                        {retryingOrderId === (order.orderId || order._id) ? (
+                          <>
+                            <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span>กำลังเปิด Stripe...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>💳</span>
+                            <span>ชำระเงินต่อ (ทำรายการใหม่) &rarr;</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
 
                   {/* Order Footer */}
                   <div className="bg-[#faf6ef] px-6 py-3 border-t border-[#e8dfd1] flex items-center justify-between text-xs text-[#6f675f]">

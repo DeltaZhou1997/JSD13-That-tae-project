@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useOutletContext } from "react-router-dom";
 import OrderEarnedPoints from "../components/order-success/OrderEarnedPoints";
 import OrderDetailsCard from "../components/order-success/OrderDetailsCard";
+import { formatDate } from "../utils/dateFormatter.js";
 
 const DEFAULT_ORDER_DATA = {
   orderId: "ORD-882940",
-  createdAt: new Date().toLocaleDateString("th-TH"),
+  createdAt: formatDate(new Date()),
   grandTotal: 959,
   earnedPoints: 0,
   deliveryDate: "12 พ.ย.",
@@ -19,6 +20,7 @@ const DEFAULT_ORDER_DATA = {
 };
 
 export default function OrderSuccess() {
+  const { handleClearCart } = useOutletContext() || {};
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
 
@@ -56,6 +58,27 @@ export default function OrderSuccess() {
   const isFallback = !isCOD && orderData.isFallbackPayment === true;
   const displayTotal =
     orderData.grandTotal || orderData.pricing?.grandTotal || 0;
+
+  // ยืนยันการชำระเงิน Stripe กับฐานข้อมูลและเคลียร์ตะกร้า
+  React.useEffect(() => {
+    async function confirmPaymentOnServer() {
+      if (urlOrderId || sessionId) {
+        try {
+          const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
+          await fetch(`${apiUrl}/api/v2/checkout/confirm-stripe`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId: urlOrderId, sessionId }),
+          });
+          sessionStorage.removeItem("last_v2_order");
+          if (handleClearCart) handleClearCart();
+        } catch (err) {
+          console.warn("Auto-confirm payment error:", err);
+        }
+      }
+    }
+    confirmPaymentOnServer();
+  }, [urlOrderId, sessionId, handleClearCart]);
 
   // State สำหรับจัดการสลิป
   const [slipImage, setSlipImage] = useState(null);

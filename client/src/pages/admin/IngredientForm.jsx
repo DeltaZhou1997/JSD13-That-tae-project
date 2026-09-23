@@ -12,6 +12,8 @@ import {
 } from "../../utils/recipeCalculator.js";
 
 import { getApiUrl, getAuthHeaders } from "../../utils/authHeader.js";
+import { formatDate } from "../../utils/dateFormatter.js";
+import DatePicker from "../../components/common/DatePicker.jsx";
 
 const inputClass =
   "w-full rounded border border-[#f1ead7] p-2 focus:border-[#4c1f08] focus:outline-none focus:ring-2 focus:ring-[#f1ead7]";
@@ -34,9 +36,26 @@ const ELEMENT_COLORS = {
   ไฟ: "bg-red-600",
 };
 
+function ElementIcon({ element, className = "h-10 w-10" }) {
+  const paths = {
+    ดิน: "m8 3 4 8 5-5 5 15H2L8 3z",
+    น้ำ: "M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z",
+    ลม: "M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2",
+    ไฟ: "M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z",
+  };
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true"><path d={paths[element] || paths.ดิน} /></svg>;
+}
+
 function emptyNutrientForm() {
   return NUTRIENT_KEYS.reduce((acc, key) => ({ ...acc, [key]: "" }), {});
 }
+
+export const REGIONAL_CONFIG = [
+  { key: "north", label: "ภาคเหนือ", icon: "⛰️", color: "border-emerald-300 bg-emerald-50/50 text-emerald-900" },
+  { key: "northeast", label: "ภาคอีสาน", icon: "🌾", color: "border-amber-300 bg-amber-50/50 text-amber-900" },
+  { key: "central", label: "ภาคกลาง", icon: "🏛️", color: "border-sky-300 bg-sky-50/50 text-sky-900" },
+  { key: "south", label: "ภาคใต้", icon: "🌊", color: "border-teal-300 bg-teal-50/50 text-teal-900" },
+];
 
 function createEmptyForm() {
   return {
@@ -50,6 +69,12 @@ function createEmptyForm() {
     elements: [],
     nutrientsPer100g: emptyNutrientForm(),
     basisWeightG: "100",
+    regionalStocks: {
+      north: "2500",
+      northeast: "2500",
+      central: "2500",
+      south: "2500",
+    },
     currentStockGrams: "10000",
     lowStockThresholdGrams: "1000",
     expiryDate: "",
@@ -145,7 +170,18 @@ function IngredientForm() {
         {},
       ),
       basisWeightG: String(item.basisWeightG ?? "100"),
-      currentStockGrams: String(item.currentStockGrams ?? ""),
+      regionalStocks: {
+        north: String(item.regionalStocks?.north ?? 0),
+        northeast: String(item.regionalStocks?.northeast ?? 0),
+        central: String(item.regionalStocks?.central !== undefined ? item.regionalStocks.central : (item.currentStockGrams ?? 0)),
+        south: String(item.regionalStocks?.south ?? 0),
+      },
+      currentStockGrams: String(
+        ((item.regionalStocks?.north ?? 0) +
+          (item.regionalStocks?.northeast ?? 0) +
+          (item.regionalStocks?.central !== undefined ? item.regionalStocks.central : (item.currentStockGrams ?? 0)) +
+          (item.regionalStocks?.south ?? 0)) || item.currentStockGrams || "0"
+      ),
       lowStockThresholdGrams: String(item.lowStockThresholdGrams ?? ""),
       expiryDate: item.expiryDate || "",
     });
@@ -160,6 +196,23 @@ function IngredientForm() {
     setFormData((prev) => ({ ...prev, [name]: value }));
     clearError(name);
   };
+  const handleRegionalStockChange = (regionKey, val) => {
+    setFormData((prev) => {
+      const nextReg = { ...(prev.regionalStocks || {}), [regionKey]: val };
+      const sum =
+        (Number(nextReg.north) || 0) +
+        (Number(nextReg.northeast) || 0) +
+        (Number(nextReg.central) || 0) +
+        (Number(nextReg.south) || 0);
+      return {
+        ...prev,
+        regionalStocks: nextReg,
+        currentStockGrams: String(sum),
+      };
+    });
+    clearError(`regionalStock_${regionKey}`);
+  };
+
 
   const handleNutrientChange = (event) => {
     const { name, value } = event.target;
@@ -303,8 +356,24 @@ function IngredientForm() {
         fat: Number(formData.nutrientsPer100g.fat) || 0,
         sodium: Number(formData.nutrientsPer100g.sodium) || 0,
       },
-      stockQuantity: Number(formData.currentStockGrams) || 0,
-      currentStockGrams: Number(formData.currentStockGrams) || 0,
+      regionalStocks: {
+        north: Math.max(0, Number(formData.regionalStocks?.north) || 0),
+        northeast: Math.max(0, Number(formData.regionalStocks?.northeast) || 0),
+        central: Math.max(0, Number(formData.regionalStocks?.central) || 0),
+        south: Math.max(0, Number(formData.regionalStocks?.south) || 0),
+      },
+      stockQuantity: (
+        Math.max(0, Number(formData.regionalStocks?.north) || 0) +
+        Math.max(0, Number(formData.regionalStocks?.northeast) || 0) +
+        Math.max(0, Number(formData.regionalStocks?.central) || 0) +
+        Math.max(0, Number(formData.regionalStocks?.south) || 0)
+      ),
+      currentStockGrams: (
+        Math.max(0, Number(formData.regionalStocks?.north) || 0) +
+        Math.max(0, Number(formData.regionalStocks?.northeast) || 0) +
+        Math.max(0, Number(formData.regionalStocks?.central) || 0) +
+        Math.max(0, Number(formData.regionalStocks?.south) || 0)
+      ),
       unit: "g",
       lowStockThresholdGrams: Number(formData.lowStockThresholdGrams) || 0,
       expiryDate: formData.expiryDate || undefined,
@@ -340,10 +409,10 @@ function IngredientForm() {
   }
 
   return (
-    <div className="mx-auto my-8 grid max-w-6xl gap-6 px-4 lg:grid-cols-[1fr_320px]">
+    <div className="mx-auto mt-24 mb-8 grid max-w-6xl gap-6 px-4 lg:grid-cols-[1fr_320px]">
       <div className="rounded-lg border border-[#f1ead7] bg-white p-6 shadow-md">
         <h1 className="mb-6 text-2xl font-bold text-[#4c1f08]">
-          {isEditMode ? "แก้ไขข้อมูลวัตถุดิบ" : "เพิ่มวัตถุดิบใหม่เข้าคลัง"}
+          {isEditMode ? "แก้ไขข้อมูลวัตถุดิบ" : "เพิ่มวัตถุดิบ"}
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
@@ -357,11 +426,10 @@ function IngredientForm() {
               onDragLeave={() => setIsDragging(false)}
               onDrop={handleImageDrop}
               onClick={() => fileInputRef.current?.click()}
-              className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
-                isDragging
+              className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl cursor-pointer transition-all ${isDragging
                   ? "border-[#4c1f08] bg-[#f8f5f0]"
                   : "border-[#f1ead7] hover:border-[#4c1f08] bg-[#faf7f2]/50"
-              }`}
+                }`}
             >
               <input
                 ref={fileInputRef}
@@ -476,7 +544,7 @@ function IngredientForm() {
             </div>
           </div>
 
-          
+
           <div>
             <label className={labelClass} htmlFor="category">
               หมวดหมู่ <span className="text-red-500">*</span>
@@ -499,7 +567,7 @@ function IngredientForm() {
             )}
           </div>
 
-          
+
           <div>
             <span className={labelClass}>
               รสยา (เลือกได้หลายรส) <span className="text-red-500">*</span>
@@ -524,7 +592,7 @@ function IngredientForm() {
             )}
           </div>
 
-          
+
           <div>
             <span className={labelClass}>
               ธาตุเจ้าเรือน <span className="text-red-500">*</span>
@@ -549,7 +617,7 @@ function IngredientForm() {
             )}
           </div>
 
-          
+
           <div>
             <span className={labelClass}>
               คุณค่าทางโภชนาการต่อ {formData.basisWeightG || 100} กรัม{" "}
@@ -583,7 +651,7 @@ function IngredientForm() {
             )}
           </div>
 
-          
+
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className={labelClass} htmlFor="basisWeightG">
@@ -608,9 +676,8 @@ function IngredientForm() {
               <label className={labelClass} htmlFor="expiryDate">
                 วันหมดอายุของล็อตปัจจุบัน
               </label>
-              <input
+              <DatePicker
                 id="expiryDate"
-                type="date"
                 name="expiryDate"
                 value={formData.expiryDate}
                 onChange={handleChange}
@@ -622,49 +689,81 @@ function IngredientForm() {
             </div>
           </div>
 
-          
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div>
-              <label className={labelClass} htmlFor="currentStockGrams">
-                จำนวนในคลัง (กรัม) <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="currentStockGrams"
-                type="number"
-                min="0"
-                step="1"
-                name="currentStockGrams"
-                value={formData.currentStockGrams}
-                onChange={handleChange}
-                className={inputClass}
-              />
-              {errors.currentStockGrams && (
-                <p className="mt-1 text-sm text-red-500">{errors.currentStockGrams}</p>
-              )}
-            </div>
-            <div>
-              <label className={labelClass} htmlFor="lowStockThresholdGrams">
-                จุดเตือนให้สั่งซื้อเพิ่ม (กรัม) <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="lowStockThresholdGrams"
-                type="number"
-                min="0"
-                step="1"
-                name="lowStockThresholdGrams"
-                value={formData.lowStockThresholdGrams}
-                onChange={handleChange}
-                className={inputClass}
-              />
-              {errors.lowStockThresholdGrams && (
-                <p className="mt-1 text-sm text-red-500">
-                  {errors.lowStockThresholdGrams}
+
+          {/* ส่วนระบุปริมาณสต็อกแยกตาม 4 ภูมิภาค */}
+          <div className="rounded-2xl border border-[#e8ded4] bg-[#fbf9f5] p-5">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-[#4c1f08]">
+                  📦 ปริมาณสต็อกแยกตาม 4 ภูมิภาค <span className="text-red-500">*</span>
+                </h3>
+                <p className="text-xs text-[#7a5c4d]">
+                  ระบุสต็อกวัตถุดิบจริงที่มีในแต่ละภาค เพื่อให้ระบบคำนวณจำนวนชุดอาหารตามภาคนั้นๆ ได้จริง
                 </p>
-              )}
+              </div>
+              <div className="rounded-xl border border-[#d9cbbd] bg-white px-3 py-1.5 shadow-2xs">
+                <span className="text-xs text-[#8d593a]">สต็อกรวมทุกภูมิภาค: </span>
+                <span className="text-sm font-black text-[#4c1f08]">
+                  {Number(formData.currentStockGrams || 0).toLocaleString()} กรัม
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {REGIONAL_CONFIG.map(({ key, label, icon, color }) => (
+                <div key={key} className={`rounded-xl border p-3 ${color} bg-white shadow-2xs`}>
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <label htmlFor={`reg-stock-${key}`} className="flex items-center gap-1.5 text-xs font-bold">
+                      <span>{icon}</span>
+                      <span>{label}</span>
+                    </label>
+                    <span className="text-[10px] text-stone-500 font-medium">กรัม (g)</span>
+                  </div>
+                  <input
+                    id={`reg-stock-${key}`}
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={formData.regionalStocks?.[key] ?? 0}
+                    onChange={(e) => handleRegionalStockChange(key, e.target.value)}
+                    placeholder="0"
+                    className="w-full rounded-lg border border-stone-200 bg-white p-2 text-sm font-semibold text-[#4c1f08] focus:border-[#4c1f08] focus:outline-none focus:ring-1 focus:ring-[#4c1f08]"
+                  />
+                  {errors[`regionalStock_${key}`] && (
+                    <p className="mt-1 text-[11px] text-red-500">{errors[`regionalStock_${key}`]}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-[#f1ead7] flex flex-wrap items-center justify-between gap-4">
+              <div className="w-full sm:w-1/2">
+                <label className={labelClass} htmlFor="lowStockThresholdGrams">
+                  จุดเตือนให้สั่งซื้อเพิ่มรวม (กรัม) <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="lowStockThresholdGrams"
+                  type="number"
+                  min="0"
+                  step="1"
+                  name="lowStockThresholdGrams"
+                  value={formData.lowStockThresholdGrams}
+                  onChange={handleChange}
+                  className={inputClass}
+                />
+                {errors.lowStockThresholdGrams && (
+                  <p className="mt-1 text-sm text-red-500">
+                    {errors.lowStockThresholdGrams}
+                  </p>
+                )}
+              </div>
+              <div className="text-xs text-[#7a5c4d] sm:text-right">
+                💡 เมื่อสต็อกรวมลดลงต่ำกว่าจุดนี้ ระบบจะแสดงสถานะ &quot;ใกล้หมด&quot; ในคลังวัตถุดิบ
+              </div>
             </div>
           </div>
 
-          
+
           <label className="flex cursor-pointer items-center gap-2 text-[#4c1f08]">
             <input
               type="checkbox"
@@ -676,7 +775,7 @@ function IngredientForm() {
             เปิดใช้งานวัตถุดิบนี้ใน Recipe Builder
           </label>
 
-          
+
           <div className="flex gap-4 pt-4">
             <button
               type="submit"
@@ -695,8 +794,8 @@ function IngredientForm() {
         </form>
       </div>
 
-      
-      <aside className="h-fit rounded-lg border border-[#f1ead7] bg-[#fff8f5] p-5 shadow-sm lg:sticky lg:top-6">
+
+      <aside className="h-fit rounded-lg border border-[#f1ead7] bg-[#fff8f5] p-5 shadow-sm lg:sticky lg:top-28">
         <h2 className="mb-1 font-bold text-[#4c1f08]">พรีวิวผลต่อสูตร</h2>
         <p className="mb-4 text-xs text-[#6b3215]">
           ถ้าใส่วัตถุดิบนี้ 100 กรัม ระบบจะประเมินธาตุและโภชนาการดังนี้
@@ -704,9 +803,12 @@ function IngredientForm() {
 
         <div className="mb-4 rounded bg-white p-3">
           <p className="text-sm text-[#6b3215]">ธาตุเด่นที่ประเมินได้</p>
-          <p className="text-xl font-bold text-[#4c1f08]">
-            ธาตุ{preview.dominantElement}
-          </p>
+          <div className="mt-2 flex items-center gap-3">
+            <span className="grid h-14 w-14 place-items-center rounded-2xl bg-[#fff4e8] text-[#8b5e34]">
+              <ElementIcon element={preview.dominantElement} />
+            </span>
+            <p className="text-xl font-bold text-[#4c1f08]">ธาตุ{preview.dominantElement}</p>
+          </div>
         </div>
 
         <div className="mb-4 space-y-2">

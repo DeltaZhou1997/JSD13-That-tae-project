@@ -544,34 +544,30 @@ export default function Navbar({ cartCount = 0 }) {
                   }`}
                 role="menu"
               >
-                {currentRole === "customer" ? (
-                  <>
-                    <Link
-                      to="/profile"
-                      onClick={() => setIsProfileOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
-                    >
-                      <ProfileMenuIcon type="profile" />
-                      โปรไฟล์ของฉัน
-                    </Link>
-                    <Link
-                      to="/orders"
-                      onClick={() => setIsProfileOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
-                    >
-                      <ProfileMenuIcon type="orders" />
-                      รายการคำสั่งซื้อของฉัน
-                    </Link>
-                  </>
-                ) : (
-                  /* แอดมิน: มีเฉพาะ โปรไฟล์ของฉัน ตามที่กำหนด */
+                <Link
+                  to="/profile"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
+                >
+                  <ProfileMenuIcon type="profile" />
+                  โปรไฟล์ของฉัน
+                </Link>
+                <Link
+                  to="/orders"
+                  onClick={() => setIsProfileOpen(false)}
+                  className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
+                >
+                  <ProfileMenuIcon type="orders" />
+                  ออเดอร์ของฉัน
+                </Link>
+                {currentRole === "admin" && (
                   <Link
-                    to="/profile"
+                    to="/admin/orders"
                     onClick={() => setIsProfileOpen(false)}
-                    className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9]"
+                    className="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors hover:bg-[#f1dec9] text-[#8d593a]"
                   >
-                    <ProfileMenuIcon type="profile" />
-                    โปรไฟล์ของฉัน
+                    <DashboardGridIcon className="w-5 h-5 shrink-0" />
+                    จัดการออเดอร์ (แอดมิน)
                   </Link>
                 )}
 
@@ -727,16 +723,14 @@ export default function Navbar({ cartCount = 0 }) {
                   </button>
                 </div>
 
-                {currentRole === "customer" && (
-                  <Link
-                    to="/orders"
-                    onClick={() => setIsOpen(false)}
-                    className="flex items-center justify-center gap-2 rounded-xl bg-white/80 p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-white shadow-xs"
-                  >
-                    <ProfileMenuIcon type="orders" />
-                    รายการคำสั่งซื้อของฉัน
-                  </Link>
-                )}
+                <Link
+                  to="/orders"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center justify-center gap-2 rounded-xl bg-white/80 p-2.5 text-xs font-bold text-[#3d2c2e] hover:bg-white shadow-xs"
+                >
+                  <ProfileMenuIcon type="orders" />
+                  ออเดอร์ของฉัน
+                </Link>
               </div>
             ) : (
               <div className="pt-2">

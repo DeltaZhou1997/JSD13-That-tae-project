@@ -190,17 +190,39 @@ function AdminIngredientList() {
                     <td className="p-3 text-[#6b3215]">
                       {item.nutrientsPer100g?.calories ?? 0}
                     </td>
-                    <td className="p-3">
-                      <input
-                        type="number"
-                        min="0"
-                        step="1"
-                        defaultValue={item.currentStockGrams}
-                        onBlur={(event) => handleStockChange(item._id, event.target.value)}
-                        className={`w-24 ${inputClass}`}
-                      />
-                      <span className="block text-xs text-[#6b3215]">
-                        เตือนที่ {item.lowStockThresholdGrams}
+                    <td className="p-3 min-w-[210px]">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-xs font-bold text-[#4c1f08]">รวม:</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          defaultValue={item.currentStockGrams}
+                          onBlur={(event) => handleStockChange(item._id, event.target.value)}
+                          className={`w-24 font-bold ${inputClass}`}
+                        />
+                        <span className="text-xs text-[#7a5c4d]">g</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1 text-[11px]">
+                        <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-800 border border-emerald-200" title="ภาคเหนือ">
+                          <span>⛰️</span>
+                          <span className="font-semibold">{item.regionalStocks?.north ?? 0}</span>
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-amber-800 border border-amber-200" title="ภาคอีสาน">
+                          <span>🌾</span>
+                          <span className="font-semibold">{item.regionalStocks?.northeast ?? 0}</span>
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded bg-sky-50 px-1.5 py-0.5 text-sky-800 border border-sky-200" title="ภาคกลาง">
+                          <span>🏛️</span>
+                          <span className="font-semibold">{item.regionalStocks?.central ?? (item.currentStockGrams || 0)}</span>
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded bg-teal-50 px-1.5 py-0.5 text-teal-800 border border-teal-200" title="ภาคใต้">
+                          <span>🌊</span>
+                          <span className="font-semibold">{item.regionalStocks?.south ?? 0}</span>
+                        </span>
+                      </div>
+                      <span className="mt-1 block text-[10px] text-[#7a5c4d]">
+                        จุดเตือน {item.lowStockThresholdGrams}g
                       </span>
                     </td>
                     <td className="p-3">

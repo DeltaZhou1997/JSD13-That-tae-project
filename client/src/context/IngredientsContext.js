@@ -12,20 +12,39 @@ export const CATEGORY_MAP = {
   other: "อื่น ๆ",
 };
 
+export const DEFAULT_STOCK_GRAMS = 10000;
+export const DEFAULT_LOW_STOCK_GRAMS = 1000;
+
 export function normalizeIngredient(item) {
+  const fallbackStock = Number(item?.currentStockGrams ?? item?.stockQuantity ?? DEFAULT_STOCK_GRAMS);
+  const rawRegions = item?.regionalStocks || {};
+  const regionalStocks = {
+    north: Number(rawRegions.north || 0),
+    northeast: Number(rawRegions.northeast || 0),
+    central: rawRegions.central !== undefined ? Number(rawRegions.central) : fallbackStock,
+    south: Number(rawRegions.south || 0),
+  };
+
+  const sumRegions =
+    regionalStocks.north + regionalStocks.northeast + regionalStocks.central + regionalStocks.south;
+
+  const currentStockGrams =
+    item?.currentStockGrams !== undefined
+      ? Number(item.currentStockGrams)
+      : sumRegions;
+
   return {
     ...item,
-    categoryTh: item.categoryTh || CATEGORY_MAP[item.category] || "อื่น ๆ",
-    basisWeightG: Number(item.basisWeightG) || 100,
-    currentStockGrams:
-      item.currentStockGrams === undefined
-        ? DEFAULT_STOCK_GRAMS
-        : Number(item.currentStockGrams),
+    categoryTh: item?.categoryTh || CATEGORY_MAP[item?.category] || "อื่น ๆ",
+    basisWeightG: Number(item?.basisWeightG) || 100,
+    regionalStocks,
+    currentStockGrams,
+    stockQuantity: currentStockGrams,
     lowStockThresholdGrams:
-      item.lowStockThresholdGrams === undefined
+      item?.lowStockThresholdGrams === undefined
         ? DEFAULT_LOW_STOCK_GRAMS
         : Number(item.lowStockThresholdGrams),
-    isActive: item.isActive !== false,
+    isActive: item?.isActive !== false,
   };
 }
 

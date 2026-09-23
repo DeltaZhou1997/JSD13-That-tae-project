@@ -18,6 +18,54 @@
 .dashboard-card-enter:nth-child(3) { animation-delay: .16s; }
 .dashboard-card-enter:nth-child(4) { animation-delay: .24s; }
 .dashboard-card-enter:nth-child(5) { animation-delay: .32s; }
+
+/* Stagger animations for Admin Orders */
+@keyframes statCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.stat-card-stagger {
+  animation: statCardIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.stat-card-stagger:nth-child(1) { animation-delay: 0.04s; }
+.stat-card-stagger:nth-child(2) { animation-delay: 0.12s; }
+.stat-card-stagger:nth-child(3) { animation-delay: 0.20s; }
+.stat-card-stagger:nth-child(4) { animation-delay: 0.28s; }
+.stat-card-stagger:nth-child(5) { animation-delay: 0.36s; }
+
+@keyframes orderRowIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.order-row-enter {
+  animation: orderRowIn 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes filterPillIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.filter-pill-enter {
+  animation: filterPillIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {

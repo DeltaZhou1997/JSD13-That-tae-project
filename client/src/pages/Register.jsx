@@ -4,6 +4,8 @@ import { useAuth } from "../context/AuthContext.js";
 import useToast from "../hooks/useToast.js";
 import { getApiUrl } from "../utils/authHeader.js";
 import defaultAvatar from "../assets/default-avatar.svg";
+import { formatDate } from "../utils/dateFormatter.js";
+import DatePicker from "../components/common/DatePicker.jsx";
 
 // ─── SVG Icons ───────────────────────────────────────────────────────────────
 const IconUser = () => (
@@ -352,8 +354,7 @@ function Register() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
               <div>
                 <label className={labelBase}>วันเกิด</label>
-                <input
-                  type="date"
+                <DatePicker
                   name="birthDate"
                   value={formData.birthDate}
                   onChange={handleChange}

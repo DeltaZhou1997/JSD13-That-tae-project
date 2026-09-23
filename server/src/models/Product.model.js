@@ -185,10 +185,27 @@ productSchema.pre("save", function () {
   }
 });
 
-// ตรวจสอบว่าวัตถุดิบทุกตัวในสูตรของเมนูนี้มีสต็อกในคลัง Ingredient เพียงพอหรือไม่
+export const PRODUCT_TO_INGREDIENT_REGION = {
+  northern: "north",
+  northeastern: "northeast",
+  central: "central",
+  southern: "south",
+  fusion: "central", // ไทยฟิวชั่น ภาคกลางจะเป็นคนซัพพอร์ตเสมอ
+};
+
+export const REGION_TH_NAMES = {
+  north: "ภาคเหนือ",
+  northeast: "ภาคอีสาน",
+  central: "ภาคกลาง",
+  south: "ภาคใต้",
+};
+
+// ตรวจสอบว่าวัตถุดิบทุกตัวในสูตรของเมนูนี้มีสต็อกในคลัง Ingredient เฉพาะภูมิภาคเพียงพอหรือไม่
 productSchema.methods.checkStockAvailability = async function (orderQuantity = 1) {
   const Ingredient = mongoose.model("Ingredient");
   const missingOrInsufficient = [];
+  const targetRegion = PRODUCT_TO_INGREDIENT_REGION[this.region] || "central";
+  const targetRegionNameTh = REGION_TH_NAMES[targetRegion] || "ภาคกลาง";
 
   for (const item of this.recipe) {
     if (!item.ingredient && !item.ingredientId) continue;
@@ -210,14 +227,19 @@ productSchema.methods.checkStockAvailability = async function (orderQuantity = 1
         reason: "ไม่พบข้อมูลวัตถุดิบในคลัง",
       });
     } else {
-      const currentStock = ing.stockQuantity ?? ing.currentStockGrams ?? 0;
-      if (currentStock < requiredAmount) {
+      const regionStock = ing.regionalStocks?.[targetRegion] !== undefined
+        ? Number(ing.regionalStocks[targetRegion])
+        : (ing.stockQuantity ?? ing.currentStockGrams ?? 0);
+
+      if (regionStock < requiredAmount) {
         missingOrInsufficient.push({
           ingredientName: ing.nameTh,
           required: requiredAmount,
-          available: currentStock,
+          available: regionStock,
           unit: ing.unit || "g",
-          reason: `สต็อกไม่เพียงพอ (ต้องการ ${requiredAmount}${ing.unit} แต่คงเหลือเพียง ${currentStock}${ing.unit})`,
+          region: targetRegion,
+          regionNameTh: targetRegionNameTh,
+          reason: `สต็อก${targetRegionNameTh}ไม่เพียงพอ (ต้องการ ${requiredAmount}${ing.unit} แต่คงเหลือเพียง ${regionStock}${ing.unit})`,
         });
       }
     }
@@ -225,7 +247,67 @@ productSchema.methods.checkStockAvailability = async function (orderQuantity = 1
 
   return {
     isAvailable: missingOrInsufficient.length === 0,
+    targetRegion,
+    targetRegionNameTh,
     details: missingOrInsufficient,
+  };
+};
+
+// คำนวณจำนวนชุดที่สามารถทำได้จริงจากสต็อกวัตถุดิบในภาคนั้นๆ
+productSchema.methods.calculateAvailableKits = async function () {
+  const Ingredient = mongoose.model("Ingredient");
+  const targetRegion = PRODUCT_TO_INGREDIENT_REGION[this.region] || "central";
+  const targetRegionNameTh = REGION_TH_NAMES[targetRegion] || "ภาคกลาง";
+
+  if (!Array.isArray(this.recipe) || this.recipe.length === 0) {
+    return { availableKits: 0, targetRegion, targetRegionNameTh, bottleneck: null, breakdown: [] };
+  }
+
+  let minKits = Infinity;
+  let bottleneck = null;
+  const breakdown = [];
+
+  for (const item of this.recipe) {
+    const ingId = item.ingredient || item.ingredientId;
+    let ing = null;
+    if (mongoose.Types.ObjectId.isValid(ingId)) {
+      ing = await Ingredient.findById(ingId);
+    }
+    if (!ing && item.nameTh) {
+      ing = await Ingredient.findOne({ nameTh: item.nameTh });
+    }
+
+    const requiredPerKit = Math.max(1, Number(item.quantity) || 1);
+    const regionStock = ing?.regionalStocks?.[targetRegion] !== undefined
+      ? Number(ing.regionalStocks[targetRegion])
+      : (ing?.stockQuantity ?? ing?.currentStockGrams ?? 0);
+    
+    const possibleKits = Math.floor(regionStock / requiredPerKit);
+    breakdown.push({
+      ingredientName: ing?.nameTh || item.nameTh || "ไม่ทราบชื่อ",
+      regionStock,
+      requiredPerKit,
+      unit: ing?.unit || item.unit || "g",
+      possibleKits,
+    });
+
+    if (possibleKits < minKits) {
+      minKits = possibleKits;
+      bottleneck = {
+        ingredientName: ing?.nameTh || item.nameTh,
+        regionStock,
+        requiredPerKit,
+        unit: ing?.unit || item.unit || "g",
+      };
+    }
+  }
+
+  return {
+    availableKits: minKits === Infinity ? 0 : Math.max(0, minKits),
+    targetRegion,
+    targetRegionNameTh,
+    bottleneck,
+    breakdown,
   };
 };
 

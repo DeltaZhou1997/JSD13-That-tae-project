@@ -2,39 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.js";
 import { useProducts } from "../../context/ProductsContext.js";
-import defaultUsers from "../../mock-data/users.js";
+import { useIngredients } from "../../context/IngredientsContext.js";
 import { getAuthHeaders } from "../../utils/authHeader.js";
-
-// ข้อมูลออเดอร์ตัวอย่างสำหรับ E-commerce Dashboard
-const DEFAULT_ORDERS = [
-  {
-    orderId: "ORD-003",
-    customerName: "คุณกานต์ วงศ์สวัสดิ์",
-    dishName: "แกงฮังเลเมืองเหนือ",
-    price: 320,
-    status: "ชำระเงินแล้ว",
-    statusType: "paid",
-    date: "วันนี้, 09:42",
-  },
-  {
-    orderId: "ORD-002",
-    customerName: "คุณชลธิชา บุญมี",
-    dishName: "ต้มยำกุ้งน้ำข้น",
-    price: 290,
-    status: "กำลังเตรียมจัดส่ง",
-    statusType: "processing",
-    date: "วันนี้, 08:15",
-  },
-  {
-    orderId: "ORD-001",
-    customerName: "คุณกิตติพงษ์ ศรีสุข",
-    dishName: "คั่วกลิ้งหมูใต้",
-    price: 250,
-    status: "จัดส่งสำเร็จ",
-    statusType: "completed",
-    date: "เมื่อวาน, 16:30",
-  },
-];
+import { formatDate } from "../../utils/dateFormatter.js";
 
 // SVG ไอคอนระดับโปรสำหรับแดชบอร์ด
 function PlusIcon({ className = "h-4 w-4" }) {
@@ -125,9 +95,10 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { products } = useProducts();
+  const { ingredients } = useIngredients();
 
-  const [usersList, setUsersList] = useState(defaultUsers);
-  const [ordersList, setOrdersList] = useState(DEFAULT_ORDERS);
+  const [usersList, setUsersList] = useState([]);
+  const [ordersList, setOrdersList] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
@@ -144,28 +115,25 @@ export default function AdminDashboard() {
 
       if (usersRes.status === "fulfilled" && usersRes.value.ok) {
         const data = await usersRes.value.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setUsersList(data);
-        }
+        setUsersList(Array.isArray(data) ? data : data.users || data.data || []);
       }
 
       if (ordersRes.status === "fulfilled" && ordersRes.value.ok) {
         const data = await ordersRes.value.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped = data.map((o) => ({
+        const orders = Array.isArray(data) ? data : data.orders || data.data || [];
+        setOrdersList(orders.map((o) => ({
             orderId: o.orderId || o._id?.slice(-5) || "ORD",
             customerName: o.shippingAddress?.fullName || o.customerName || "ลูกค้าทั่วไป",
             dishName: o.items?.[0]?.productName || o.dishName || "ชุดทำอาหาร",
             price: o.grandTotal || o.itemsSubtotal || o.price || 0,
-            status: o.status === "PAID" ? "ชำระเงินแล้ว" : o.status === "PREPARING" ? "กำลังเตรียมจัดส่ง" : "จัดส่งสำเร็จ",
-            statusType: o.status === "PAID" ? "paid" : o.status === "PREPARING" ? "processing" : "completed",
-            date: o.createdAt ? new Date(o.createdAt).toLocaleDateString("th-TH") : "วันนี้",
-          }));
-          setOrdersList(mapped);
-        }
+            status: o.status === "PAID" ? "ชำระเงินแล้ว" : o.status === "PREPARING" ? "กำลังเตรียมจัดส่ง" : o.status === "SHIPPED" || o.status === "DELIVERED" ? "จัดส่งสำเร็จ" : o.status || "รอดำเนินการ",
+            statusType: o.status === "PAID" ? "paid" : o.status === "PREPARING" ? "processing" : o.status === "SHIPPED" || o.status === "DELIVERED" ? "completed" : "pending",
+            date: o.createdAt ? formatDate(o.createdAt) : "วันนี้",
+          })));
       }
     } catch {
-      // เซิร์ฟเวอร์ออฟไลน์ ใช้ mock เริ่มต้น
+      setUsersList([]);
+      setOrdersList([]);
     } finally {
       setTimeout(() => setLoading(false), 250);
     }
@@ -180,6 +148,8 @@ export default function AdminDashboard() {
     const totalRevenue = ordersList.reduce((sum, o) => sum + (Number(o.price) || 0), 0);
     const totalStock = products.reduce((sum, p) => sum + (Number(p.quantity) || 0), 0);
     const customerCount = usersList.filter((u) => u.role !== "admin").length;
+    const paidOrders = ordersList.filter((o) => o.statusType === "paid").length;
+    const shippedOrders = ordersList.filter((o) => o.statusType === "completed").length;
 
     return {
       totalRevenue,
@@ -188,8 +158,21 @@ export default function AdminDashboard() {
       totalStock,
       customerCount,
       totalUsers: usersList.length,
+      paidOrders,
+      shippedOrders,
+      ingredientCount: ingredients.length,
     };
-  }, [ordersList, products, usersList]);
+  }, [ordersList, products, usersList, ingredients]);
+
+  const popularRegions = useMemo(() => {
+    const grouped = products.reduce((acc, product) => {
+      const region = product.regionNameTh || product.region;
+      if (!region) return acc;
+      acc[region] = (acc[region] || 0) + 1;
+      return acc;
+    }, {});
+    return Object.entries(grouped).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  }, [products]);
 
   // สรุปยอดตามสถานะคำสั่งซื้อ
   const statusBadge = (type) => {
@@ -223,7 +206,7 @@ export default function AdminDashboard() {
           {/* วันที่ปัจจุบัน */}
           <div className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-medium text-[#4c1f08] bg-white/70 border border-[#f1ead7]">
             <CalendarIcon className="h-4 w-4 text-[#8b5e34]" />
-            <span>{new Date().toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric" })}</span>
+            <span>{formatDate(new Date())}</span>
           </div>
 
           {/* ปุ่มสร้างเมนูใหม่ (Action สำคัญของแอดมิน) */}
@@ -270,9 +253,9 @@ export default function AdminDashboard() {
                 <div className="mt-1 sm:mt-2 flex flex-wrap items-center gap-1 text-[11px] sm:text-xs text-emerald-700 font-medium">
                   <span className="inline-flex items-center gap-0.5 font-bold">
                     <TrendingUpIcon className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                    +14.5%
+                    ข้อมูลจริง
                   </span>
-                  <span className="text-gray-400 font-normal">จาก 3 คำสั่งซื้อ</span>
+                  <span className="text-gray-400 font-normal">จาก {metrics.totalOrders} คำสั่งซื้อ</span>
                 </div>
               </div>
             </div>
@@ -292,12 +275,12 @@ export default function AdminDashboard() {
                 <div className="mt-1 sm:mt-2 flex flex-wrap items-center gap-1.5 text-[11px] sm:text-xs text-[#7a5c4d]">
                   <span className="inline-flex items-center gap-1">
                     <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-                    <span>ชำระ 2</span>
+                    <span>ชำระ {metrics.paidOrders}</span>
                   </span>
                   <span>·</span>
                   <span className="inline-flex items-center gap-1">
                     <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
-                    <span>ส่ง 1</span>
+                    <span>ส่ง {metrics.shippedOrders}</span>
                   </span>
                 </div>
               </div>
@@ -476,7 +459,7 @@ export default function AdminDashboard() {
 
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-[#7a5c4d]">วัตถุดิบสดในคลังสต็อก</span>
-                  <span className="font-semibold text-[#8b5e34]">15 รายการ</span>
+                  <span className="font-semibold text-[#8b5e34]">{metrics.ingredientCount} รายการ</span>
                 </div>
               </div>
             )}
@@ -486,24 +469,18 @@ export default function AdminDashboard() {
               <div className="text-xs font-bold text-[#4c1f08] mb-2">
                 เมนูยอดนิยมตามภูมิภาค
               </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-xl bg-[#fffbf8] border border-[#f1ead7] p-2">
-                  <span className="text-gray-500 text-[11px] block">ภาคเหนือ</span>
-                  <span className="font-semibold text-[#4c1f08]">แกงฮังเล</span>
+              {popularRegions.length ? <div className="grid grid-cols-2 gap-2 text-xs">
+                {popularRegions.map(([region, count]) => (
+                  <div key={region} className="rounded-xl bg-[#fffbf8] border border-[#f1ead7] p-2">
+                    <span className="text-gray-500 text-[11px] block">{region}</span>
+                    <span className="font-semibold text-[#4c1f08]">{count} เมนู</span>
+                  </div>
+                ))}
+              </div> : (
+                <div className="rounded-xl bg-[#fffbf8] border border-dashed border-[#e5d6c5] p-4 text-center text-xs text-[#9a8172]">
+                  ยังไม่มีข้อมูลภูมิภาคจากเมนูในระบบ
                 </div>
-                <div className="rounded-xl bg-[#fffbf8] border border-[#f1ead7] p-2">
-                  <span className="text-gray-500 text-[11px] block">ภาคกลาง</span>
-                  <span className="font-semibold text-[#4c1f08]">ต้มยำกุ้ง</span>
-                </div>
-                <div className="rounded-xl bg-[#fffbf8] border border-[#f1ead7] p-2">
-                  <span className="text-gray-500 text-[11px] block">ภาคใต้</span>
-                  <span className="font-semibold text-[#4c1f08]">คั่วกลิ้งหมู</span>
-                </div>
-                <div className="rounded-xl bg-[#fffbf8] border border-[#f1ead7] p-2">
-                  <span className="text-gray-500 text-[11px] block">ภาคอีสาน</span>
-                  <span className="font-semibold text-[#4c1f08]">น้ำยาป่า</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 

@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import gsap from "gsap";
 import hero1 from "../../assets/hero-1.jpg"
 const slides = [
@@ -8,7 +9,7 @@ const slides = [
       "ค้นหาธาตุเจ้าเรือนและเลือกอาหารที่สอดคล้องกับร่างกาย เป้าหมายสุขภาพ และวิถีชีวิตของคุณ",
     image:
       "https://cdn.prod.website-files.com/64c167650e120b1b88d297d3/653657450580816a6a3eeede_Five-Elements-Nutrition.jpeg",
-    primary: ["ค้นหาธาตุของคุณ", "#personalized"],
+    primary: ["ค้นหาธาตุของคุณ", "/element-quiz"],
     secondary: ["ดูแนวคิดธาตุแท้", "#personalized"],
   },
   {
@@ -92,20 +93,40 @@ export default function HeroSection() {
             {slide.description}
           </p>
           <div className="mt-7 grid gap-3 min-[430px]:flex min-[430px]:flex-wrap sm:mt-8">
-            <a
-              href={slide.primary[1]}
-              className="shimmer-button rounded-full bg-white px-6 py-3.5 text-xl text-center font-bold text-[#3d2c2e] transition-colors hover:bg-[#f1dec9] sm:px-7"
-            >
-              {slide.primary[0]}
-            </a>
-            <a
-              href={slide.secondary[1]}
-              className="rounded-full border border-white/40 
-              bg-black/10 px-6 py-3.5 text-center font-bold backdrop-blur-sm text-xl
-              transition-colors hover:bg-white/15 sm:px-7"
-            >
-              {slide.secondary[0]}
-            </a>
+            {slide.primary[1].startsWith("/") ? (
+              <Link
+                to={slide.primary[1]}
+                className="shimmer-button rounded-full bg-white px-6 py-3.5 text-xl text-center font-bold text-[#3d2c2e] transition-colors hover:bg-[#f1dec9] sm:px-7 inline-block"
+              >
+                {slide.primary[0]}
+              </Link>
+            ) : (
+              <a
+                href={slide.primary[1]}
+                className="shimmer-button rounded-full bg-white px-6 py-3.5 text-xl text-center font-bold text-[#3d2c2e] transition-colors hover:bg-[#f1dec9] sm:px-7"
+              >
+                {slide.primary[0]}
+              </a>
+            )}
+            {slide.secondary[1].startsWith("/") ? (
+              <Link
+                to={slide.secondary[1]}
+                className="rounded-full border border-white/40 
+                bg-black/10 px-6 py-3.5 text-center font-bold backdrop-blur-sm text-xl
+                transition-colors hover:bg-white/15 sm:px-7 inline-block"
+              >
+                {slide.secondary[0]}
+              </Link>
+            ) : (
+              <a
+                href={slide.secondary[1]}
+                className="rounded-full border border-white/40 
+                bg-black/10 px-6 py-3.5 text-center font-bold backdrop-blur-sm text-xl
+                transition-colors hover:bg-white/15 sm:px-7"
+              >
+                {slide.secondary[0]}
+              </a>
+            )}
           </div>
           {slide.benefits && (
             <div className="mt-9 flex flex-wrap gap-x-7 gap-y-2 text-lg text-white/75">

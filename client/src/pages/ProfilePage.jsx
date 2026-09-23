@@ -223,6 +223,9 @@ const ELEMENT_DETAILS = {
 };
 
 export default function ProfilePage() {
+  const [profileOrders, setProfileOrders] = useState([]);
+  const [loadingProfileOrders, setLoadingProfileOrders] = useState(false);
+  const [retryingOrderId, setRetryingOrderId] = useState(null);
   const { currentUser, updateUser } = useAuth();
   const toast = useToast();
   const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
@@ -847,6 +850,108 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* Card 2.2: ออเดอร์ของฉัน (My Orders) & รายการที่ยังไม่ชำระเงิน */}
+            <div className="dashboard-card-enter bg-white border border-[#E8DFD1] rounded-3xl p-6 sm:p-7 shadow-xs space-y-4">
+              <div className="flex items-center justify-between border-b border-[#F2ECE4] pb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-[#FAF7F2] border border-[#EAE2D5] flex items-center justify-center text-[#8D593A]">
+                    <OrderHistoryIcon className="w-4 h-4" />
+                  </div>
+                  <h2 className="text-base font-black text-[#3D2E2B]">ออเดอร์ของฉัน</h2>
+                </div>
+
+                <Link
+                  to="/orders"
+                  className="text-xs font-bold text-[#8D593A] hover:underline inline-flex items-center gap-1"
+                >
+                  <span>ดูทั้งหมด</span>
+                  <span>&rarr;</span>
+                </Link>
+              </div>
+
+              {loadingProfileOrders ? (
+                <div className="py-4 text-center text-xs text-[#7A6B63]">กำลังโหลดข้อมูลคำสั่งซื้อ...</div>
+              ) : profileOrders.length === 0 ? (
+                <div className="rounded-2xl bg-[#FAF8F5] p-5 text-center text-xs text-[#7A6B63] space-y-2">
+                  <p>ยังไม่มีประวัติคำสั่งซื้อชุด Cooking Kit</p>
+                  <Link to="/menus" className="inline-block text-[#8D593A] font-bold underline">
+                    เลือกดูเมนู 4 ภาค &rarr;
+                  </Link>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {profileOrders.slice(0, 3).map((ord) => {
+                    const isPending = (ord.status || "").toUpperCase() === "PENDING";
+                    const ordId = ord.orderId || (ord._id ? `ORD-${ord._id.slice(-4)}` : "ORD-N/A");
+                    const firstItem = ord.items?.[0]?.productName || ord.items?.[0]?.nameTh || "Cooking Kit";
+                    const itemCount = (ord.items || []).reduce((s, i) => s + (Number(i.quantity) || 1), 0);
+
+                    return (
+                      <div
+                        key={ordId}
+                        className={`rounded-2xl border p-3.5 transition-all ${
+                          isPending
+                            ? "bg-amber-50/70 border-amber-200 shadow-2xs"
+                            : "bg-[#FAF8F5] border-[#EAE2D5]"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-xs text-[#3D2E2B]">{ordId}</span>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold border ${
+                                isPending
+                                  ? "bg-amber-100 text-amber-800 border-amber-300"
+                                  : ord.status === "PAID"
+                                    ? "bg-emerald-100 text-emerald-800 border-emerald-300"
+                                    : "bg-stone-100 text-stone-700 border-stone-300"
+                              }`}
+                            >
+                              {isPending ? "ยังไม่ชำระเงิน" : ord.status === "PAID" ? "ชำระเงินแล้ว" : ord.status || "ปกติ"}
+                            </span>
+                          </div>
+                          <span className="font-extrabold text-xs text-[#8D593A]">
+                            ฿{(Number(ord.grandTotal) || 0).toLocaleString()}
+                          </span>
+                        </div>
+
+                        <div className="mt-1 text-xs text-[#63534B] flex items-center justify-between">
+                          <span className="truncate max-w-[200px]">
+                            {firstItem} {itemCount > 1 && `(+อีก ${itemCount - 1} ชิ้น)`}
+                          </span>
+                          <span className="text-[11px] text-[#7A6B63]">
+                            {ord.createdAt ? formatDate(ord.createdAt) : ""}
+                          </span>
+                        </div>
+
+                        {/* ปุ่มชำระเงินต่อ หากออเดอร์ยัง pending */}
+                        {isPending && (
+                          <div className="mt-2.5 pt-2 border-t border-amber-200/80 flex items-center justify-between gap-2">
+                            <span className="text-[11px] text-amber-800">ทำรายการต่อผ่าน Stripe</span>
+                            <button
+                              type="button"
+                              disabled={retryingOrderId === (ord.orderId || ord._id)}
+                              onClick={() => handleRetryPaymentFromProfile(ord)}
+                              className="rounded-full bg-[#8D593A] px-3.5 py-1 text-xs font-bold text-white hover:bg-[#6B3215] transition cursor-pointer shadow-xs disabled:opacity-50 flex items-center gap-1.5"
+                            >
+                              {retryingOrderId === (ord.orderId || ord._id) ? (
+                                <span>กำลังเปิด Stripe...</span>
+                              ) : (
+                                <>
+                                  <span>💳</span>
+                                  <span>ชำระเงินต่อ &rarr;</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
             {/* Address book */}
             {!isAdmin && <div className="hidden">
               <div className="flex items-center justify-between mb-4">
@@ -863,34 +968,7 @@ export default function ProfilePage() {
             </div>}
 
 
-            {/* Card 2.3: ทางลัดกิจกรรม (Quick Action Shortcuts) */}
-            <div className="grid grid-cols-2 gap-3">
-              <Link
-                to="/menu-randomizer"
-                className="p-4 rounded-2xl bg-white border border-[#E8DFD1] hover:border-[#8D593A] transition-all shadow-2xs group flex items-center gap-3"
-              >
-                <div className="w-10 h-10 rounded-xl bg-amber-50 group-hover:bg-[#8D593A] group-hover:text-white text-[#8D593A] flex items-center justify-center transition">
-                  <DiceIcon className="w-5 h-5" />
-                </div>
-                <div>
-                  <strong className="text-xs font-black text-[#3D2E2B] block">สุ่มเมนู 4 ภาค</strong>
-                  <span className="text-[10px] text-[#7A6B63]">คิดไม่ออกให้เราช่วยเลือก</span>
-                </div>
-              </Link>
-
-              <Link
-                to="/menus"
-                className="p-4 rounded-2xl bg-white border border-[#E8DFD1] hover:border-[#8D593A] transition-all shadow-2xs group flex items-center gap-3"
-              >
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 group-hover:bg-emerald-700 group-hover:text-white text-emerald-700 flex items-center justify-center transition">
-                  <LeafIcon className="w-5 h-5" />
-                </div>
-                <div>
-                  <strong className="text-xs font-black text-[#3D2E2B] block">สำรวจเมนูทั้งหมด</strong>
-                  <span className="text-[10px] text-[#7A6B63]">วัตถุดิบสดพร้อมปรุง</span>
-                </div>
-              </Link>
-            </div>
+            
           </div>
         </div>
       </div>

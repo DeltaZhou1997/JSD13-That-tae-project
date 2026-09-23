@@ -27,7 +27,6 @@ import PaymentMethodSelector from "../components/checkout/PaymentMethodSelector"
 import CheckoutSummary from "../components/checkout/CheckoutSummary";
 import PlanSelector from "../components/checkout/PlanSelector";
 import PromptPayModal from "../components/checkout/PromptPayModal";
-import PaymentArchitectureToggle from "../components/checkout/PaymentArchitectureToggle";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -43,7 +42,7 @@ export default function CheckoutPage() {
   const currentUserId = currentUser?.id || currentUser?._id || "USR-001";
 
   // State สลับระบบชำระเงิน ('v2' = Stripe Hosted | 'v1' = In-App UI)
-  const [paymentVersion, setPaymentVersion] = useState("v2");
+  const paymentVersion = "v2";
 
   const { 
     cartItems: outletCartItems = [], 
@@ -464,11 +463,7 @@ export default function CheckoutPage() {
           </h1>
         </div>
 
-        {/* แถบสลับโหมด v1 vs v2 */}
-        <PaymentArchitectureToggle
-          paymentVersion={paymentVersion}
-          onToggleVersion={setPaymentVersion}
-        />
+        
 
         {/* ข้อมูลสมาชิก */}
         <CheckoutUserStatus currentUser={currentUser} />

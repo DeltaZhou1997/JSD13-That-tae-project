@@ -123,99 +123,30 @@ export default function PaymentMethodSelector({
               onChange={() => setPaymentMethod(PAYMENT_METHODS.CREDIT_CARD)}
               className="accent-[#8d593a] w-4 h-4"
             />
-            <span className="font-semibold text-sm">บัตรเครดิต / เดบิต</span>
+            <span className="font-semibold text-sm">บัตรเครดิต / เดบิต (Stripe Payment Gateway)</span>
           </div>
           <span className="text-xs text-[#6f675f] flex items-center gap-1">
-            💳 Visa / Mastercard
+            💳 Visa / Mastercard / JCB
           </span>
         </label>
 
-        {/* แสดงฟอร์มกรอกบัตรในหน้าเว็บเฉพาะตอนเป็น v1 */}
-        {isCreditCard && paymentVersion === "v1" && (
-          <div className="p-6 bg-white border border-[#e8dfd1] rounded-2xl space-y-4 my-2">
-            <div>
-              <label className="block text-xs font-semibold text-[#6f675f] mb-1.5">
-                หมายเลขบัตร
-              </label>
-              <div className="w-full bg-[#fdfbf7] border border-[#e8dfd1] rounded-xl px-4 py-3 focus-within:ring-2 focus-within:ring-[#8d593a] focus-within:outline-none transition-all">
-                <CardNumberElement
-                  options={{
-                    ...ELEMENT_STYLE,
-                    placeholder: "1234 5678 9012 3456",
-                  }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-[#6f675f] mb-1.5">
-                ชื่อบนบัตร
-              </label>
-              <input
-                type="text"
-                name="cardName"
-                placeholder="NATCHA SOOKJAI"
-                value={cardData.cardName}
-                onChange={onCardInputChange}
-                className="w-full bg-[#fdfbf7] border border-[#e8dfd1] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8d593a] transition-all"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+        {/* ข้อมูลการชำระเงินผ่าน Stripe Hosted Gateway */}
+        {isCreditCard && (
+          <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl text-left my-2 space-y-2">
+            <div className="flex items-start gap-2.5">
+              <span className="text-xl mt-0.5">🔒</span>
               <div>
-                <label className="block text-xs font-semibold text-[#6f675f] mb-1.5">
-                  วันหมดอายุ (MM/YY)
-                </label>
-                <div className="w-full bg-[#fdfbf7] border border-[#e8dfd1] rounded-xl px-4 py-3 focus-within:ring-2 focus-within:ring-[#8d593a] focus-within:outline-none transition-all">
-                  <CardExpiryElement
-                    options={{
-                      ...ELEMENT_STYLE,
-                      placeholder: "MM/YY",
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-[#6f675f] mb-1.5">
-                  รหัส CVC / CVV
-                </label>
-                <div className="w-full bg-[#fdfbf7] border border-[#e8dfd1] rounded-xl px-4 py-3 focus-within:ring-2 focus-within:ring-[#8d593a] focus-within:outline-none transition-all">
-                  <CardCvcElement
-                    options={{
-                      ...ELEMENT_STYLE,
-                      placeholder: "123",
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {paymentError && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3.5 mt-3 flex items-start gap-2.5 text-left animate-in fade-in duration-200">
-                <span className="text-red-600 font-bold text-base leading-none mt-0.5">
-                  ✖
-                </span>
-                <p className="text-xs text-red-700 leading-relaxed font-medium">
-                  {paymentError}
+                <p className="text-xs font-bold text-emerald-900">
+                  ชำระเงินผ่าน Stripe Payment Gateway ปลอดภัยระดับโลก (PCI-DSS)
+                </p>
+                <p className="text-xs text-emerald-800 mt-0.5 leading-relaxed">
+                  เมื่อกดยืนยันการสั่งซื้อ ระบบจะนำท่านไปยังหน้าชำระเงินของ Stripe โดยตรง สามารถใช้เลขบัตรจริง หรือเลขบัตรทดสอบสำหรับจำลองสถานการณ์ต่างๆ ได้ทันที
                 </p>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* กล่องแจ้งเตือนของ v2 (ไม่แสดงฟอร์มกรอกบัตรที่นี่ ให้ไปกรอกที่หน้า Stripe) */}
-        {isCreditCard && paymentVersion === "v2" && (
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-left my-2 flex items-start gap-3">
-            <span className="text-xl mt-0.5">🔒</span>
-            <div>
-              <p className="text-xs font-bold text-emerald-900">
-                ชำระเงินผ่านบัตรเครดิต / เดบิต อย่างปลอดภัย
-              </p>
-              <p className="text-xs text-emerald-700 mt-0.5 leading-relaxed">
-                ระบบจะนำท่านไปยังหน้าชำระเงินที่ได้รับมาตรฐานความปลอดภัยระดับโลก
-                (PCI-DSS) ของ Stripe เพื่อกรอกข้อมูลบัตรได้อย่างปลอดภัย 100%
-              </p>
+            </div>
+            <div className="bg-white/80 p-2.5 rounded-xl border border-emerald-100 text-[11px] text-stone-600">
+              <span className="font-bold text-emerald-900">💡 การจำลองสถานะชำระเงิน: </span>
+              ใส่เลขบัตรทดสอบ <code className="bg-emerald-100/70 px-1.5 py-0.5 rounded font-mono font-bold text-emerald-950">4242 4242 4242 4242</code> ในหน้า Stripe เพื่อจำลองการชำระสำเร็จ
             </div>
           </div>
         )}

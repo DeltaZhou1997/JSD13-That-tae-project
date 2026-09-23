@@ -138,6 +138,13 @@ const ingredientSchema = new mongoose.Schema({
     default: 0,
     min: 0,
   },
+  // ปริมาณสต็อกแยกตาม 4 ภูมิภาคหลัก (north, northeast, central, south)
+  regionalStocks: {
+    north: { type: Number, default: 0, min: 0 },
+    northeast: { type: Number, default: 0, min: 0 },
+    central: { type: Number, default: 0, min: 0 },
+    south: { type: Number, default: 0, min: 0 },
+  },
   lowStockThresholdGrams: {
     type: Number,
     default: 0,
@@ -202,6 +209,52 @@ ingredientSchema.pre("validate", function () {
   if (this.category && !this.categoryTh) {
     this.categoryTh = INGREDIENT_CATEGORIES[this.category] || "อื่น ๆ";
   }
+
+  // Sync regionalStocks กับ total stock
+  if (this.regionalStocks) {
+    const north = Math.max(0, Number(this.regionalStocks.north) || 0);
+    const northeast = Math.max(0, Number(this.regionalStocks.northeast) || 0);
+    const central = Math.max(0, Number(this.regionalStocks.central) || 0);
+    const south = Math.max(0, Number(this.regionalStocks.south) || 0);
+    this.regionalStocks = { north, northeast, central, south };
+
+    const totalFromRegions = north + northeast + central + south;
+    const currentTotal = Number(this.currentStockGrams ?? this.stockQuantity ?? 0);
+
+    // ถ้ายอดรวมจาก 4 ภาคมากกว่า 0 หรือมีการส่ง regionalStocks มา ให้ใช้ยอดรวมของภาคเป็นหลัก
+    if (totalFromRegions > 0 || (this.currentStockGrams === 0 && this.stockQuantity === 0) || this.isModified("regionalStocks")) {
+      this.currentStockGrams = totalFromRegions;
+      this.stockQuantity = totalFromRegions;
+    } else if (currentTotal > 0 && totalFromRegions === 0) {
+      // กรณีข้อมูลเดิมมีแต่ stock รวม ให้ default เข้า central (ภาคกลาง)
+      this.regionalStocks.central = currentTotal;
+    }
+
+    // Auto-update regions จากภาคที่มีสต็อกจริง (> 0)
+    const activeRegions = [];
+    if (this.regionalStocks.north > 0) activeRegions.push("north");
+    if (this.regionalStocks.northeast > 0) activeRegions.push("northeast");
+    if (this.regionalStocks.central > 0) activeRegions.push("central");
+    if (this.regionalStocks.south > 0) activeRegions.push("south");
+
+    if (activeRegions.length > 0) {
+      this.regions = activeRegions;
+      if (!this.region || !activeRegions.includes(this.region)) {
+        this.region = activeRegions[0];
+      }
+    }
+  } else {
+    const existing = Number(this.currentStockGrams ?? this.stockQuantity ?? 0);
+    this.regionalStocks = {
+      north: 0,
+      northeast: 0,
+      central: existing,
+      south: 0,
+    };
+    this.stockQuantity = existing;
+    this.currentStockGrams = existing;
+  }
+
   // Sync region และ regions array
   if (this.region && (!this.regions || this.regions.length === 0)) {
     this.regions = [this.region];
@@ -210,13 +263,6 @@ ingredientSchema.pre("validate", function () {
   }
   if (this.region && !this.regionNameTh) {
     this.regionNameTh = REGION[this.region] || (this.region === "all" ? "ทุกภูมิภาค (ทั่วไป)" : "ทั่วไป");
-  }
-
-  // Sync stock: currentStockGrams ↔ stockQuantity (ให้ frontend form และ DB ใช้ field เดียวกันได้)
-  if (this.currentStockGrams !== undefined && this.currentStockGrams !== null) {
-    this.stockQuantity = Number(this.currentStockGrams) || 0;
-  } else if (this.stockQuantity !== undefined && this.stockQuantity !== null) {
-    this.currentStockGrams = Number(this.stockQuantity) || 0;
   }
 
   // ซิงค์สารอาหารให้ครบทั้ง 7 ชนิดตาม Model

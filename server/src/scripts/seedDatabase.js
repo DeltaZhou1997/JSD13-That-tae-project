@@ -49,6 +49,12 @@ async function seedAll() {
         sodium: item.nutrientsPer100g?.sodium || 0,
       },
       stockQuantity: item.stockQuantity ?? (50 + (index % 10) * 10), // สต็อกเริ่มต้น 50 - 140
+      regionalStocks: {
+        north: assignedRegion === "north" ? 5000 : 1500,
+        northeast: assignedRegion === "northeast" ? 5000 : 1500,
+        central: assignedRegion === "central" ? 5000 : 2500,
+        south: assignedRegion === "south" ? 5000 : 1500,
+      },
       unit: item.unit || "g",
       pricePerUnit: item.pricePerUnit || 15,
       region: assignedRegion,

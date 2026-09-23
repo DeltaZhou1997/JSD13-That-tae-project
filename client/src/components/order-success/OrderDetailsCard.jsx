@@ -1,4 +1,5 @@
 import React from "react";
+import { formatDate } from "../../utils/dateFormatter.js";
 
 // แมปชื่อ paymentMethod ให้เป็นภาษาไทยที่อ่านง่าย
 const PAYMENT_METHOD_LABELS = {
@@ -10,6 +11,7 @@ const PAYMENT_METHOD_LABELS = {
 export default function OrderDetailsCard({ orderData }) {
   const {
     orderId,
+    createdAt,
     deliveryDate,
     shippingAddress,
     grandTotal,
@@ -42,6 +44,14 @@ export default function OrderDetailsCard({ orderData }) {
         <span className="text-[#6f675f]">หมายเลขคำสั่งซื้อ:</span>
         <span className="font-bold text-[#3d2c2e]">{orderId}</span>
       </div>
+
+      {/* วันที่สั่งซื้อ */}
+      {createdAt && (
+        <div className="flex justify-between border-b border-[#e8dfd1] pb-2">
+          <span className="text-[#6f675f]">วันที่สั่งซื้อ:</span>
+          <span className="font-medium text-[#2f2119]">{formatDate(createdAt)}</span>
+        </div>
+      )}
 
       {/* ช่องทางชำระเงิน */}
       <div className="flex justify-between border-b border-[#e8dfd1] pb-2">
