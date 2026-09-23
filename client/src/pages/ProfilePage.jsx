@@ -252,6 +252,11 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isDraggingAvatar, setIsDraggingAvatar] = useState(false);
+  const [addressBook, setAddressBook] = useState(currentUser?.addresses || []);
+  const [addressModal, setAddressModal] = useState(null);
+  const [addressSaving, setAddressSaving] = useState(false);
+  const emptyAddress = { label: "บ้าน", address: "", subdistrict: "", district: "", province: "", zipcode: "", phone: currentUser?.phone || "" };
+  const [addressForm, setAddressForm] = useState(emptyAddress);
   const avatarInputRef = useRef(null);
 
   // อัปโหลดรูปภาพโปรไฟล์ขึ้น MongoDB GridFS (v2)
@@ -318,6 +323,40 @@ export default function ProfilePage() {
       });
     }
   }, [currentUser]);
+
+  useEffect(() => setAddressBook(currentUser?.addresses || []), [currentUser?.addresses]);
+
+  const saveBookAddress = async (event) => {
+    event.preventDefault();
+    setAddressSaving(true);
+    const isEdit = addressModal !== "new";
+    const endpoint = isEdit ? `${apiUrl}/api/v2/users/me/addresses/${addressModal._id}` : `${apiUrl}/api/v2/users/me/addresses`;
+    try {
+      const res = await fetch(endpoint, { method: isEdit ? "PUT" : "POST", headers: getAuthHeaders({ "Content-Type": "application/json" }), body: JSON.stringify({ ...addressForm, isDefault: addressForm.isDefault || addressBook.length === 0 }) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "บันทึกที่อยู่ไม่สำเร็จ");
+      setAddressBook(data.addresses || []);
+      updateUser({ addresses: data.addresses || [] });
+      setAddressModal(null);
+      toast.success("บันทึกที่อยู่เรียบร้อยแล้ว");
+    } catch (error) { toast.error(error.message); }
+    finally { setAddressSaving(false); }
+  };
+
+  const deleteBookAddress = async (id) => {
+    if (!window.confirm("ต้องการลบที่อยู่นี้ใช่ไหม?")) return;
+    const res = await fetch(`${apiUrl}/api/v2/users/me/addresses/${id}`, { method: "DELETE", headers: getAuthHeaders() });
+    const data = await res.json();
+    if (res.ok) { setAddressBook(data.addresses || []); updateUser({ addresses: data.addresses || [] }); toast.success("ลบที่อยู่แล้ว"); }
+    else toast.error(data.message || "ลบที่อยู่ไม่สำเร็จ");
+  };
+
+  const setDefaultBookAddress = async (item) => {
+    const res = await fetch(`${apiUrl}/api/v2/users/me/addresses/${item._id}`, { method: "PUT", headers: getAuthHeaders({ "Content-Type": "application/json" }), body: JSON.stringify({ isDefault: true }) });
+    const data = await res.json();
+    if (res.ok) { setAddressBook(data.addresses || []); updateUser({ addresses: data.addresses || [] }); toast.success("ตั้งเป็นที่อยู่หลักแล้ว"); }
+    else toast.error(data.message || "ตั้งค่าที่อยู่หลักไม่สำเร็จ");
+  };
 
   // ปิด modal เมื่อกดปุ่ม Escape
   useEffect(() => {
@@ -796,11 +835,26 @@ export default function ProfilePage() {
                   <p className="font-medium text-[#3D2E2B] text-xs sm:text-sm leading-relaxed pt-1">
                     {formData.street
                       ? `${formData.street} ${formData.district} ${formData.province} ${formData.postalCode}`
-                      : "123/45 ถนนวงศ์สว่าง บางซื่อ กรุงเทพมหานคร 10800"}
+                      : "ยังไม่ได้เพิ่มที่อยู่จัดส่ง"}
                   </p>
                 </div>
               </div>
             </div>
+
+            {/* Address book */}
+            {!isAdmin && <div className="bg-white border border-[#E8DFD1] rounded-3xl p-6 shadow-xs">
+              <div className="flex items-center justify-between mb-4">
+                <div><h2 className="text-base font-black text-[#3D2E2B]">สมุดที่อยู่จัดส่ง</h2><p className="text-xs text-[#7A6B63] mt-1">บันทึกได้หลายที่อยู่ และเลือกใช้ตอนชำระเงิน</p></div>
+                <button type="button" onClick={() => { setAddressForm({ ...emptyAddress, phone: currentUser.phone || "" }); setAddressModal("new"); }} className="rounded-full bg-[#4C1F08] px-3 py-2 text-xs font-bold text-white">+ เพิ่มที่อยู่</button>
+              </div>
+              <div className="space-y-3">
+                {addressBook.length === 0 && <p className="rounded-2xl bg-[#FAF8F5] p-4 text-center text-xs text-[#7A6B63]">ยังไม่มีที่อยู่หลายรายการ</p>}
+                {addressBook.map((item) => <div key={item._id} className="rounded-2xl border border-[#EAE2D5] bg-[#FAF8F5] p-4">
+                  <div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2"><strong className="text-sm text-[#3D2E2B]">{item.label}</strong>{item.isDefault && <span className="rounded-full bg-[#8D593A]/10 px-2 py-0.5 text-[10px] font-bold text-[#8D593A]">ที่อยู่หลัก</span>}</div><p className="mt-1 text-xs leading-5 text-[#63534B]">{item.address} ต.{item.subdistrict} อ.{item.district} จ.{item.province} {item.zipcode}<br />โทร. {item.phone}</p></div><div className="flex shrink-0 gap-2 text-[11px] font-bold"><button type="button" onClick={() => { setAddressForm({ ...item }); setAddressModal(item); }} className="text-[#8D593A]">แก้ไข</button><button type="button" onClick={() => deleteBookAddress(item._id)} className="text-rose-600">ลบ</button></div></div>
+                  {!item.isDefault && <button type="button" onClick={() => setDefaultBookAddress(item)} className="mt-3 text-[11px] font-bold text-[#8D593A] underline">ตั้งเป็นที่อยู่หลัก</button>}
+                </div>)}
+              </div>
+            </div>}
 
 
             {/* Card 2.3: ทางลัดกิจกรรม (Quick Action Shortcuts) */}
@@ -834,6 +888,13 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {addressModal && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => !addressSaving && setAddressModal(null)}><form onSubmit={saveBookAddress} onClick={(e) => e.stopPropagation()} className="w-full max-w-xl space-y-4 rounded-3xl bg-white p-6 shadow-2xl">
+        <div className="flex items-center justify-between"><h2 className="text-lg font-black text-[#3D2E2B]">{addressModal === "new" ? "เพิ่มที่อยู่ใหม่" : "แก้ไขที่อยู่"}</h2><button type="button" onClick={() => setAddressModal(null)}>✕</button></div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{[["label","ชื่อที่อยู่ เช่น บ้าน / ที่ทำงาน"],["phone","เบอร์โทรศัพท์"],["address","บ้านเลขที่ อาคาร ถนน ซอย"],["subdistrict","ตำบล / แขวง"],["district","อำเภอ / เขต"],["province","จังหวัด"],["zipcode","รหัสไปรษณีย์"]].map(([name, label]) => <label key={name} className={name === "address" ? "sm:col-span-2 text-xs font-bold text-[#7A6B63]" : "text-xs font-bold text-[#7A6B63]"}>{label}<input required value={addressForm[name] || ""} onChange={(e) => setAddressForm((prev) => ({ ...prev, [name]: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#E8DFD1] bg-[#FAF8F5] px-3 py-2 text-sm font-normal text-[#3D2E2B] outline-none focus:border-[#8D593A]" /></label>)}</div>
+        <label className="flex items-center gap-2 text-xs font-bold text-[#63534B]"><input type="checkbox" checked={Boolean(addressForm.isDefault)} onChange={(e) => setAddressForm((prev) => ({ ...prev, isDefault: e.target.checked }))} /> ตั้งเป็นที่อยู่หลัก</label>
+        <div className="flex justify-end gap-2 border-t border-[#F2ECE4] pt-4"><button type="button" onClick={() => setAddressModal(null)} className="rounded-full border px-4 py-2 text-sm">ยกเลิก</button><button disabled={addressSaving} className="rounded-full bg-[#4C1F08] px-5 py-2 text-sm font-bold text-white">{addressSaving ? "กำลังบันทึก..." : "บันทึกที่อยู่"}</button></div>
+      </form></div>}
 
       {/* ===================================================================== */}
       {/* 🌟 Modal 1: Popup ฟอร์มแก้ไขข้อมูลส่วนตัว                                */}

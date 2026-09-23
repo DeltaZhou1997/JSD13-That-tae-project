@@ -55,6 +55,7 @@ export default function ShippingForm({ formData, onChange, onDateChange }) {
             rows="2"
             value={formData.address}
             onChange={onChange}
+            placeholder="กรอกบ้านเลขที่ หมู่บ้าน อาคาร ถนน หรือซอย"
             className="w-full bg-white border border-[#e8dfd1] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#8d593a]"
             required
           />

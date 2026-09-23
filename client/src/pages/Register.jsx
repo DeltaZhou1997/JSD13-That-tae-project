@@ -229,7 +229,7 @@ function Register() {
       if (response.ok) {
         // Auto-login ทันที
         if (data.user && data.token) {
-          login(data.user, data.token);
+          login({ ...data.user, deliveryAddress: data.user.deliveryAddress || payload.deliveryAddress }, data.token);
           if (avatarFile && data.user.id) {
             const uploadData = new FormData();
             uploadData.append("image", avatarFile);
@@ -241,11 +241,7 @@ function Register() {
             const uploaded = await uploadResponse.json();
             if (uploadResponse.ok && uploaded.url) {
               const avatarUrl = uploaded.url.startsWith("http") ? uploaded.url : `${apiUrl}${uploaded.url}`;
-              await fetch(`${apiUrl}/api/v2/users/${data.user.id}`, {
-                method: "PUT",
-                headers: { Authorization: `Bearer ${data.token}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ avatar: avatarUrl }),
-              });
+              login({ ...data.user, avatar: avatarUrl }, data.token);
             }
           }
         }

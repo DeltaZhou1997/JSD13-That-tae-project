@@ -70,20 +70,31 @@ export default function CheckoutPage() {
   const [formData, setFormData] = useState({
     fullName: `${currentUser.firstName} ${currentUser.lastName}`,
     phone: currentUser.phone || "",
-    address: "123/45 ถนนวงศ์สว่าง",
+    address: "",
     subdistrict: "",
-    district: "บางซื่อ",
-    province: "กรุงเทพมหานคร",
-    zipcode: "10800",
+    district: "",
+    province: "",
+    zipcode: "",
     deliveryDate: "12",
   });
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [isSavingAddress, setIsSavingAddress] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState("");
 
   useEffect(() => {
-    const a = authUser?.deliveryAddress;
+    const savedAddresses = authUser?.addresses || [];
+    const selected = savedAddresses.find((item) => item.isDefault) || savedAddresses[0];
+    const a = selected ? { ...selected, street: selected.address, postalCode: selected.zipcode } : authUser?.deliveryAddress;
+    if (selected) setSelectedAddressId(String(selected._id));
     if (a) setFormData((prev) => ({ ...prev, address: a.street || "", subdistrict: a.subdistrict || "", district: a.district || "", province: a.province || "", zipcode: a.postalCode || "", phone: authUser.phone || prev.phone, fullName: `${authUser.firstName || ""} ${authUser.lastName || ""}`.trim() }));
   }, [authUser]);
+
+  const selectSavedAddress = (id) => {
+    const selected = (authUser?.addresses || []).find((item) => String(item._id) === String(id));
+    if (!selected) return;
+    setSelectedAddressId(String(selected._id));
+    setFormData((prev) => ({ ...prev, address: selected.address || "", subdistrict: selected.subdistrict || "", district: selected.district || "", province: selected.province || "", zipcode: selected.zipcode || "", phone: selected.phone || prev.phone, fullName: `${authUser.firstName || ""} ${authUser.lastName || ""}`.trim() }));
+  };
 
   const saveAddress = async () => {
     const userId = authUser?.id || authUser?._id;
@@ -519,7 +530,10 @@ export default function CheckoutPage() {
           className="grid grid-cols-1 lg:grid-cols-12 gap-8"
         >
           <div className="lg:col-span-7 flex flex-col gap-6">
-            <div className="mb-3 flex justify-end"><button type="button" onClick={() => setIsAddressModalOpen(true)} className="text-sm font-bold text-[#8d593a] underline">แก้ไขที่อยู่จัดส่งในโปรไฟล์</button></div>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              {authUser?.addresses?.length > 0 ? <select value={selectedAddressId} onChange={(e) => selectSavedAddress(e.target.value)} className="min-w-0 flex-1 rounded-xl border border-[#e8dfd1] bg-white px-3 py-2 text-sm font-bold text-[#4c1f08]"><option value="">เลือกที่อยู่จัดส่ง</option>{authUser.addresses.map((item) => <option key={item._id} value={item._id}>{item.label}{item.isDefault ? " (หลัก)" : ""}</option>)}</select> : <span className="text-xs text-[#7a6b63]">ยังไม่มีรายการที่อยู่ที่บันทึกไว้</span>}
+              <button type="button" onClick={() => setIsAddressModalOpen(true)} className="shrink-0 text-sm font-bold text-[#8d593a] underline">แก้ไขที่อยู่</button>
+            </div>
             <ShippingForm
               formData={formData}
               onChange={handleInputChange}

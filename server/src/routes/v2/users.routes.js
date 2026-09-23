@@ -149,6 +149,14 @@ const handleRegister = async (req, res, next) => {
         // ผู้สมัครใหม่ยังไม่ทำแบบทดสอบธาตุ จึงต้องเว้นค่าว่างไว้ก่อน
         const assignedElement = req.body.element || "";
 
+        const deliveryAddress = {
+            street: req.body.deliveryAddress?.street ?? req.body.street ?? "",
+            subdistrict: req.body.deliveryAddress?.subdistrict ?? req.body.subdistrict ?? "",
+            district: req.body.deliveryAddress?.district ?? req.body.district ?? "",
+            province: req.body.deliveryAddress?.province ?? req.body.province ?? "",
+            postalCode: req.body.deliveryAddress?.postalCode ?? req.body.postalCode ?? "",
+        };
+
         const newUser = new User({
             firstName: userFirstName,
             lastName: userLastName,
@@ -160,13 +168,10 @@ const handleRegister = async (req, res, next) => {
             bloodType: bloodType || "O",
             element: assignedElement,
             bodyElement: req.body.bodyElement || assignedElement,
-            deliveryAddress: req.body.deliveryAddress || {
-                street: req.body.street || "",
-                subdistrict: req.body.subdistrict || "",
-                district: req.body.district || "",
-                province: req.body.province || "",
-                postalCode: req.body.postalCode || "",
-            },
+            deliveryAddress,
+            addresses: (deliveryAddress.street && deliveryAddress.subdistrict && deliveryAddress.district && deliveryAddress.province && deliveryAddress.postalCode)
+                ? [{ label: "บ้าน", address: deliveryAddress.street, subdistrict: deliveryAddress.subdistrict, district: deliveryAddress.district, province: deliveryAddress.province, zipcode: deliveryAddress.postalCode, phone: cleanPhone, isDefault: true }]
+                : [],
             role: req.body.role === "admin" ? "admin" : "customer",
         });
 
@@ -185,6 +190,7 @@ const handleRegister = async (req, res, next) => {
                 role: newUser.role,
                 element: newUser.element,
                 points: newUser.points,
+                deliveryAddress: newUser.deliveryAddress,
             },
         });
     } catch (err) {
@@ -194,6 +200,56 @@ const handleRegister = async (req, res, next) => {
 
 router.post("/register", handleRegister);
 router.post("/", handleRegister); // รองรับ Frontend ที่เรียก POST /api/v2/users (เหมือน Register.jsx และ AdminUserList.jsx)
+
+// Address book: รองรับหลายที่อยู่ต่อผู้ใช้
+router.get("/me/addresses", verifyToken, async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.id).select("addresses deliveryAddress").lean();
+        if (!user) return res.status(404).json({ message: "ไม่พบผู้ใช้" });
+        return res.json({ addresses: user.addresses || [], deliveryAddress: user.deliveryAddress || null });
+    } catch (err) { next(err); }
+});
+
+router.post("/me/addresses", verifyToken, async (req, res, next) => {
+    try {
+        const { label = "บ้าน", address, subdistrict, district, province, zipcode, phone } = req.body;
+        if (!address || !subdistrict || !district || !province || !zipcode || !phone) {
+            return res.status(400).json({ message: "กรุณากรอกข้อมูลที่อยู่ให้ครบถ้วน" });
+        }
+        const user = await User.findById(req.user.id);
+        if (!user) return res.status(404).json({ message: "ไม่พบผู้ใช้" });
+        const isDefault = user.addresses.length === 0 || Boolean(req.body.isDefault);
+        if (isDefault) user.addresses.forEach((item) => { item.isDefault = false; });
+        user.addresses.push({ label, address, subdistrict, district, province, zipcode, phone, isDefault });
+        await user.save();
+        return res.status(201).json({ address: user.addresses[user.addresses.length - 1], addresses: user.addresses });
+    } catch (err) { next(err); }
+});
+
+router.put("/me/addresses/:addressId", verifyToken, async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.id);
+        const address = user?.addresses.id(req.params.addressId);
+        if (!address) return res.status(404).json({ message: "ไม่พบที่อยู่" });
+        Object.assign(address, req.body);
+        if (req.body.isDefault) user.addresses.forEach((item) => { item.isDefault = String(item._id) === String(address._id); });
+        await user.save();
+        return res.json({ address, addresses: user.addresses });
+    } catch (err) { next(err); }
+});
+
+router.delete("/me/addresses/:addressId", verifyToken, async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.id);
+        const address = user?.addresses.id(req.params.addressId);
+        if (!address) return res.status(404).json({ message: "ไม่พบที่อยู่" });
+        const wasDefault = address.isDefault;
+        address.deleteOne();
+        if (wasDefault && user.addresses.length > 0) user.addresses[0].isDefault = true;
+        await user.save();
+        return res.json({ addresses: user.addresses });
+    } catch (err) { next(err); }
+});
 
 // 5. LOGIN (POST /api/v2/users/login)
 router.post("/login", async (req, res, next) => {

@@ -291,7 +291,7 @@ export default function MenuFilters({ filters, setFilters }) {
     selectedElements.includes(userElement)
 
   return (
-    <aside className="h-fit self-start bg-[#faf7f2] dark:bg-[#3b2a1a] rounded-2xl p-3 sm:p-3.5 border border-[#d4c5b0] dark:border-[#523a24] shadow-xs lg:sticky lg:top-24 xl:top-28 transition-all">
+    <aside className="relative z-10 h-fit self-start bg-[#faf7f2] dark:bg-[#3b2a1a] rounded-2xl p-3 sm:p-3.5 border border-[#d4c5b0] dark:border-[#523a24] shadow-xs lg:sticky lg:top-28 xl:top-32 transition-all">
       {/* ===================================================================== */}
       {/* 1. Header: กะทัดรัด สบายตา ไม่กินความสูงหน้าจอ                        */}
       {/* ===================================================================== */}

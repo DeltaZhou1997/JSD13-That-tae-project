@@ -3,6 +3,8 @@ import multer from "multer";
 import mongoose from "mongoose";
 import { Readable } from "stream";
 import { getGridFSBucket } from "../../utils/gridfs.js";
+import { User } from "../../models/User.model.js";
+import { verifyToken } from "./users.routes.js";
 
 const router = Router();
 const upload = multer({
@@ -17,7 +19,7 @@ const upload = multer({
  * อัปโหลดรูปภาพเข้า GridFS โดยตรง
  * Response: { fileId, filename, url }
  */
-router.post("/upload", upload.single("image"), (req, res) => {
+router.post("/upload", verifyToken, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "กรุณาแนบไฟล์รูปภาพ (field: image)" });
@@ -43,13 +45,24 @@ router.post("/upload", upload.single("image"), (req, res) => {
       .on("error", (err) => {
         return res.status(500).json({ message: "อัปโหลดรูปล้มเหลว", error: err.message });
       })
-      .on("finish", () => {
+      .on("finish", async () => {
         const fileId = uploadStream.id.toString();
+        const url = `/api/v2/images/${fileId}`;
+        // อัปโหลดจาก profile/register ให้บันทึก avatar ใน User ทันที
+        if (req.user?.id && req.user.role !== "admin") {
+          try {
+            await User.findByIdAndUpdate(req.user.id, { avatar: url });
+          } catch (err) {
+            console.error("บันทึก avatar ไม่สำเร็จ:", err.message);
+            return res.status(500).json({ message: "อัปโหลดสำเร็จแต่บันทึกรูปโปรไฟล์ไม่สำเร็จ" });
+          }
+        }
         return res.status(201).json({
           message: "อัปโหลดรูปภาพเข้า GridFS สำเร็จ",
           fileId,
           filename,
-          url: `/api/v2/images/${fileId}`,
+          url,
+          avatarSaved: Boolean(req.user?.id && req.user.role !== "admin"),
         });
       });
   } catch (error) {
