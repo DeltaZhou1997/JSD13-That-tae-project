@@ -307,7 +307,7 @@ const handleCreateStripeSession = async (req, res, next) => {
         .join(", ")
         .slice(0, 480);
       const customer = await User.findById(existingOrder.userId).select("email").lean().catch(() => null);
-      const session = await stripe.checkout.sessions.create({
+      const sessionParams = {
         payment_method_types: STRIPE_PAYMENT_METHODS,
         locale: "th",
         ...(customer?.email ? { customer_email: customer.email } : {}),
@@ -333,7 +333,17 @@ const handleCreateStripeSession = async (req, res, next) => {
           orderId: existingOrder.orderId,
           userId: String(existingOrder.userId),
         },
-      });
+      };
+
+      let session;
+      try {
+        session = await stripe.checkout.sessions.create(sessionParams);
+      } catch (stripeErr) {
+        // บัญชี Stripe ยังไม่เปิด PromptPay → เปิดหน้าชำระด้วยบัตร (รวม Apple Pay / Google Pay) แทน ไม่ให้จ่ายไม่ได้ทั้งระบบ
+        if (!/promptpay|payment method type/i.test(stripeErr.message || "")) throw stripeErr;
+        console.warn("⚠️ [Stripe] PromptPay ยังไม่เปิดใช้งานใน Dashboard — ใช้บัตรอย่างเดียว:", stripeErr.message);
+        session = await stripe.checkout.sessions.create({ ...sessionParams, payment_method_types: ["card"] });
+      }
 
       existingOrder.stripeSessionId = session.id;
       await existingOrder.save();

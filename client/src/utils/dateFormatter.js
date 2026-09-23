@@ -42,3 +42,10 @@ export function getTodayFormatted() {
 }
 
 export default formatDate;
+
+/** วันที่ปัจจุบันตามเวลาเครื่อง (YYYY-MM-DD) — ห้ามใช้ toISOString() เพราะเป็นเวลา UTC
+ *  ในไทย (UTC+7) ช่วง 00:00-06:59 จะได้วันที่ของเมื่อวาน */
+export function todayIso() {
+  const t = new Date();
+  return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
+}

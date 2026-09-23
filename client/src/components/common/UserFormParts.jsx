@@ -2,6 +2,7 @@
 // และกล่องเพิ่มสมาชิกของแอดมิน (AddUserModal.jsx) ให้หน้าตาและเงื่อนไขตรงกันเสมอ
 import { useState } from "react";
 import DatePicker from "./DatePicker.jsx";
+import { todayIso } from "../../utils/dateFormatter.js";
 import { THAI_PROVINCES } from "../../constants/thaiProvinces.js";
 import { BLOOD_TYPES, GENDER_OPTIONS } from "../../utils/userForm.js";
 
@@ -152,7 +153,7 @@ export function UserFormFields({ formData, onChange, avatarPreview, onAvatarChan
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
           <div>
             <label className={labelBase}>วันเกิด</label>
-            <DatePicker name="birthDate" value={formData.birthDate} onChange={onChange} max={new Date().toISOString().split("T")[0]} className={inputBase} />
+            <DatePicker name="birthDate" value={formData.birthDate} onChange={onChange} max={todayIso()} className={inputBase} />
           </div>
           <div>
             <label className={labelBase}>เพศ</label>

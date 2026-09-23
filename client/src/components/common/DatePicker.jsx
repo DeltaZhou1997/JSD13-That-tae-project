@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { todayIso } from "../../utils/dateFormatter.js";
 
 const THAI_MONTHS = [
   "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน",
@@ -30,11 +31,14 @@ function dmyToIso(dmy) {
   const monthNum = parseInt(m, 10);
   const yearNum = parseInt(y, 10);
   if (dayNum < 1 || dayNum > 31 || monthNum < 1 || monthNum > 12 || yearNum < 1000) return "";
+  const real = new Date(yearNum, monthNum - 1, dayNum);
+  if (real.getMonth() !== monthNum - 1) return ""; // เช่น 31/02 ไม่มีจริง
   return `${yearNum}-${String(monthNum).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
 }
 
 /**
  * DatePicker component มาตรฐาน DD/MM/YYYY (คริสต์ศักราช ค.ศ.)
+ * - min / max (YYYY-MM-DD) จำกัดทั้งการคลิกในปฏิทิน การเลื่อนเดือน/ปี และการพิมพ์
  * - แสดงผลในช่องเป็น DD/MM/YYYY เสมอในทุกเบราว์เซอร์
  * - มี Calendar Picker Popup ให้คลิกเลือกวัน เดือน ปี ได้สะดวก
  * - ซิงค์ค่าไปให้ฟอร์มเป็น YYYY-MM-DD (ISO format) ตามมาตรฐาน Database
@@ -52,6 +56,7 @@ export default function DatePicker({
   required = false,
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [rangeError, setRangeError] = useState("");
   const [inputText, setInputText] = useState(() => isoToDmy(value));
   const containerRef = useRef(null);
 
@@ -114,20 +119,32 @@ export default function DatePicker({
     if (input.length === 8) {
       const iso = dmyToIso(formatted);
       if (iso) {
-        if (min && iso < min) return;
-        if (max && iso > max) return;
+        if (min && iso < min) {
+          setRangeError(`เลือกได้ตั้งแต่ ${isoToDmy(min)}`);
+          return;
+        }
+        if (max && iso > max) {
+          setRangeError(`เลือกได้ไม่เกิน ${isoToDmy(max)}`);
+          return;
+        }
+        setRangeError("");
         onChange?.({ target: { name, value: iso } });
+      } else {
+        setRangeError("วันที่ไม่ถูกต้อง");
       }
     } else if (input.length === 0) {
+      setRangeError("");
       onChange?.({ target: { name, value: "" } });
     }
   };
 
   const handleInputBlur = () => {
-    // เมื่อ blur ถ้าค่าไม่สมบูรณ์ให้คืนกลับตาม value เดิม
-    if (inputText && !dmyToIso(inputText)) {
+    // เมื่อ blur ถ้าค่าไม่สมบูรณ์ หรืออยู่นอกช่วง min/max ให้คืนกลับตาม value เดิม
+    const iso = dmyToIso(inputText);
+    if (inputText && (!iso || (min && iso < min) || (max && iso > max))) {
       setInputText(isoToDmy(value));
     }
+    setRangeError("");
   };
 
   // เลือกวันจากปฏิทิน
@@ -171,18 +188,38 @@ export default function DatePicker({
   }, [viewYear, viewMonth]);
 
   // รายการปีให้เลือก (เช่น 1925 ถึง 2035)
+  const minYear = min ? Number(min.slice(0, 4)) : null;
+  const maxYear = max ? Number(max.slice(0, 4)) : null;
+  const maxMonth = max ? Number(max.slice(5, 7)) - 1 : 11;
+  const minMonth = min ? Number(min.slice(5, 7)) - 1 : 0;
+
   const yearOptions = useMemo(() => {
     const currentYear = new Date().getFullYear();
-    const startYear = 1920;
-    const endYear = currentYear + 15;
+    const startYear = minYear ?? 1920;
+    const endYear = maxYear ?? currentYear + 15;
     const years = [];
     for (let y = endYear; y >= startYear; y--) {
       years.push(y);
     }
     return years;
-  }, []);
+  }, [minYear, maxYear]);
+
+  // เลื่อนไปก่อน min / หลัง max ไม่ได้
+  const canGoPrev = !(minYear !== null && (viewYear < minYear || (viewYear === minYear && viewMonth <= minMonth)));
+  const canGoNext = !(maxYear !== null && (viewYear > maxYear || (viewYear === maxYear && viewMonth >= maxMonth)));
+  const isMonthOutOfRange = (idx) =>
+    (maxYear !== null && viewYear === maxYear && idx > maxMonth) ||
+    (minYear !== null && viewYear === minYear && idx < minMonth);
+
+  // เปลี่ยนปีแล้วเดือนเกินช่วง → ดึงกลับมาเดือนสุดท้ายที่เลือกได้
+  const handleYearChange = (y) => {
+    setViewYear(y);
+    if (maxYear !== null && y === maxYear && viewMonth > maxMonth) setViewMonth(maxMonth);
+    if (minYear !== null && y === minYear && viewMonth < minMonth) setViewMonth(minMonth);
+  };
 
   const prevMonth = () => {
+    if (!canGoPrev) return;
     if (viewMonth === 0) {
       setViewMonth(11);
       setViewYear((y) => y - 1);
@@ -192,6 +229,7 @@ export default function DatePicker({
   };
 
   const nextMonth = () => {
+    if (!canGoNext) return;
     if (viewMonth === 11) {
       setViewMonth(0);
       setViewYear((y) => y + 1);
@@ -200,10 +238,8 @@ export default function DatePicker({
     }
   };
 
-  const todayStr = useMemo(() => {
-    const t = new Date();
-    return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, "0")}-${String(t.getDate()).padStart(2, "0")}`;
-  }, []);
+  const todayStr = useMemo(() => todayIso(), []);
+  const todayDisabled = (min && todayStr < min) || (max && todayStr > max);
 
   return (
     <div ref={containerRef} className="relative w-full">
@@ -240,6 +276,10 @@ export default function DatePicker({
         </button>
       </div>
 
+      {rangeError && (
+        <p className="mt-1 text-xs text-red-500" role="alert">{rangeError}</p>
+      )}
+
       {/* Calendar Dropdown Popup */}
       {isOpen && (
         <div className="absolute left-0 top-full mt-1.5 z-50 w-72 rounded-2xl border border-[#e8ded4] bg-white p-3.5 shadow-xl ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-100">
@@ -248,7 +288,8 @@ export default function DatePicker({
             <button
               type="button"
               onClick={prevMonth}
-              className="p-1 rounded-lg text-stone-500 hover:text-[#4c1f08] hover:bg-stone-100 transition-colors"
+              disabled={!canGoPrev}
+              className="p-1 rounded-lg text-stone-500 hover:text-[#4c1f08] hover:bg-stone-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
               title="เดือนก่อนหน้า"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -263,7 +304,7 @@ export default function DatePicker({
                 className="text-xs font-bold text-[#4c1f08] bg-stone-50 border border-stone-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4c1f08] cursor-pointer"
               >
                 {THAI_MONTHS.map((mName, idx) => (
-                  <option key={mName} value={idx}>
+                  <option key={mName} value={idx} disabled={isMonthOutOfRange(idx)}>
                     {mName}
                   </option>
                 ))}
@@ -271,7 +312,7 @@ export default function DatePicker({
 
               <select
                 value={viewYear}
-                onChange={(e) => setViewYear(Number(e.target.value))}
+                onChange={(e) => handleYearChange(Number(e.target.value))}
                 className="text-xs font-bold text-[#4c1f08] bg-stone-50 border border-stone-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#4c1f08] cursor-pointer"
               >
                 {yearOptions.map((y) => (
@@ -285,7 +326,8 @@ export default function DatePicker({
             <button
               type="button"
               onClick={nextMonth}
-              className="p-1 rounded-lg text-stone-500 hover:text-[#4c1f08] hover:bg-stone-100 transition-colors"
+              disabled={!canGoNext}
+              className="p-1 rounded-lg text-stone-500 hover:text-[#4c1f08] hover:bg-stone-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
               title="เดือนถัดไป"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -360,7 +402,8 @@ export default function DatePicker({
             <button
               type="button"
               onClick={handleSelectToday}
-              className="text-[#4c1f08] font-bold hover:underline px-1.5 py-0.5"
+              disabled={todayDisabled}
+              className="text-[#4c1f08] font-bold hover:underline px-1.5 py-0.5 disabled:opacity-30 disabled:no-underline disabled:cursor-not-allowed"
             >
               วันนี้
             </button>
