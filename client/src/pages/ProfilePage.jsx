@@ -1,11 +1,11 @@
 // client/src/pages/ProfilePage.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.js";
 import useToast from "../hooks/useToast.js";
 import customerAvatar from "../mock-data/assets/reviews/praew.jpg";
 import { getUserElement, ELEMENT_TH_TO_EN } from "../utils/quizHelpers.js";
-import { getAuthHeaders } from "../utils/authHeader.js";
+import { getAuthHeaders, getApiUrl } from "../utils/authHeader.js";
 
 // =========================================================================
 // 🌟 SVGs & Visual Icons (User-friendly & Premium)
@@ -246,8 +246,57 @@ export default function ProfilePage() {
 
   // Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isDraggingAvatar, setIsDraggingAvatar] = useState(false);
+  const avatarInputRef = useRef(null);
+
+  // อัปโหลดรูปภาพโปรไฟล์ขึ้น MongoDB GridFS (v2)
+  const handleAvatarUpload = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("กรุณาเลือกไฟล์รูปภาพ (JPG, PNG, WebP)");
+      return;
+    }
+
+    const userId = currentUser.id || currentUser._id;
+    const uploadData = new FormData();
+    uploadData.append("image", file);
+
+    setIsUploadingAvatar(true);
+    try {
+      const res = await fetch(`${apiUrl}/api/v2/images/upload`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: uploadData,
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        const fullAvatarUrl = data.url.startsWith("http") ? data.url : `${apiUrl}${data.url}`;
+        // บันทึกลง User model ใน MongoDB ทันที
+        const updateRes = await fetch(`${apiUrl}/api/v2/users/${userId}`, {
+          method: "PUT",
+          headers: getAuthHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify({ avatar: fullAvatarUrl }),
+        });
+        if (updateRes.ok) {
+          const updatedUserData = await updateRes.json();
+          updateUser(updatedUserData.user || { ...currentUser, avatar: fullAvatarUrl });
+          toast.success("อัปเดตรูปโปรไฟล์สำเร็จเรียบร้อย! 📸✨");
+        } else {
+          updateUser({ ...currentUser, avatar: fullAvatarUrl });
+          toast.success("อัปเดตรูปโปรไฟล์ชั่วคราวเรียบร้อย ✨");
+        }
+      } else {
+        toast.error(data.message || "อัปโหลดรูปภาพไม่สำเร็จ");
+      }
+    } catch (err) {
+      console.error("Avatar upload error:", err);
+      toast.error("เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   useEffect(() => {
     if (currentUser) {
@@ -341,7 +390,7 @@ export default function ProfilePage() {
     };
 
     try {
-      const res = await fetch(`${apiUrl}/api/v1/users/${userId}`, {
+      const res = await fetch(`${apiUrl}/api/v2/users/${userId}`, {
         method: "PUT",
         headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(payload),
@@ -398,13 +447,52 @@ export default function ProfilePage() {
 
           <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="flex items-center gap-5">
-              <div className="relative shrink-0">
-                <img
-                  src={customerAvatar}
-                  alt="Avatar"
-                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white shadow-md ring-2 ring-[#EAE2D5]"
+              {/* รูปโปรไฟล์ พร้อมปุ่มอัปโหลดรูปภาพ / Drag & Drop */}
+              <div
+                className="relative shrink-0 group cursor-pointer"
+                onClick={() => avatarInputRef.current?.click()}
+                onDragOver={(e) => { e.preventDefault(); setIsDraggingAvatar(true); }}
+                onDragLeave={() => setIsDraggingAvatar(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDraggingAvatar(false);
+                  const file = e.dataTransfer?.files?.[0];
+                  if (file) handleAvatarUpload(file);
+                }}
+                title="คลิกหรือลากรูปมาวางเพื่อเปลี่ยนรูปโปรไฟล์ (บันทึกลง MongoDB)"
+              >
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleAvatarUpload(file);
+                  }}
+                  className="hidden"
                 />
-                <span className="absolute -bottom-1 -right-1 bg-[#8D593A] text-white text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-xs flex items-center gap-1">
+                <img
+                  src={currentUser.avatar || customerAvatar}
+                  alt="Avatar"
+                  className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-white shadow-md ring-2 transition-all ${
+                    isDraggingAvatar ? "ring-[#8D593A] scale-105" : "ring-[#EAE2D5] group-hover:ring-[#8D593A]"
+                  }`}
+                />
+                {isUploadingAvatar ? (
+                  <div className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center text-white text-[10px] font-bold">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mb-1" />
+                    <span>กำลังอัปโหลด...</span>
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[10px] font-bold">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 mb-0.5">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                      <circle cx="12" cy="13" r="4" />
+                    </svg>
+                    <span>เปลี่ยนรูป</span>
+                  </div>
+                )}
+                <span className="absolute -bottom-1 -right-1 bg-[#8D593A] text-white text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-xs flex items-center gap-1 z-10">
                   <SparklesIcon className="w-3 h-3 text-amber-300" />
                   {isAdmin ? "Admin" : tier}
                 </span>

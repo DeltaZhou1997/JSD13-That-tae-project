@@ -15,10 +15,10 @@ export default function ProductsProvider({ children }) {
     let isMounted = true;
     async function loadProducts() {
       try {
-        const res = await fetch(`${apiUrl}/api/v1/products`);
+        const res = await fetch(`${apiUrl}/api/v2/products`);
         if (res.ok) {
           const data = await res.json();
-          const items = Array.isArray(data) ? data : data.products || [];
+          const items = Array.isArray(data) ? data : data.products || data.data || [];
           if (items.length > 0 && isMounted) {
             setProducts(items);
           }
@@ -44,7 +44,7 @@ export default function ProductsProvider({ children }) {
       const newProduct = { ...data, _id: tempId };
       setProducts((prev) => [...prev, newProduct]);
       try {
-        const res = await fetch(`${apiUrl}/api/v1/products`, {
+        const res = await fetch(`${apiUrl}/api/v2/products`, {
           method: "POST",
           headers: getAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify(data),
@@ -76,7 +76,7 @@ export default function ProductsProvider({ children }) {
         ),
       );
       try {
-        await fetch(`${apiUrl}/api/v1/products/${id}`, {
+        await fetch(`${apiUrl}/api/v2/products/${id}`, {
           method: "PUT",
           headers: getAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify(data),
@@ -94,7 +94,7 @@ export default function ProductsProvider({ children }) {
         prev.filter((product) => (product._id || product.id) !== id),
       );
       try {
-        await fetch(`${apiUrl}/api/v1/products/${id}`, {
+        await fetch(`${apiUrl}/api/v2/products/${id}`, {
           method: "DELETE",
           headers: getAuthHeaders(),
         });

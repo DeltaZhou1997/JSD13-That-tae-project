@@ -25,7 +25,7 @@ export default function AuthProvider({ children }) {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  // ตรวจสอบความถูกต้องของ Token จริงกับเซิร์ฟเวอร์ (GET /api/v1/users/me)
+  // ตรวจสอบความถูกต้องของ Token จริงกับเซิร์ฟเวอร์ (GET /api/v2/users/me)
   useEffect(() => {
     let isMounted = true;
     async function verifySession() {
@@ -38,7 +38,7 @@ export default function AuthProvider({ children }) {
 
       try {
         const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
-        const res = await fetch(`${apiUrl}/api/v1/users/me`, {
+        const res = await fetch(`${apiUrl}/api/v2/users/me`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

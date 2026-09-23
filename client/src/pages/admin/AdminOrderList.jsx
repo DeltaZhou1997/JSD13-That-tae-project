@@ -155,7 +155,7 @@ export default function AdminOrderList() {
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${apiUrl}/api/v1/orders`, {
+      const res = await fetch(`${apiUrl}/api/v2/orders`, {
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลคำสั่งซื้อได้");
@@ -183,7 +183,7 @@ export default function AdminOrderList() {
   const handleUpdateStatus = async (orderId, newStatus) => {
     setUpdatingId(orderId);
     try {
-      const res = await fetch(`${apiUrl}/api/v1/orders/${orderId}/status`, {
+      const res = await fetch(`${apiUrl}/api/v2/orders/${orderId}/status`, {
         method: "PATCH",
         headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ status: newStatus, orderStatus: newStatus }),

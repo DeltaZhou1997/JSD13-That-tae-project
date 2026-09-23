@@ -115,7 +115,7 @@ export default function ElementQuizPage() {
 
         const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
         const userId = currentUser.id || currentUser._id;
-        const res = await fetch(`${apiUrl}/api/v1/users/${userId}`, {
+        const res = await fetch(`${apiUrl}/api/v2/users/${userId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",

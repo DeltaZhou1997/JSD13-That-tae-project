@@ -146,7 +146,7 @@ export default function CheckoutPage() {
   const finalizeOrder = async (orderPayload) => {
     const apiUrl = getApiUrl();
     try {
-      const response = await fetch(`${apiUrl}/api/v1/checkout`, {
+      const response = await fetch(`${apiUrl}/api/v2/checkout`, {
         method: "POST",
         headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(orderPayload),
@@ -296,7 +296,7 @@ export default function CheckoutPage() {
       setIsProcessingPayment(true);
       try {
         const piRes = await fetch(
-          `${apiUrl}/api/v1/payment/create-payment-intent`,
+          `${apiUrl}/api/v2/payment/create-payment-intent`,
           {
             method: "POST",
             headers: getAuthHeaders({ "Content-Type": "application/json" }),

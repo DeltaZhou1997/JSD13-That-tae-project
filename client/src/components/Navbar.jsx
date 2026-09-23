@@ -499,7 +499,7 @@ export default function Navbar({ cartCount = 0 }) {
                   </span>
                 ) : (
                   <img
-                    src={customerAvatar}
+                    src={currentUser?.avatar || customerAvatar}
                     alt=""
                     className="h-8 w-8 rounded-full border border-white/70 object-cover"
                   />
@@ -686,7 +686,7 @@ export default function Navbar({ cartCount = 0 }) {
                       </span>
                     ) : (
                       <img
-                        src={customerAvatar}
+                        src={currentUser?.avatar || customerAvatar}
                         alt=""
                         className="h-9 w-9 shrink-0 rounded-full border border-white/70 object-cover"
                       />

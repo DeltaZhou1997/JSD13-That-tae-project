@@ -1,4 +1,5 @@
 import { Router } from "express";
+import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { User } from "../../models/User.model.js";
@@ -154,6 +155,8 @@ const handleRegister = async (req, res, next) => {
 
         const cleanPhone = phone ? String(phone).replace(/\D/g, "") : "08" + Math.floor(10000000 + Math.random() * 90000000);
 
+        const assignedElement = req.body.element || "ดิน";
+
         const newUser = new User({
             firstName: userFirstName,
             lastName: userLastName,
@@ -163,7 +166,14 @@ const handleRegister = async (req, res, next) => {
             birthDate: birthDate ? new Date(birthDate) : new Date("2000-01-01"),
             gender: gender || "not_specified",
             bloodType: bloodType || "O",
-            element: "ดิน",
+            element: assignedElement,
+            bodyElement: req.body.bodyElement || assignedElement,
+            deliveryAddress: req.body.deliveryAddress || {
+                street: req.body.street || "",
+                district: req.body.district || "",
+                province: req.body.province || "",
+                postalCode: req.body.postalCode || "",
+            },
             role: req.body.role === "admin" ? "admin" : "customer",
         });
 

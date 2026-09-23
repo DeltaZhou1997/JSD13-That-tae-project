@@ -164,6 +164,16 @@ const ingredientSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  imageUrl: {
+    type: String,
+    default: "",
+    trim: true,
+  },
+  imageId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "images.files",
+    default: null,
+  },
   isActive: {
     type: Boolean,
     default: true,

@@ -18,7 +18,7 @@ export default function OrdersPage() {
     async function fetchOrders() {
       setLoading(true);
       try {
-        const res = await fetch(`${apiUrl}/api/v1/orders/user/${userId}`, {
+        const res = await fetch(`${apiUrl}/api/v2/orders/user/${userId}`, {
           headers: getAuthHeaders(),
         });
         if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลรายการคำสั่งซื้อได้");

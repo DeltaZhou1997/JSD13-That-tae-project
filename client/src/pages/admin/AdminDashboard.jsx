@@ -138,8 +138,8 @@ export default function AdminDashboard() {
     try {
       const headers = getAuthHeaders();
       const [usersRes, ordersRes] = await Promise.allSettled([
-        fetch(`${apiUrl}/api/v1/users`, { headers }),
-        fetch(`${apiUrl}/api/v1/orders`, { headers }),
+        fetch(`${apiUrl}/api/v2/users`, { headers }),
+        fetch(`${apiUrl}/api/v2/orders`, { headers }),
       ]);
 
       if (usersRes.status === "fulfilled" && usersRes.value.ok) {

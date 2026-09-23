@@ -50,7 +50,7 @@ export default function AdminUserList() {
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${apiUrl}/api/v1/users`, {
+      const res = await fetch(`${apiUrl}/api/v2/users`, {
         headers: getAuthHeaders(),
       });
       if (res.ok) {
@@ -111,7 +111,7 @@ export default function AdminUserList() {
 
     const userId = editingUser.id || editingUser._id;
     try {
-      const res = await fetch(`${apiUrl}/api/v1/users/${userId}`, {
+      const res = await fetch(`${apiUrl}/api/v2/users/${userId}`, {
         method: "PUT",
         headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(editFormData),
@@ -145,7 +145,7 @@ export default function AdminUserList() {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const res = await fetch(`${apiUrl}/api/v1/users`, {
+      const res = await fetch(`${apiUrl}/api/v2/users`, {
         method: "POST",
         headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(newUserData),
@@ -187,7 +187,7 @@ export default function AdminUserList() {
   // ยืนยันการลบผู้ใช้
   const handleConfirmDelete = async (id) => {
     try {
-      const res = await fetch(`${apiUrl}/api/v1/users/${id}`, {
+      const res = await fetch(`${apiUrl}/api/v2/users/${id}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
       });

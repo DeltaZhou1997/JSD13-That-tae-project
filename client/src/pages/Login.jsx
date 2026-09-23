@@ -15,7 +15,7 @@ function Login() {
 
     try {
       const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
-      const response = await fetch(`${apiUrl}/api/v1/users/login`, {
+      const response = await fetch(`${apiUrl}/api/v2/users/login`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -75,11 +75,13 @@ router.get("/:id", async (req, res, next) => {
 // =========================================================================
 router.post("/", verifyToken, requireAdmin, async (req, res, next) => {
   try {
-    const { nameTh, category, unit } = req.body;
-    if (!nameTh || !category || !unit) {
+    const { nameTh, category } = req.body;
+    const unit = req.body.unit || "g";
+    req.body.unit = unit;
+    if (!nameTh || !category) {
       return res.status(400).json({
         success: false,
-        message: "กรุณาระบุข้อมูลที่จำเป็น (ชื่อภาษาไทย, หมวดหมู่, และหน่วยนับ)",
+        message: "กรุณาระบุข้อมูลที่จำเป็น (ชื่อภาษาไทย และ หมวดหมู่)",
       });
     }
 

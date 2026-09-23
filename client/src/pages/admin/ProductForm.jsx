@@ -118,7 +118,7 @@ export default function ProductForm() {
     async function loadIngredients() {
       setLoadingIngredients(true);
       try {
-        const res = await fetch(`${apiUrl}/api/v1/ingredients`);
+        const res = await fetch(`${apiUrl}/api/v2/ingredients`);
         if (res.ok) {
           const json = await res.json();
           if (Array.isArray(json.data) && isMounted) {

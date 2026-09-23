@@ -132,19 +132,21 @@ ingredientsRouter.get("/:id", async (req, res) => {
 });
 
 // 3. POST /api/v1/ingredients - เพิ่มวัตถุดิบใหม่เข้าระบบ
-ingredientsRouter.post("/", (req, res) => {
+ingredientsRouter.post("/", async (req, res) => {
   const {
     nameTh,
     nameEn = "",
     category = "vegetable",
     categoryTh,
-    medicinalTaste = "รสจืด/มัน",
+    medicinalTaste = "จืด",
     elements = ["ดิน"],
     stockQuantity = 50,
     unit = "g",
     region = "all",
     pricePerUnit = 20,
     nutrientsPer100g = {},
+    imageUrl = "",
+    imageId = null,
   } = req.body;
 
   if (!nameTh || String(nameTh).trim().length < 2) {
@@ -154,48 +156,65 @@ ingredientsRouter.post("/", (req, res) => {
     });
   }
 
-  // หา ID ถัดไป
-  const existingIds = Object.keys(ingredientsStore);
-  const maxNum = existingIds.reduce((max, id) => {
-    const num = parseInt(id.replace("ing_", ""), 10);
-    return !isNaN(num) && num > max ? num : max;
-  }, 0);
-  const newId = `ing_${String(maxNum + 1).padStart(3, "0")}`;
-
   const categoryMap = {
     meat: "เนื้อสัตว์ & โปรตีน",
     vegetable: "ผัก & พืชสมุนไพร",
-    seasoning: "เครื่องปรุง & ซอส",
-    grain: "ธัญพืช & ข้าว",
-    herb: "สมุนไพรสด",
+    seasoning_spice: "เครื่องปรุง & เครื่องเทศ",
+    seasoning: "เครื่องปรุงรส",
+    herb_spice: "สมุนไพร & เครื่องเทศ",
+    carb: "แป้ง & คาร์โบไฮเดรต",
+    dairy: "นม",
+    egg: "ไข่",
     other: "วัตถุดิบอื่นๆ",
   };
 
-  const newIngredient = {
-    _id: newId,
-    id: newId,
+  const assignedCategoryTh = categoryTh || categoryMap[category] || "วัตถุดิบอาหาร";
+  const assignedElements = Array.isArray(elements) && elements.length > 0 ? elements : ["ดิน"];
+  const parsedTaste = Array.isArray(medicinalTaste) ? medicinalTaste[0] || "จืด" : String(medicinalTaste || "จืด");
+
+  const docPayload = {
     nameTh: nameTh.trim(),
-    nameEn: nameEn.trim(),
+    nameEn: nameEn.trim() || nameTh.trim(),
     category,
-    categoryTh: categoryTh || categoryMap[category] || "วัตถุดิบอาหาร",
-    medicinalTaste,
-    elements: Array.isArray(elements) ? elements : [elements],
+    categoryTh: assignedCategoryTh,
+    medicinalTaste: parsedTaste,
+    elements: assignedElements,
     basisWeightG: 100,
     stockQuantity: Math.max(0, Number(stockQuantity) || 0),
     unit: unit || "g",
     region: region || "all",
+    regions: [region || "all", "all"],
     regionNameTh: regionNameMap[region] || "ทั่วไป",
-    pricePerUnit: Math.max(0, Number(pricePerUnit) || 0),
-    nutrientsPer100g: {
+    pricePerUnit: Math.max(0, Number(pricePerUnit) || 15),
+    nutritionPer100G: {
       calories: Number(nutrientsPer100g.calories) || 0,
-      carbs: Number(nutrientsPer100g.carbs) || 0,
+      carb: Number(nutrientsPer100g.carbs || nutrientsPer100g.carb) || 0,
       sugar: Number(nutrientsPer100g.sugar) || 0,
       fiber: Number(nutrientsPer100g.fiber) || 0,
       protein: Number(nutrientsPer100g.protein) || 0,
       fat: Number(nutrientsPer100g.fat) || 0,
       sodium: Number(nutrientsPer100g.sodium) || 0,
     },
+    imageUrl: imageUrl || "",
+    imageId: imageId || null,
     isActive: true,
+  };
+
+  let savedDoc = null;
+  if (mongoose.connection.readyState === 1) {
+    try {
+      savedDoc = await Ingredient.create(docPayload);
+    } catch (err) {
+      console.warn("MongoDB create ingredient fallback:", err.message);
+    }
+  }
+
+  const newId = savedDoc ? String(savedDoc._id) : `ing_${Date.now()}`;
+  const newIngredient = {
+    _id: newId,
+    id: newId,
+    ...docPayload,
+    nutrientsPer100g: docPayload.nutritionPer100G,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -204,93 +223,91 @@ ingredientsRouter.post("/", (req, res) => {
 
   res.status(201).json({
     success: true,
-    message: "เพิ่มวัตถุดิบใหม่เข้าคลังสต็อกสำเร็จ",
-    data: newIngredient,
+    message: `เพิ่มวัตถุดิบ "${newIngredient.nameTh}" เข้าสู่ระบบสำเร็จ`,
+    data: savedDoc || newIngredient,
   });
 });
 
 // 4. PUT /api/v1/ingredients/:id - แก้ไขข้อมูลวัตถุดิบ สต็อก โภชนาการ และภูมิภาค
-ingredientsRouter.put("/:id", (req, res) => {
+ingredientsRouter.put("/:id", async (req, res) => {
   const { id } = req.params;
-  const existing = ingredientsStore[id];
+  const updateData = { ...req.body };
 
-  if (!existing) {
-    return res.status(404).json({
-      success: false,
-      message: `ไม่พบวัตถุดิบรหัส "${id}"`,
-    });
+  let dbUpdated = null;
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nameTh: id };
+      dbUpdated = await Ingredient.findOneAndUpdate(query, updateData, {
+        new: true,
+        runValidators: false,
+      });
+    } catch (err) {
+      console.warn("MongoDB update ingredient fallback:", err.message);
+    }
   }
 
-  const {
-    nameTh,
-    nameEn,
-    category,
-    categoryTh,
-    medicinalTaste,
-    elements,
-    stockQuantity,
-    unit,
-    region,
-    pricePerUnit,
-    nutrientsPer100g,
-    isActive,
-  } = req.body;
-
-  if (nameTh !== undefined) existing.nameTh = String(nameTh).trim();
-  if (nameEn !== undefined) existing.nameEn = String(nameEn).trim();
-  if (category !== undefined) existing.category = category;
-  if (categoryTh !== undefined) existing.categoryTh = categoryTh;
-  if (medicinalTaste !== undefined) existing.medicinalTaste = medicinalTaste;
-  if (elements !== undefined) existing.elements = Array.isArray(elements) ? elements : [elements];
-  if (stockQuantity !== undefined) existing.stockQuantity = Math.max(0, Number(stockQuantity) || 0);
-  if (unit !== undefined) existing.unit = unit;
-  if (region !== undefined) {
-    existing.region = region;
-    existing.regionNameTh = regionNameMap[region] || "ทั่วไป";
-  }
-  if (pricePerUnit !== undefined) existing.pricePerUnit = Math.max(0, Number(pricePerUnit) || 0);
-  if (isActive !== undefined) existing.isActive = Boolean(isActive);
-
-  if (nutrientsPer100g && typeof nutrientsPer100g === "object") {
-    existing.nutrientsPer100g = {
-      ...existing.nutrientsPer100g,
-      calories: Number(nutrientsPer100g.calories ?? existing.nutrientsPer100g.calories),
-      carbs: Number(nutrientsPer100g.carbs ?? existing.nutrientsPer100g.carbs),
-      sugar: Number(nutrientsPer100g.sugar ?? existing.nutrientsPer100g.sugar),
-      fiber: Number(nutrientsPer100g.fiber ?? existing.nutrientsPer100g.fiber),
-      protein: Number(nutrientsPer100g.protein ?? existing.nutrientsPer100g.protein),
-      fat: Number(nutrientsPer100g.fat ?? existing.nutrientsPer100g.fat),
-      sodium: Number(nutrientsPer100g.sodium ?? existing.nutrientsPer100g.sodium),
-    };
-  }
-
-  existing.updatedAt = new Date().toISOString();
+  const existing = ingredientsStore[id] || {};
+  const merged = { ...existing, ...updateData, _id: id, id, updatedAt: new Date().toISOString() };
+  ingredientsStore[id] = merged;
 
   res.status(200).json({
     success: true,
     message: "อัปเดตข้อมูลวัตถุดิบและสต็อกสำเร็จ",
-    data: existing,
+    data: dbUpdated || merged,
   });
 });
 
-// 5. DELETE /api/v1/ingredients/:id - ลบวัตถุดิบออกจากสต็อก
-ingredientsRouter.delete("/:id", (req, res) => {
+// 5. PATCH /api/v1/ingredients/:id/stock - อัปเดตเฉพาะสต็อก
+ingredientsRouter.patch("/:id/stock", async (req, res) => {
   const { id } = req.params;
-  const existing = ingredientsStore[id];
+  const { currentStockGrams, stockQuantity } = req.body;
+  const stock = Number(stockQuantity ?? currentStockGrams ?? 0);
 
-  if (!existing) {
-    return res.status(404).json({
-      success: false,
-      message: `ไม่พบวัตถุดิบรหัส "${id}"`,
-    });
+  let dbUpdated = null;
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nameTh: id };
+      dbUpdated = await Ingredient.findOneAndUpdate(
+        query,
+        { $set: { stockQuantity: stock } },
+        { new: true }
+      );
+    } catch (err) {
+      console.warn("MongoDB update stock fallback:", err.message);
+    }
+  }
+
+  if (ingredientsStore[id]) {
+    ingredientsStore[id].stockQuantity = stock;
+    ingredientsStore[id].currentStockGrams = stock;
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "อัปเดตสต็อกวัตถุดิบสำเร็จ",
+    data: dbUpdated || { id, stockQuantity: stock },
+  });
+});
+
+// 6. DELETE /api/v1/ingredients/:id - ลบวัตถุดิบออกจากสต็อก
+ingredientsRouter.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+
+  if (mongoose.connection.readyState === 1) {
+    try {
+      const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nameTh: id };
+      await Ingredient.findOneAndUpdate(query, { $set: { isActive: false } });
+    } catch (err) {
+      console.warn("MongoDB delete fallback:", err.message);
+    }
   }
 
   delete ingredientsStore[id];
 
   res.status(200).json({
     success: true,
-    message: `ลบวัตถุดิบ "${existing.nameTh}" (${id}) เรียบร้อยแล้ว`,
-    data: existing,
+    message: `ลบวัตถุดิบรหัส "${id}" เรียบร้อยแล้ว`,
+    data: { id },
   });
 });
 

@@ -153,17 +153,34 @@ function AdminIngredientList() {
                     }`}
                   >
                     <td className="p-3 font-medium text-[#4c1f08]">
-                      {item.nameTh}
-                      {low && (
-                        <span className="ml-2 rounded bg-red-600 px-1.5 py-0.5 text-xs text-white">
-                          ใกล้หมด
-                        </span>
-                      )}
-                      {item.nameEn && (
-                        <span className="block text-xs font-normal text-[#6b3215]">
-                          {item.nameEn}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-3">
+                        {item.imageUrl ? (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.nameTh}
+                            className="w-10 h-10 rounded-lg object-cover border border-[#f1ead7] shrink-0 shadow-2xs"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-[#f1ead7]/60 flex items-center justify-center text-xs text-[#8d593a] shrink-0 font-bold">
+                            {item.nameTh.slice(0, 2)}
+                          </div>
+                        )}
+                        <div>
+                          <div>
+                            {item.nameTh}
+                            {low && (
+                              <span className="ml-2 rounded bg-red-600 px-1.5 py-0.5 text-xs text-white">
+                                ใกล้หมด
+                              </span>
+                            )}
+                          </div>
+                          {item.nameEn && (
+                            <span className="block text-xs font-normal text-[#6b3215]">
+                              {item.nameEn}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </td>
                     <td className="p-3 text-[#6b3215]">{item.categoryTh}</td>
                     <td className="p-3 text-[#6b3215]">{item.medicinalTaste || "-"}</td>

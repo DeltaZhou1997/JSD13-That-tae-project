@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { CATEGORY_MAP, useIngredients } from "../../context/IngredientsContext.js";
@@ -10,6 +10,8 @@ import {
   calculateRecipeMetrics,
   toElementPercentages,
 } from "../../utils/recipeCalculator.js";
+
+import { getApiUrl, getAuthHeaders } from "../../utils/authHeader.js";
 
 const inputClass =
   "w-full rounded border border-[#f1ead7] p-2 focus:border-[#4c1f08] focus:outline-none focus:ring-2 focus:ring-[#f1ead7]";
@@ -42,6 +44,8 @@ function createEmptyForm() {
     nameEn: "",
     scientificName: "",
     category: "vegetable",
+    imageUrl: "",
+    imageId: null,
     medicinalTastes: [],
     elements: [],
     nutrientsPer100g: emptyNutrientForm(),
@@ -68,6 +72,58 @@ function IngredientForm() {
   const [formData, setFormData] = useState(createEmptyForm);
   const [errors, setErrors] = useState({});
   const [notFound, setNotFound] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
+  const apiUrl = getApiUrl();
+
+  const handleUploadImageFile = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("กรุณาเลือกไฟล์รูปภาพเท่านั้น (JPG, PNG, WebP)");
+      return;
+    }
+
+    const uploadData = new FormData();
+    uploadData.append("image", file);
+
+    setIsUploadingImage(true);
+    try {
+      const res = await fetch(`${apiUrl}/api/v2/images/upload`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: uploadData,
+      });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        const fullUrl = data.url.startsWith("http") ? data.url : `${apiUrl}${data.url}`;
+        setFormData((prev) => ({
+          ...prev,
+          imageUrl: fullUrl,
+          imageId: data.fileId || data.id || null,
+        }));
+        toast.success("อัปโหลดรูปภาพวัตถุดิบขึ้นระบบเรียบร้อย! ✨");
+      } else {
+        toast.error(data.message || "อัปโหลดภาพไม่สำเร็จ");
+      }
+    } catch (err) {
+      toast.error("เกิดข้อผิดพลาดในการอัปโหลดภาพ");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleImageFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) handleUploadImageFile(file);
+  };
+
+  const handleImageDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file) handleUploadImageFile(file);
+  };
 
   useEffect(() => {
     if (!isEditMode) return;
@@ -234,6 +290,8 @@ function IngredientForm() {
       currentStockGrams: Number(formData.currentStockGrams),
       lowStockThresholdGrams: Number(formData.lowStockThresholdGrams),
       expiryDate: formData.expiryDate || undefined,
+      imageUrl: formData.imageUrl || "",
+      imageId: formData.imageId || null,
       isActive: formData.isActive,
     };
 
@@ -271,7 +329,88 @@ function IngredientForm() {
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          
+          {/* ส่วนอัปโหลดรูปภาพวัตถุดิบ (Drag & Drop + File Selector) */}
+          <div>
+            <label className={labelClass}>
+              รูปภาพวัตถุดิบ (ลากรูปมาวาง หรือคลิกเลือกไฟล์)
+            </label>
+            <div
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleImageDrop}
+              onClick={() => fileInputRef.current?.click()}
+              className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
+                isDragging
+                  ? "border-[#4c1f08] bg-[#f8f5f0]"
+                  : "border-[#f1ead7] hover:border-[#4c1f08] bg-[#faf7f2]/50"
+              }`}
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageFileSelect}
+                className="hidden"
+              />
+              {formData.imageUrl ? (
+                <div className="relative group text-center" onClick={(e) => e.stopPropagation()}>
+                  <img
+                    src={formData.imageUrl}
+                    alt="Ingredient preview"
+                    className="w-32 h-32 object-cover rounded-xl shadow-md border-2 border-white mx-auto ring-1 ring-[#e8dfd1]"
+                  />
+                  <div className="mt-2 flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-xs bg-[#4c1f08] text-white px-3 py-1 rounded-md hover:bg-[#6b3215] transition"
+                    >
+                      เปลี่ยนรูป
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, imageUrl: "", imageId: null }))}
+                      className="text-xs bg-rose-600 text-white px-3 py-1 rounded-md hover:bg-rose-700 transition"
+                    >
+                      ลบรูป
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center">
+                  {isUploadingImage ? (
+                    <div className="flex flex-col items-center">
+                      <div className="w-8 h-8 border-3 border-[#4c1f08] border-t-transparent rounded-full animate-spin mb-2" />
+                      <p className="text-sm font-medium text-[#4c1f08]">กำลังอัปโหลดรูปภาพขึ้นระบบ...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-10 h-10 text-[#8d593a] mx-auto mb-2">
+                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                        <circle cx="9" cy="9" r="2" />
+                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                      </svg>
+                      <p className="text-sm font-semibold text-[#4c1f08]">
+                        ลากและวางรูปภาพที่นี่ หรือ <span className="underline">คลิกเพื่อเลือกไฟล์</span>
+                      </p>
+                      <p className="text-xs text-[#8d593a]/80 mt-1">รองรับไฟล์ PNG, JPG, WEBP (อัปโหลดเข้า MongoDB GridFS จริง)</p>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="mt-2">
+              <input
+                type="url"
+                name="imageUrl"
+                value={formData.imageUrl}
+                onChange={handleChange}
+                placeholder="หรือกรอก URL รูปภาพโดยตรง (https://...)"
+                className="w-full text-xs rounded border border-[#f1ead7] p-2 focus:border-[#4c1f08] focus:outline-none"
+              />
+            </div>
+          </div>
+
           <div>
             <label className={labelClass} htmlFor="nameTh">
               ชื่อวัตถุดิบ (ภาษาไทย) <span className="text-red-500">*</span>

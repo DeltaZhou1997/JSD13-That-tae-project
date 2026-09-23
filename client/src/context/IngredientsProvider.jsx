@@ -17,7 +17,7 @@ export default function IngredientsProvider({ children }) {
     let isMounted = true;
     async function loadIngredients() {
       try {
-        const res = await fetch(`${apiUrl}/api/v1/ingredients`);
+        const res = await fetch(`${apiUrl}/api/v2/ingredients`);
         if (res.ok) {
           const json = await res.json();
           const items = Array.isArray(json) ? json : json.data || [];
@@ -45,7 +45,7 @@ export default function IngredientsProvider({ children }) {
       const created = normalizeIngredient({ ...data, _id: createTempObjectId() });
       setIngredients((prev) => [...prev, created]);
       try {
-        const res = await fetch(`${apiUrl}/api/v1/ingredients`, {
+        const res = await fetch(`${apiUrl}/api/v2/ingredients`, {
           method: "POST",
           headers: getAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify(data),
@@ -75,7 +75,7 @@ export default function IngredientsProvider({ children }) {
         ),
       );
       try {
-        await fetch(`${apiUrl}/api/v1/ingredients/${id}`, {
+        await fetch(`${apiUrl}/api/v2/ingredients/${id}`, {
           method: "PUT",
           headers: getAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify(data),
@@ -96,7 +96,7 @@ export default function IngredientsProvider({ children }) {
         ),
       );
       try {
-        await fetch(`${apiUrl}/api/v1/ingredients/${id}/stock`, {
+        await fetch(`${apiUrl}/api/v2/ingredients/${id}/stock`, {
           method: "PATCH",
           headers: getAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ currentStockGrams: stock }),
@@ -112,7 +112,7 @@ export default function IngredientsProvider({ children }) {
     async (id) => {
       setIngredients((prev) => prev.filter((item) => item._id !== id));
       try {
-        await fetch(`${apiUrl}/api/v1/ingredients/${id}`, {
+        await fetch(`${apiUrl}/api/v2/ingredients/${id}`, {
           method: "DELETE",
           headers: getAuthHeaders(),
         });
