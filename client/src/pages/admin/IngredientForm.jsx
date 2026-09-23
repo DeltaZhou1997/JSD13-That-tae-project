@@ -7,9 +7,9 @@ import {
   ELEMENTS,
   MEDICINAL_TASTES,
   NUTRIENT_KEYS,
+  analyzeMedicinalTastes,
   calculateRecipeMetrics,
   getElementFromMedicinalTastes,
-  toElementPercentages,
 } from "../../utils/recipeCalculator.js";
 
 import { getApiUrl, getAuthHeaders } from "../../utils/authHeader.js";
@@ -36,6 +36,20 @@ const ELEMENT_COLORS = {
   ลม: "bg-emerald-600",
   ไฟ: "bg-red-600",
 };
+
+// รสยา 10 รส พร้อมสรรพคุณย่อ (แสดงเป็นตัวเลือกเดียว ไม่แบ่งหมวดธาตุ)
+const TASTE_OPTIONS = [
+  { taste: "รสหวาน", hint: "ซึมซาบ บำรุงกล้ามเนื้อ" },
+  { taste: "รสเปรี้ยว", hint: "กัดเสมหะ ฟอกโลหิต" },
+  { taste: "รสเค็ม", hint: "ซึมซาบผิวหนัง รักษาเนื้อ" },
+  { taste: "รสขม", hint: "แก้ทางโลหิตและดี" },
+  { taste: "รสเผ็ดร้อน", hint: "แก้ลม ขับลม บำรุงไฟธาตุ" },
+  { taste: "รสมัน", hint: "บำรุงเส้นเอ็น ไขข้อ" },
+  { taste: "รสฝาด", hint: "สมานแผล คุมธาตุ" },
+  { taste: "รสหอมเย็น", hint: "บำรุงหัวใจ ชื่นใจ" },
+  { taste: "รสจืด", hint: "ขับปัสสาวะ ดับพิษร้อน" },
+  { taste: "รสเมาเบื่อ", hint: "แก้พิษ แก้พยาธิ" },
+];
 
 const ELEMENT_THEMES = {
   ดิน: {
@@ -296,10 +310,21 @@ function IngredientForm() {
     return calculateRecipeMetrics([candidate], 1);
   }, [formData]);
 
-  const previewPercentages = useMemo(
-    () => toElementPercentages(preview.elementScores),
-    [preview],
+  // ผลวิเคราะห์รสยา → ธาตุ (ถ้าไม่เข้าสูตร เช่น ธาตุคะแนนเท่ากัน จะบันทึกไม่ได้)
+  const tasteAnalysis = useMemo(
+    () => analyzeMedicinalTastes(formData.medicinalTastes),
+    [formData.medicinalTastes],
   );
+  const canSave = tasteAnalysis.status === "ok";
+
+  // จำรสล่าสุดที่กด เพื่อเล่น animation feedback
+  const [lastTasteTap, setLastTasteTap] = useState(null);
+  const handleToggleTaste = (taste) => {
+    const added = !formData.medicinalTastes.includes(taste);
+    toggleInList("medicinalTastes", taste);
+    clearError("medicinalTastes");
+    setLastTasteTap((prev) => ({ taste, added, n: (prev?.n || 0) + 1 }));
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -312,8 +337,12 @@ function IngredientForm() {
       newErrors.category = "กรุณาเลือกหมวดหมู่วัตถุดิบ";
     }
 
-    if (formData.medicinalTastes.length === 0) {
+    if (tasteAnalysis.status === "empty") {
       newErrors.medicinalTastes = "กรุณาเลือกรสยาอย่างน้อย 1 รส";
+    } else if (tasteAnalysis.status === "conflict") {
+      newErrors.medicinalTastes = `รสที่เลือกให้ธาตุ${tasteAnalysis.tiedElements.join(" / ธาตุ")} เท่ากัน ระบุธาตุเด่นไม่ได้ กรุณาปรับรสยา`;
+    } else if (tasteAnalysis.status === "unknown") {
+      newErrors.medicinalTastes = "รสยาที่เลือกไม่ตรงกับสูตรคำนวณธาตุ";
     }
 
     const badNutrients = NUTRIENT_KEYS.filter((key) => {
@@ -610,209 +639,149 @@ function IngredientForm() {
 
 
           {/* ──────────────────────────────────────────────────────────
-              รสยา (Medicinal Tastes) - จัดกลุ่มตามธาตุพร้อมข้อมูลเภสัชกรรมไทย
+              รสยา (Medicinal Tastes) — เลือกเป็นรสอย่างเดียว
+              ธาตุเจ้าเรือนคำนวณอัตโนมัติจากรสที่เลือก (getElementFromMedicinalTastes)
               ────────────────────────────────────────────────────────── */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className={labelClass}>
-                รสยาตามหลักเภสัชกรรมไทย (เลือกอย่างน้อย 1 รส) <span className="text-red-500">*</span>
-              </span>
-              <span className="text-xs text-[#8d593a] font-medium">
-                เลือกแล้ว: <strong className="text-[#4c1f08]">{formData.medicinalTastes.length}</strong> รส
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {[
-                {
-                  element: "ดิน",
-                  icon: "ดิน",
-                  title: "ปถวีธาตุ (ธาตุดิน)",
-                  desc: "บำรุงโครงสร้าง เนื้อ เอ็น กระดูก สมานแผล",
-                  tastes: ["รสฝาด", "รสหวาน", "รสมัน", "รสเค็ม"],
-                  bgClass: "bg-amber-50/70 border-amber-200 hover:border-amber-400",
-                  headerColor: "text-amber-900",
-                  activeTasteBg: "bg-amber-700 text-white border-amber-700 shadow-xs",
-                  inactiveTasteBg: "bg-white text-amber-900 border-amber-200 hover:bg-amber-100/60",
-                },
-                {
-                  element: "น้ำ",
-                  icon: "น้ำ",
-                  title: "อาโปธาตุ (ธาตุน้ำ)",
-                  desc: "ของเหลว เลือด น้ำดี ขับเสมหะ ฟอกโลหิต",
-                  tastes: ["รสเปรี้ยว", "รสขม"],
-                  bgClass: "bg-sky-50/70 border-sky-200 hover:border-sky-400",
-                  headerColor: "text-sky-900",
-                  activeTasteBg: "bg-sky-700 text-white border-sky-700 shadow-xs",
-                  inactiveTasteBg: "bg-white text-sky-900 border-sky-200 hover:bg-sky-100/60",
-                },
-                {
-                  element: "ลม",
-                  icon: "ลม",
-                  title: "วาโยธาตุ (ธาตุลม)",
-                  desc: "กระจายลม กระตุ้นไหลเวียน บำรุงหัวใจ",
-                  tastes: ["รสเผ็ดร้อน", "รสหอมเย็น"],
-                  bgClass: "bg-emerald-50/70 border-emerald-200 hover:border-emerald-400",
-                  headerColor: "text-emerald-900",
-                  activeTasteBg: "bg-emerald-700 text-white border-emerald-700 shadow-xs",
-                  inactiveTasteBg: "bg-white text-emerald-900 border-emerald-200 hover:bg-emerald-100/60",
-                },
-                {
-                  element: "ไฟ",
-                  icon: "ไฟ",
-                  title: "เตโชธาตุ (ธาตุไฟ)",
-                  desc: "ลดความร้อน ดับพิษไข้ ถอนพิษร้อน",
-                  tastes: ["รสจืด"],
-                  bgClass: "bg-rose-50/70 border-rose-200 hover:border-rose-400",
-                  headerColor: "text-rose-900",
-                  activeTasteBg: "bg-rose-700 text-white border-rose-700 shadow-xs",
-                  inactiveTasteBg: "bg-white text-rose-900 border-rose-200 hover:bg-rose-100/60",
-                },
-              ].map((grp) => {
-                const isDominant = preview.dominantElement === grp.element;
-                return (
-                  <div
-                    key={grp.element}
-                    className={`rounded-2xl border p-3.5 transition-all flex flex-col justify-between ${grp.bgClass} ${
-                      isDominant ? "ring-2 ring-[#4c1f08]/30 shadow-xs" : ""
-                    }`}
-                  >
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className="grid h-7 w-7 place-items-center rounded-lg bg-white/80 text-stone-700 shadow-2xs">
-                            <ElementIcon element={grp.icon} className="h-4 w-4" />
-                          </span>
-                          <span className={`text-xs font-bold ${grp.headerColor}`}>
-                            {grp.title}
-                          </span>
-                        </div>
-                        {isDominant && (
-                          <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-[#4c1f08] text-white">
-                            ธาตุเด่น
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] text-[#7a5c4d] mb-3 leading-snug">
-                        {grp.desc}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1.5">
-                      {grp.tastes.map((taste) => {
-                        const isChecked = formData.medicinalTastes.includes(taste);
-                        return (
-                          <button
-                            key={taste}
-                            type="button"
-                            onClick={() => toggleInList("medicinalTastes", taste)}
-                            className={`px-2.5 py-1 text-xs font-bold rounded-lg border transition-all cursor-pointer ${
-                              isChecked ? grp.activeTasteBg : grp.inactiveTasteBg
-                            }`}
-                          >
-                            {isChecked ? "✓ " : ""}{taste}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {errors.medicinalTastes && (
-              <p className="mt-1 text-sm text-red-500 font-medium">{errors.medicinalTastes}</p>
-            )}
-          </div>
-
-          {/* ──────────────────────────────────────────────────────────
-              การเลือก / ประเมินธาตุเจ้าเรือน (SVG Card Selector)
-              ────────────────────────────────────────────────────────── */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <span className={labelClass}>
-                ธาตุเจ้าเรือนของวัตถุดิบ (คำนวณจากรสยาอัตโนมัติ หรือคลิกเลือกธาตุ)
-              </span>
-              <span className="text-xs text-[#8d593a]">
-                ธาตุที่จะถูกบันทึกลงระบบ: <strong className="text-[#4c1f08]">ธาตุ{preview.dominantElement}</strong>
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <span className={labelClass}>
+                  รสยาของวัตถุดิบ <span className="text-red-500">*</span>
+                </span>
+                <p className="text-xs text-[#8d593a]">
+                  แตะเลือกรสที่วัตถุดิบนี้มี (เลือกได้หลายรส) ระบบจะคำนวณธาตุให้อัตโนมัติ
+                </p>
+              </div>
+              <span
+                key={formData.medicinalTastes.length}
+                className="element-result-in rounded-full bg-[#f5ece2] px-2.5 py-1 text-xs font-bold text-[#4c1f08]"
+              >
+                เลือกแล้ว {formData.medicinalTastes.length} รส
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { key: "ดิน", label: "ธาตุดิน", sub: "ปถวีธาตุ", color: "from-amber-600 to-amber-800", border: "border-amber-400 bg-amber-50" },
-                { key: "น้ำ", label: "ธาตุน้ำ", sub: "อาโปธาตุ", color: "from-sky-500 to-sky-700", border: "border-sky-400 bg-sky-50" },
-                { key: "ลม", label: "ธาตุลม", sub: "วาโยธาตุ", color: "from-emerald-500 to-emerald-700", border: "border-emerald-400 bg-emerald-50" },
-                { key: "ไฟ", label: "ธาตุไฟ", sub: "เตโชธาตุ", color: "from-rose-500 to-rose-700", border: "border-rose-400 bg-rose-50" },
-              ].map(({ key, label, sub, border }) => {
-                const isSelected = preview.dominantElement === key;
-                const percent = previewPercentages[key] || 0;
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+              {TASTE_OPTIONS.map(({ taste, hint }) => {
+                const isChecked = formData.medicinalTastes.includes(taste);
+                const isLastTap = lastTasteTap?.taste === taste;
                 return (
                   <button
-                    key={key}
+                    // เปลี่ยน key ทุกครั้งที่กด เพื่อให้ animation เล่นซ้ำได้
+                    key={isLastTap ? `${taste}-${lastTasteTap.n}` : taste}
                     type="button"
-                    onClick={() => {
-                      // เมื่อคลิกธาตุ จะช่วยตั้งค่ารสยาเริ่มต้นของธาตุนั้นให้โดยอัตโนมัติหากยังไม่มี
-                      const defaultTastesByElem = {
-                        ดิน: "รสหวาน",
-                        น้ำ: "รสเปรี้ยว",
-                        ลม: "รสเผ็ดร้อน",
-                        ไฟ: "รสจืด",
-                      };
-                      if (!formData.medicinalTastes.some(t => {
-                        const elem = getElementFromMedicinalTastes([t]);
-                        return elem === key;
-                      })) {
-                        toggleInList("medicinalTastes", defaultTastesByElem[key]);
-                      }
-                    }}
-                    className={`group relative flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all cursor-pointer text-center ${
-                      isSelected
-                        ? `${border} shadow-md scale-[1.02] ring-2 ring-[#4c1f08]/20`
-                        : "border-[#f1ead7] bg-white hover:border-[#dfd1c1] hover:bg-[#fffbf7]"
+                    aria-pressed={isChecked}
+                    onClick={() => handleToggleTaste(taste)}
+                    className={`relative flex min-h-[64px] cursor-pointer flex-col items-start justify-center rounded-2xl border-2 px-3.5 py-2.5 text-left transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4c1f08]/40 ${
+                      isLastTap ? "taste-pop" : ""
+                    } ${
+                      isChecked
+                        ? "border-[#4c1f08] bg-[#4c1f08] text-white shadow-md"
+                        : "border-[#f1ead7] bg-white text-[#4c1f08] hover:border-[#d9c4ae] hover:bg-[#fffaf5] active:scale-[.97]"
                     }`}
                   >
-                    {/* SVG Icon พร้อมวงแหวนสีประจำธาตุ */}
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-2 transition-transform group-hover:scale-110 ${
-                      isSelected ? "bg-[#4c1f08] text-white shadow-xs" : "bg-[#f5ece2] text-[#8d593a]"
-                    }`}>
-                      <ElementIcon element={key} className="w-6 h-6" />
-                    </div>
-
-                    <div className="font-extrabold text-sm text-[#4c1f08]">{label}</div>
-                    <div className="text-[11px] text-[#8d593a]">{sub}</div>
-
-                    {/* Progress Bar คะแนนธาตุ */}
-                    <div className="w-full mt-2.5">
-                      <div className="flex justify-between text-[10px] text-stone-500 mb-0.5">
-                        <span>สัดส่วน</span>
-                        <span className="font-bold text-[#4c1f08]">{percent}%</span>
-                      </div>
-                      <div className="w-full h-1.5 rounded-full bg-[#f1ead7] overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${ELEMENT_COLORS[key]}`}
-                          style={{ width: `${percent}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Badge แสดงสถานะธาตุเด่น */}
-                    {isSelected && (
-                      <span className="absolute -top-2.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-[#4c1f08] text-white shadow-xs">
-                        ✓ ธาตุประจำวัตถุดิบ
+                    {/* วงแหวนกระเพื่อมตอนกด */}
+                    {isLastTap && (
+                      <span className="taste-ring pointer-events-none absolute inset-0 rounded-2xl border-2 border-[#c49758]" />
+                    )}
+                    {/* ป้ายลอยบอกผลการกด */}
+                    {isLastTap && (
+                      <span
+                        className={`taste-float pointer-events-none absolute left-1/2 top-0 whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm ${
+                          lastTasteTap.added ? "bg-[#c49758] text-white" : "bg-stone-200 text-stone-600"
+                        }`}
+                      >
+                        {lastTasteTap.added ? `+ ${taste}` : `− ${taste}`}
                       </span>
                     )}
+
+                    <span className="flex w-full items-center justify-between gap-2">
+                      <span className="text-sm font-extrabold">{taste}</span>
+                      <span
+                        className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border text-[11px] font-black ${
+                          isChecked ? "taste-check-in border-white bg-white text-[#4c1f08]" : "border-[#e2d5c6] text-transparent"
+                        }`}
+                        aria-hidden="true"
+                      >
+                        ✓
+                      </span>
+                    </span>
+                    <span className={`mt-0.5 text-[11px] leading-snug ${isChecked ? "text-white/75" : "text-[#8d593a]"}`}>
+                      {hint}
+                    </span>
                   </button>
                 );
               })}
             </div>
 
-            <p className="text-xs text-[#8d593a] bg-[#fffaf5] border border-[#f1ead7] rounded-xl p-2.5 flex items-center gap-2">
-              <span className="text-base">💡</span>
-              <span>
-                <strong>หลักเภสัชกรรมไทย:</strong> วัตถุดิบแต่ละชนิดจะมี <strong>ธาตุเด่นเพียง 1 ธาตุ</strong> โดยระบบคำนวณจากรสยาประธาน เมื่อกด <strong>บันทึกวัตถุดิบ</strong> ระบบจะบันทึกธาตุ <strong>{preview.dominantElement}</strong> ลงฐานข้อมูลจริงให้อัตโนมัติ
-              </span>
-            </p>
+            {errors.medicinalTastes && tasteAnalysis.status === "empty" && (
+              <p className="text-sm font-medium text-red-500">{errors.medicinalTastes}</p>
+            )}
+
+            {/* ผลคำนวณธาตุ (อ่านอย่างเดียว) — นับจำนวนรสของแต่ละธาตุ ธาตุที่มากที่สุดเพียงธาตุเดียวคือธาตุเด่น */}
+            <div
+              className={`rounded-2xl border p-3 transition-colors duration-300 ${
+                tasteAnalysis.status === "conflict" || tasteAnalysis.status === "unknown"
+                  ? "border-amber-300 bg-amber-50"
+                  : "border-[#f1ead7] bg-[#fffaf5]"
+              }`}
+            >
+              {tasteAnalysis.status === "empty" && (
+                <p className="text-xs text-[#8d593a]">
+                  ยังไม่ได้เลือกรส — เลือกอย่างน้อย 1 รสเพื่อคำนวณธาตุของวัตถุดิบ
+                </p>
+              )}
+
+              {(tasteAnalysis.status === "conflict" || tasteAnalysis.status === "unknown") && (
+                <div key={`warn-${tasteAnalysis.tiedElements.join()}`} className="element-result-in flex items-start gap-2.5" role="alert">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-500 text-lg font-black text-white shadow-xs">!</span>
+                  <div className="text-xs text-amber-900">
+                    <p className="text-sm font-extrabold">ยังคำนวณธาตุไม่ได้ — บันทึกวัตถุดิบไม่ได้</p>
+                    {tasteAnalysis.status === "conflict" ? (
+                      <p className="mt-0.5 leading-relaxed">
+                        รสที่เลือกให้ <strong>ธาตุ{tasteAnalysis.tiedElements.join(" และ ธาตุ")}</strong> เท่ากัน
+                        วัตถุดิบ 1 ชนิดต้องมีธาตุเด่นเพียง 1 ธาตุ — เพิ่มรสของธาตุที่เด่นกว่า หรือเอารสที่ไม่ใช่รสหลักออก
+                      </p>
+                    ) : (
+                      <p className="mt-0.5">รสยาที่เลือกไม่ตรงกับสูตรคำนวณธาตุ</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {tasteAnalysis.status === "ok" && (
+                <div key={`ok-${tasteAnalysis.element}`} className="element-result-in flex items-center gap-2.5">
+                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl text-white shadow-xs ${ELEMENT_COLORS[tasteAnalysis.element]}`}>
+                    <ElementIcon element={tasteAnalysis.element} className="h-5 w-5" />
+                  </span>
+                  <div>
+                    <p className="text-[11px] text-[#8d593a]">คำนวณได้เป็น</p>
+                    <p className="text-sm font-extrabold text-[#4c1f08]">ธาตุ{tasteAnalysis.element}</p>
+                  </div>
+                </div>
+              )}
+
+              {tasteAnalysis.status !== "empty" && (
+                <div className="mt-3 grid grid-cols-4 gap-2 border-t border-black/5 pt-2.5">
+                  {ELEMENTS.map((key) => {
+                    const count = tasteAnalysis.counts[key] || 0;
+                    const isTop = tasteAnalysis.element === key || tasteAnalysis.tiedElements.includes(key);
+                    return (
+                      <div
+                        key={key}
+                        className={`rounded-lg px-2 py-1.5 text-center transition-colors ${
+                          isTop ? "bg-white shadow-2xs ring-1 ring-[#4c1f08]/15" : ""
+                        }`}
+                      >
+                        <p className={`text-[11px] ${isTop ? "font-bold text-[#4c1f08]" : "text-stone-500"}`}>ธาตุ{key}</p>
+                        <p className={`text-sm font-extrabold ${count > 0 ? "text-[#4c1f08]" : "text-stone-300"}`}>
+                          {count} <span className="text-[10px] font-medium">รส</span>
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
 
@@ -968,7 +937,13 @@ function IngredientForm() {
           <div className="flex gap-4 pt-4">
             <button
               type="submit"
-              className="rounded-lg bg-[#4c1f08] px-6 py-2 font-medium text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215]"
+              disabled={!canSave}
+              title={canSave ? undefined : "ปรับรสยาให้คำนวณธาตุได้ก่อน จึงจะบันทึกได้"}
+              className={`rounded-lg px-6 py-2 font-medium shadow-sm transition duration-200 ${
+                canSave
+                  ? "bg-[#4c1f08] text-white hover:-translate-y-0.5 hover:bg-[#6b3215]"
+                  : "cursor-not-allowed bg-stone-300 text-stone-500 shadow-none"
+              }`}
             >
               {isEditMode ? "บันทึกการแก้ไข" : "เพิ่มเข้าคลัง"}
             </button>
@@ -999,7 +974,23 @@ function IngredientForm() {
             การ์ดแสดงผลธาตุเดี่ยว (Single Element Card) พร้อม Transition
             ────────────────────────────────────────────────────────── */}
         {(() => {
-          const domElem = preview.dominantElement || "ดิน";
+          // ยังไม่เลือกรส / รสไม่เข้าสูตร → ไม่แสดงธาตุ (เดิมขึ้นธาตุดินเสมอ ทำให้สับสน)
+          if (tasteAnalysis.status !== "ok") {
+            const isWarn = tasteAnalysis.status !== "empty";
+            return (
+              <div
+                className={`mb-4 rounded-2xl border-2 border-dashed p-4 text-center text-xs ${
+                  isWarn ? "border-amber-300 bg-amber-50 text-amber-900" : "border-[#e8ddd0] bg-[#fffaf5] text-[#8d593a]"
+                }`}
+              >
+                <p className="text-sm font-extrabold">{isWarn ? "ระบุธาตุเด่นไม่ได้" : "ยังไม่ทราบธาตุ"}</p>
+                <p className="mt-1">
+                  {isWarn ? "ปรับรสยาให้มีธาตุเด่นเพียง 1 ธาตุ" : "เลือกรสยาเพื่อคำนวณธาตุของวัตถุดิบ"}
+                </p>
+              </div>
+            );
+          }
+          const domElem = tasteAnalysis.element;
           const theme = ELEMENT_THEMES[domElem] || ELEMENT_THEMES.ดิน;
           const tastesText = formData.medicinalTastes.join(" · ") || "ยังไม่ได้เลือกรสยา";
           const hasTastes = formData.medicinalTastes.length > 0;

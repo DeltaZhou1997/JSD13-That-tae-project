@@ -3,6 +3,7 @@ import { useLocation, Link, useOutletContext } from "react-router-dom";
 import OrderEarnedPoints from "../components/order-success/OrderEarnedPoints";
 import OrderDetailsCard from "../components/order-success/OrderDetailsCard";
 import { formatDate } from "../utils/dateFormatter.js";
+import { getAuthHeaders } from "../utils/authHeader.js";
 
 const DEFAULT_ORDER_DATA = {
   orderId: "ORD-882940",
@@ -67,7 +68,7 @@ export default function OrderSuccess() {
           const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
           await fetch(`${apiUrl}/api/v2/checkout/confirm-stripe`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: getAuthHeaders({ "Content-Type": "application/json" }),
             body: JSON.stringify({ orderId: urlOrderId, sessionId }),
           });
           sessionStorage.removeItem("last_v2_order");

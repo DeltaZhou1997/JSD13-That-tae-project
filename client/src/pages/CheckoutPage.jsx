@@ -11,7 +11,7 @@ import {
 
 import { users } from "../mock-data/users";
 import { useAuth } from "../context/AuthContext.js";
-import { PAYMENT_METHODS } from "../constants/checkout";
+import { PAYMENT_METHODS, SHIPPING_FEE } from "../constants/checkout";
 import { useProducts } from "../context/ProductsContext.js";
 import { getAuthHeaders, getApiUrl } from "../utils/authHeader.js";
 import {
@@ -263,7 +263,7 @@ export default function CheckoutPage() {
       shippingAddress: { ...formData },
       paymentMethod,
       itemsSubtotal,
-      shippingFee: 60,
+      shippingFee: SHIPPING_FEE,
       grandTotal,
       earnedPoints,
       createdAt: new Date().toISOString(),

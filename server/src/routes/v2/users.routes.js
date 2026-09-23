@@ -22,11 +22,37 @@ function generateToken(user) {
 
 // ข้อมูลผู้ใช้ที่ส่งกลับให้ Frontend (ใช้รูปแบบเดียวกันทั้ง login / me / update)
 // เดิม login ส่งไปแค่บางฟิลด์ (ไม่มี avatar, bodyElement) ทำให้ล็อกอินใหม่แล้วรูป/ข้อมูลหาย
+// tierStatus / conditions / biaPoints คือชื่อฟิลด์ที่หน้า Admin ใช้ (map มาจาก membership.tier / restrictions / points)
 function toPublicUser(user) {
     if (!user) return null;
     const obj = typeof user.toObject === "function" ? user.toObject() : { ...user };
     delete obj.password;
-    return { ...obj, id: obj._id };
+    const tier = obj.membership?.tier || "BRONZE";
+    return {
+        ...obj,
+        id: obj._id,
+        tierStatus: tier.charAt(0).toUpperCase() + tier.slice(1).toLowerCase(),
+        conditions: obj.restrictions || [],
+        biaPoints: obj.points || 0,
+    };
+}
+
+// แปลงฟิลด์จากหน้า Admin (tierStatus, conditions) กลับเป็นฟิลด์จริงใน User model
+// เดิมส่งไปตรง ๆ แล้ว Mongoose ทิ้งทิ้ง (ไม่มีใน schema) ทำให้แก้ระดับสมาชิก/โรคประจำตัวไม่ติด
+function mapAdminFields(updateData) {
+    if (updateData.tierStatus !== undefined) {
+        updateData["membership.tier"] = String(updateData.tierStatus).toUpperCase();
+    }
+    if (updateData.conditions !== undefined) {
+        updateData.restrictions = Array.isArray(updateData.conditions) ? updateData.conditions : [];
+    }
+    if (updateData.biaPoints !== undefined && updateData.points === undefined) {
+        updateData.points = Number(updateData.biaPoints) || 0;
+    }
+    delete updateData.tierStatus;
+    delete updateData.conditions;
+    delete updateData.biaPoints;
+    return updateData;
 }
 
 const ALLOWED_ELEMENTS = ["ดิน", "earth", "น้ำ", "water", "ลม", "wind", "air", "ไฟ", "fire", ""];
@@ -53,6 +79,20 @@ export function verifyToken(req, res, next) {
     }
 }
 
+// อ่าน token แบบไม่บังคับ (ไม่มี/ไม่ถูกต้อง → null)
+function getOptionalUser(req) {
+    const authHeader = req.headers.authorization;
+    const token =
+        (authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null) ||
+        req.cookies?.token;
+    if (!token) return null;
+    try {
+        return jwt.verify(token, JWT_SECRET);
+    } catch {
+        return null;
+    }
+}
+
 // Middleware 2: ตรวจสอบว่าเป็น Admin หรือไม่
 export function requireAdmin(req, res, next) {
     if (req.user?.role !== "admin") {
@@ -69,7 +109,7 @@ export function requireAdmin(req, res, next) {
 router.get("/", verifyToken, requireAdmin, async (req, res, next) => {
     try {
         const users = await User.find().select("-password").lean();
-        const mapped = users.map(u => ({ ...u, id: u._id, tierStatus: u.membership?.tier ? (u.membership.tier.charAt(0) + u.membership.tier.slice(1).toLowerCase()) : (u.tierStatus || "Bronze"), conditions: u.restrictions || u.conditions || [], biaPoints: u.points || 0 })); return res.status(200).json(mapped);
+        return res.status(200).json(users.map(toPublicUser));
     } catch (err) {
         next(err);
     }
@@ -106,17 +146,10 @@ router.get("/:id", verifyToken, async (req, res, next) => {
             user = await User.findOne({ $or: [{ email: targetId }, { phone: targetId }] }).select("-password").lean();
         }
         if (!user) {
-            // Fallback เพื่อให้หน้าจอไม่พังกรณีทดสอบด้วย mock ID เช่น USR-001
-            return res.status(200).json({
-                id: targetId,
-                _id: targetId,
-                firstName: "ผู้ใช้งาน",
-                lastName: "ทั่วไป",
-                role: "customer",
-                element: "ดิน",
-            });
+            // เดิมคืนข้อมูลปลอม (ธาตุดิน) ทำให้ Frontend แสดงข้อมูลไม่ตรงกับ DB
+            return res.status(404).json({ message: "ไม่พบข้อมูลผู้ใช้ในระบบ" });
         }
-        return res.status(200).json({ ...user, id: user._id });
+        return res.status(200).json(toPublicUser(user));
     } catch (err) {
         next(err);
     }
@@ -184,7 +217,8 @@ const handleRegister = async (req, res, next) => {
             addresses: (deliveryAddress.street && deliveryAddress.subdistrict && deliveryAddress.district && deliveryAddress.province && deliveryAddress.postalCode)
                 ? [{ label: "บ้าน", address: deliveryAddress.street, subdistrict: deliveryAddress.subdistrict, district: deliveryAddress.district, province: deliveryAddress.province, zipcode: deliveryAddress.postalCode, phone: cleanPhone, isDefault: true }]
                 : [],
-            role: req.body.role === "admin" ? "admin" : "customer",
+            // สร้างบัญชี admin ได้เฉพาะเมื่อผู้เรียกเป็น admin (กันคนทั่วไปส่ง role: "admin" มาสมัครเอง)
+            role: req.body.role === "admin" && getOptionalUser(req)?.role === "admin" ? "admin" : "customer",
         });
 
         await newUser.save();
@@ -319,10 +353,15 @@ router.put("/:id", verifyToken, async (req, res, next) => {
 
         // ป้องกันไม่ให้ Customer ทั่วไปแอบแก้ role ตัวเองเป็น admin
         const updateData = { ...req.body };
+        delete updateData._id;
         if (req.user?.role !== "admin") {
             delete updateData.role;
             delete updateData.points;
+            delete updateData.biaPoints;
+            delete updateData.membership;
+            delete updateData.tierStatus;
         }
+        mapAdminFields(updateData);
         delete updateData.password; // ถ้าจะเปลี่ยนรหัสผ่านควรแยก endpoint
 
         // ธาตุเจ้าเรือน: ตรวจค่าและเก็บเป็นภาษาไทยเสมอ ให้ element กับ bodyElement ตรงกัน

@@ -193,18 +193,18 @@ export default function AdminOrderList() {
         body: JSON.stringify({ status: newStatus, orderStatus: newStatus }),
       });
 
-      // ปรับปรุง State หน้าจอทันที
-      setOrders((prev) =>
-        prev.map((o) =>
-          o.orderId === orderId || o._id === orderId ? { ...o, status: newStatus } : o
-        )
-      );
-
-      if (selectedOrder && (selectedOrder.orderId === orderId || selectedOrder._id === orderId)) {
-        setSelectedOrder((prev) => ({ ...prev, status: newStatus }));
-      }
-
       if (res.ok) {
+        // อัปเดตหน้าจอตามข้อมูลที่ DB บันทึกจริงเท่านั้น
+        const data = await res.json().catch(() => ({}));
+        const saved = data.order ? { ...data.order, status: data.order.status || newStatus } : { status: newStatus };
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.orderId === orderId || o._id === orderId ? { ...o, ...saved } : o
+          )
+        );
+        if (selectedOrder && (selectedOrder.orderId === orderId || selectedOrder._id === orderId)) {
+          setSelectedOrder((prev) => ({ ...prev, ...saved }));
+        }
         toast?.success?.("อัปเดตสถานะคำสั่งซื้อในฐานข้อมูลเรียบร้อยแล้ว");
       } else {
         const errJson = await res.json().catch(() => ({}));

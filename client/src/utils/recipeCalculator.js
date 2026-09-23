@@ -21,7 +21,65 @@ export const MEDICINAL_TASTES = [
   "รสเผ็ดร้อน",
   "รสหอมเย็น",
   "รสจืด",
+  "รสเมาเบื่อ",
 ];
+
+// รสยา → ธาตุที่รสนั้นบำรุง (หลักเภสัชกรรมไทย)
+// เรียงคำยาวก่อน เพื่อให้ "หอมเย็น" ไม่ถูกจับเป็น "เย็น" (ธาตุไฟ)
+const TASTE_KEYWORDS = [
+  ["เผ็ดร้อน", "ลม"],
+  ["หอมเย็น", "ลม"],
+  ["เมาเบื่อ", "น้ำ"],
+  ["เปรี้ยว", "น้ำ"],
+  ["สุขุม", "ลม"],
+  ["หวาน", "ดิน"],
+  ["ฝาด", "ดิน"],
+  ["เค็ม", "ดิน"],
+  ["เผ็ด", "ลม"],
+  ["มัน", "ดิน"],
+  ["ขม", "น้ำ"],
+  ["จืด", "ไฟ"],
+  ["เย็น", "ไฟ"],
+];
+
+export function getTasteElement(taste) {
+  const text = String(taste || "").replace(/^รส/, "").trim();
+  return TASTE_KEYWORDS.find(([keyword]) => text.includes(keyword))?.[1] || null;
+}
+
+function splitTastes(tastes) {
+  return (Array.isArray(tastes) ? tastes : [tastes])
+    .flatMap((t) => String(t || "").split(/[/,·|\s]+/))
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
+/**
+ * วิเคราะห์รสยาที่เลือก → ธาตุเด่น
+ * สูตร: นับจำนวนรสของแต่ละธาตุ ธาตุที่มีรสมากที่สุด "เพียงธาตุเดียว" คือธาตุของวัตถุดิบ
+ * status:
+ *  - "empty"    ยังไม่เลือกรส
+ *  - "ok"       ได้ธาตุเด่นชัดเจน
+ *  - "conflict" มีหลายธาตุคะแนนเท่ากัน (ไม่เข้าเงื่อนไข ห้ามบันทึก)
+ *  - "unknown"  รสที่ระบุไม่ตรงกับรสยาใดเลย
+ */
+export function analyzeMedicinalTastes(tastes = []) {
+  const counts = ELEMENTS.reduce((acc, el) => ({ ...acc, [el]: 0 }), {});
+  const tokens = splitTastes(tastes);
+  if (tokens.length === 0) return { status: "empty", element: null, counts, tiedElements: [] };
+
+  tokens.forEach((token) => {
+    const element = getTasteElement(token);
+    if (element) counts[element] += 1;
+  });
+
+  const max = Math.max(...Object.values(counts));
+  if (max === 0) return { status: "unknown", element: null, counts, tiedElements: [] };
+
+  const top = ELEMENTS.filter((el) => counts[el] === max);
+  if (top.length > 1) return { status: "conflict", element: null, counts, tiedElements: top };
+  return { status: "ok", element: top[0], counts, tiedElements: [] };
+}
 
 export const TASTE_ELEMENT_WEIGHTS = {
   ฝาด: { ดิน: 1.5 },
@@ -33,19 +91,16 @@ export const TASTE_ELEMENT_WEIGHTS = {
   หอมเย็น: { ลม: 1.2, ไฟ: 0.6 },
   ขม: { ไฟ: 1.5, น้ำ: 0.5 },
   จืด: { ไฟ: 1.5, น้ำ: 0.5 },
+  เมาเบื่อ: { น้ำ: 1.5 },
 };
 
-// ธาตุหลักของวัตถุดิบกำหนดจากรสยาประธานตามหลักเภสัชกรรมไทย
+// ธาตุหลักของวัตถุดิบกำหนดจากรสยาตามหลักเภสัชกรรมไทย (ใช้สูตรเดียวกับ analyzeMedicinalTastes)
+// ข้อมูลเก่าที่คะแนนเท่ากัน ใช้ลำดับ ดิน → น้ำ → ลม → ไฟ ตามเดิม เพื่อไม่ให้การคำนวณสูตรอาหารพัง
 export function getElementFromMedicinalTastes(tastes = []) {
-  const text = (Array.isArray(tastes) ? tastes : [tastes]).join("/");
-  const groups = [
-    ["ดิน", ["ฝาด", "หวาน", "มัน", "เค็ม"]],
-    ["น้ำ", ["เปรี้ยว", "ขม", "เมาเบื่อ"]],
-    ["ลม", ["เผ็ดร้อน", "สุขุม", "หอมเย็น"]],
-    ["ไฟ", ["จืด", "เย็น"]],
-  ];
-  const match = groups.find(([, tastesInGroup]) => tastesInGroup.some((taste) => text.includes(taste)));
-  return match?.[0] || "ดิน";
+  const result = analyzeMedicinalTastes(tastes);
+  if (result.status === "ok") return result.element;
+  if (result.status === "conflict") return result.tiedElements[0];
+  return "ดิน";
 }
 
 const DIRECT_ELEMENT_WEIGHT = 3;

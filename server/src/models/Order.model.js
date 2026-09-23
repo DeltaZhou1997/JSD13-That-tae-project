@@ -97,7 +97,7 @@ const orderSchema = new mongoose.Schema(
     },
     shippingFee: {
       type: Number,
-      default: 60,
+      default: 120,
     },
     grandTotal: {
       type: Number,
@@ -107,6 +107,17 @@ const orderSchema = new mongoose.Schema(
     earnedPoints: {
       type: Number,
       default: 0,
+    },
+    // กันให้แต้มซ้ำ (เช่น เรียก confirm-stripe หลายครั้ง)
+    // ไม่มี default: ออเดอร์เก่าที่ไม่มีฟิลด์นี้ได้แต้มไปแล้วตอนสร้าง จึงห้ามให้ซ้ำ
+    // ออเดอร์ใหม่ตั้งเป็น false ตอนสร้างใน checkout.routes.js
+    pointsAwarded: {
+      type: Boolean,
+    },
+    // true = คืนสต็อกแล้ว (ตอนยกเลิกคำสั่งซื้อ)
+    stockRestored: {
+      type: Boolean,
+      default: false,
     },
     stripeSessionId: {
       type: String,

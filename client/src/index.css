@@ -190,6 +190,43 @@ body {
   }
 }
 
+/* ── ตัวเลือกรสยา (IngredientForm) ── */
+@keyframes tastePop {
+  0% { transform: scale(1); }
+  35% { transform: scale(.93); }
+  70% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+@keyframes tasteRing {
+  from { opacity: .55; transform: scale(1); }
+  to { opacity: 0; transform: scale(1.18); }
+}
+@keyframes tasteFloat {
+  0% { opacity: 0; transform: translate(-50%, 4px); }
+  20% { opacity: 1; transform: translate(-50%, -6px); }
+  100% { opacity: 0; transform: translate(-50%, -22px); }
+}
+@keyframes tasteCheckIn {
+  from { opacity: 0; transform: scale(.3) rotate(-30deg); }
+  to { opacity: 1; transform: scale(1) rotate(0); }
+}
+@keyframes elementResultIn {
+  from { opacity: 0; transform: translateY(6px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.taste-pop { animation: tastePop .38s cubic-bezier(.34,1.56,.64,1); }
+.taste-ring { animation: tasteRing .5s ease-out forwards; }
+.taste-float { animation: tasteFloat .9s ease-out forwards; }
+.taste-check-in { animation: tasteCheckIn .25s cubic-bezier(.34,1.56,.64,1); }
+.element-result-in { animation: elementResultIn .35s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .taste-pop, .taste-ring, .taste-float, .taste-check-in, .element-result-in {
+    animation: none;
+  }
+  .taste-ring, .taste-float { display: none; }
+}
+
 @media (max-width: 900px) {
   .home-container {
     width: min(100% - 40px, 1200px);
