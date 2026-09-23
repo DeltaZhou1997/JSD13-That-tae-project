@@ -282,13 +282,31 @@ function IngredientForm() {
       categoryTh: CATEGORY_MAP[formData.category],
       medicinalTaste: formData.medicinalTastes.join("/"),
       elements: formData.elements,
-      basisWeightG: Number(formData.basisWeightG),
-      nutrientsPer100g: NUTRIENT_KEYS.reduce(
-        (acc, key) => ({ ...acc, [key]: Number(formData.nutrientsPer100g[key]) }),
-        {},
-      ),
-      currentStockGrams: Number(formData.currentStockGrams),
-      lowStockThresholdGrams: Number(formData.lowStockThresholdGrams),
+      basisWeightG: Number(formData.basisWeightG) || 100,
+      nutrientsPer100g: {
+        calories: Number(formData.nutrientsPer100g.calories) || 0,
+        carb: Number(formData.nutrientsPer100g.carbs) || 0,
+        carbs: Number(formData.nutrientsPer100g.carbs) || 0,
+        sugar: Number(formData.nutrientsPer100g.sugar) || 0,
+        fiber: Number(formData.nutrientsPer100g.fiber) || 0,
+        protein: Number(formData.nutrientsPer100g.protein) || 0,
+        fat: Number(formData.nutrientsPer100g.fat) || 0,
+        sodium: Number(formData.nutrientsPer100g.sodium) || 0,
+      },
+      nutritionPer100G: {
+        calories: Number(formData.nutrientsPer100g.calories) || 0,
+        carb: Number(formData.nutrientsPer100g.carbs) || 0,
+        carbs: Number(formData.nutrientsPer100g.carbs) || 0,
+        sugar: Number(formData.nutrientsPer100g.sugar) || 0,
+        fiber: Number(formData.nutrientsPer100g.fiber) || 0,
+        protein: Number(formData.nutrientsPer100g.protein) || 0,
+        fat: Number(formData.nutrientsPer100g.fat) || 0,
+        sodium: Number(formData.nutrientsPer100g.sodium) || 0,
+      },
+      stockQuantity: Number(formData.currentStockGrams) || 0,
+      currentStockGrams: Number(formData.currentStockGrams) || 0,
+      unit: "g",
+      lowStockThresholdGrams: Number(formData.lowStockThresholdGrams) || 0,
       expiryDate: formData.expiryDate || undefined,
       imageUrl: formData.imageUrl || "",
       imageId: formData.imageId || null,
@@ -332,7 +350,7 @@ function IngredientForm() {
           {/* ส่วนอัปโหลดรูปภาพวัตถุดิบ (Drag & Drop + File Selector) */}
           <div>
             <label className={labelClass}>
-              รูปภาพวัตถุดิบ (ลากรูปมาวาง หรือคลิกเลือกไฟล์)
+              รูปภาพวัตถุดิบ <span className="text-xs font-normal text-stone-500">(ไม่บังคับ - จะมีหรือไม่มีรูปภาพก็ได้)</span>
             </label>
             <div
               onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}

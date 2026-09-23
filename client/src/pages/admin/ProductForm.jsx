@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
 
@@ -73,15 +73,20 @@ export default function ProductForm() {
   });
 
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [errors, setErrors] = useState({});
   const [notFound, setNotFound] = useState(false);
+  const fileInputRef = useRef(null);
 
   const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
 
-  // ฟังก์ชันอัปโหลดรูปภาพขึ้น MongoDB GridFS
-  const handleImageFileUpload = async (e) => {
-    const file = e.target.files?.[0];
+  // ฟังก์ชันอัปโหลดรูปภาพเมนูอาหารขึ้น MongoDB GridFS
+  const handleUploadImageFile = async (file) => {
     if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("กรุณาเลือกไฟล์รูปภาพเท่านั้น (JPG, PNG, WebP)");
+      return;
+    }
 
     const uploadData = new FormData();
     uploadData.append("image", file);
@@ -101,7 +106,8 @@ export default function ProductForm() {
           imageUrl: fullUrl,
           imageId: data.fileId || data.id || "",
         }));
-        toast.success("อัปโหลดรูปภาพเข้า MongoDB GridFS สำเร็จ! ✨");
+        setErrors((prev) => ({ ...prev, imageUrl: "" }));
+        toast.success("อัปโหลดรูปภาพเมนูอาหารเข้า MongoDB GridFS สำเร็จ! ✨");
       } else {
         toast.error(data.message || "อัปโหลดภาพไม่สำเร็จ");
       }
@@ -110,6 +116,18 @@ export default function ProductForm() {
     } finally {
       setIsUploadingImage(false);
     }
+  };
+
+  const handleImageFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) handleUploadImageFile(file);
+  };
+
+  const handleImageDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer?.files?.[0];
+    if (file) handleUploadImageFile(file);
   };
 
   // 1. ดึงวัตถุดิบทั้งหมดจากสต็อกมาให้แอดมินเลือก
@@ -346,6 +364,10 @@ export default function ProductForm() {
       newErrors.tags = "ต้องระบุอย่างน้อย 1 แท็ก (เช่น ภาคเหนือ, GERD Friendly, ธาตุไฟ)";
     }
 
+    if (!formData.imageUrl && !formData.imageId) {
+      newErrors.imageUrl = "กรุณาอัปโหลดรูปภาพเมนูอาหาร (เมนูอาหารจำเป็นต้องมีรูปภาพ)";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -488,78 +510,137 @@ export default function ProductForm() {
               </div>
             </div>
 
-            {/* ช่องระบุ URL รูปภาพ หรือ อัปโหลดเข้า MongoDB GridFS */}
+            {/* ช่องอัปโหลดรูปภาพอาหาร (จำเป็นต้องมี - Drag & Drop / File Selector / URL) */}
             <div className="mt-4">
               <label className={labelClass}>
-                รูปภาพอาหาร (อัปโหลดเข้า MongoDB GridFS หรือใส่ URL)
+                รูปภาพเมนูอาหาร <span className="text-rose-600 font-bold">* (จำเป็นต้องมีรูปภาพอาหาร)</span>
               </label>
-              
-              <div className="flex flex-col sm:flex-row gap-2">
+
+              {/* Drag & Drop Zone */}
+              <div
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleImageDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className={`relative flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-2xl cursor-pointer transition-all ${
+                  isDragging
+                    ? "border-[#4c1f08] bg-[#f8f5f0]"
+                    : errors.imageUrl
+                      ? "border-rose-400 bg-rose-50/40 hover:border-rose-600"
+                      : "border-[#d9cbbd] hover:border-[#4c1f08] bg-white"
+                }`}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageFileUpload}
+                  className="hidden"
+                />
+
+                {formData.imageUrl ? (
+                  <div className="relative group text-center" onClick={(e) => e.stopPropagation()}>
+                    <div className="relative w-44 h-32 rounded-xl overflow-hidden shadow-md mx-auto border-2 border-[#4c1f08]/20">
+                      <img
+                        src={formData.imageUrl}
+                        alt="Product preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = "https://placehold.co/180x120?text=Invalid+Image";
+                        }}
+                      />
+                    </div>
+                    <div className="mt-2.5 flex items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="text-xs bg-[#4c1f08] text-white px-3 py-1.5 rounded-lg hover:bg-[#6b3215] font-semibold transition shadow-sm"
+                      >
+                        เปลี่ยนรูป
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev) => ({ ...prev, imageUrl: "", imageId: "" }));
+                          setErrors((prev) => ({ ...prev, imageUrl: "กรุณาอัปโหลดรูปภาพเมนูอาหาร (เมนูอาหารจำเป็นต้องมีรูปภาพ)" }));
+                        }}
+                        className="text-xs bg-rose-600 text-white px-3 py-1.5 rounded-lg hover:bg-rose-700 font-semibold transition shadow-sm"
+                      >
+                        ลบรูป
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    {isUploadingImage ? (
+                      <div className="flex flex-col items-center py-2">
+                        <div className="w-9 h-9 border-3 border-[#4c1f08] border-t-transparent rounded-full animate-spin mb-2" />
+                        <p className="text-sm font-bold text-[#4c1f08]">กำลังอัปโหลดรูปภาพเมนูเข้า MongoDB GridFS...</p>
+                        <span className="text-xs text-stone-500">กรุณารอสักครู่</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="w-12 h-12 rounded-full bg-[#f8f5f0] text-[#4c1f08] flex items-center justify-center mx-auto mb-2 border border-[#d9cbbd]">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-6 h-6">
+                            <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                            <circle cx="9" cy="9" r="2" />
+                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                          </svg>
+                        </div>
+                        <p className="text-sm font-bold text-[#4c1f08]">
+                          ลากและวางรูปภาพเมนูอาหารที่นี่ หรือ <span className="underline text-amber-800">คลิกเพื่อเลือกไฟล์</span>
+                        </p>
+                        <p className="text-xs text-[#7a5c4d] mt-1">
+                          รองรับ PNG, JPG, WEBP (อัปโหลดเข้าสู่ระบบ MongoDB GridFS จริง)
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {errors.imageUrl && (
+                <p className="mt-1.5 text-xs text-rose-600 font-bold flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                  {errors.imageUrl}
+                </p>
+              )}
+
+              {/* หรือระบุ URL รูปภาพโดยตรง */}
+              <div className="mt-3 flex items-center gap-2">
                 <input
                   type="url"
                   name="imageUrl"
                   value={formData.imageUrl}
-                  onChange={handleChange}
-                  placeholder="https://example.com/dish.jpg หรืออัปโหลดไฟล์ด้านขวา"
-                  className={`${inputClass} flex-1`}
+                  onChange={(e) => {
+                    handleChange(e);
+                    if (e.target.value) setErrors((prev) => ({ ...prev, imageUrl: "" }));
+                  }}
+                  placeholder="หรือระบุ URL รูปภาพโดยตรง (https://...)"
+                  className={`${inputClass} text-xs flex-1`}
                 />
-
-                <label className="flex items-center justify-center gap-2 rounded-xl bg-[#4c1f08] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#6b3215] transition cursor-pointer shrink-0">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
-                  <span>{isUploadingImage ? "กำลังอัปโหลด..." : "อัปโหลดภาพ"}</span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageFileUpload}
-                    disabled={isUploadingImage}
-                    className="hidden"
-                  />
-                </label>
               </div>
 
               {/* Preset รูปภาพอาหารแนะนำ */}
               <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-[#7a5c4d]">
-                <span className="font-semibold text-[#4c1f08]">เลือกภาพด่วน:</span>
+                <span className="font-semibold text-[#4c1f08]">เลือกภาพอาหารตัวอย่าง:</span>
                 {PRESET_DISH_IMAGES.map((img) => (
                   <button
                     key={img.label}
                     type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, imageUrl: img.url }))}
-                    className="rounded-lg bg-white px-2 py-1 border border-[#d9cbbd] text-[11px] font-medium hover:bg-[#f8ede3] cursor-pointer"
+                    onClick={() => {
+                      setFormData((prev) => ({ ...prev, imageUrl: img.url, imageId: "" }));
+                      setErrors((prev) => ({ ...prev, imageUrl: "" }));
+                    }}
+                    className="rounded-lg bg-white px-2 py-1 border border-[#d9cbbd] text-[11px] font-medium hover:bg-[#f8ede3] cursor-pointer transition shadow-xs"
                   >
                     {img.label}
                   </button>
                 ))}
-              </div>
-
-              {/* Live Preview Box */}
-              <div className="mt-3 flex items-center gap-4 rounded-xl border border-[#d9cbbd] bg-white p-3">
-                <div className="h-20 w-28 shrink-0 overflow-hidden rounded-lg bg-[#f1ead7] flex items-center justify-center border">
-                  {formData.imageUrl ? (
-                    <img
-                      src={formData.imageUrl}
-                      alt="พรีวิวภาพอาหาร"
-                      className="h-full w-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = "https://placehold.co/120x80?text=Invalid+URL";
-                      }}
-                    />
-                  ) : (
-                    <span className="text-xs text-[#8d593a]">ไม่มีรูปภาพ</span>
-                  )}
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-[#4c1f08]">
-                    ตัวอย่างการแสดงผลภาพอาหารในเว็บไซต์
-                  </div>
-                  <div className="text-[11px] text-[#7a5c4d]">
-                    ภาพที่คมชัดจะแสดงในหน้าแคตตาล็อก, หน้าทดสอบธาตุ และหน้าสรุปออเดอร์
-                  </div>
-                </div>
               </div>
             </div>
           </div>

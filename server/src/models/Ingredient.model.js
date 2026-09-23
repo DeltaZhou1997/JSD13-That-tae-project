@@ -54,6 +54,7 @@ const nutrientSchema = new mongoose.Schema(
   {
     calories: { type: Number, default: 0, min: 0 },
     carb: { type: Number, default: 0, min: 0 },
+    carbs: { type: Number, default: 0, min: 0 },
     sugar: { type: Number, default: 0, min: 0 },
     fiber: { type: Number, default: 0, min: 0 },
     protein: { type: Number, default: 0, min: 0 },
@@ -119,6 +120,10 @@ const ingredientSchema = new mongoose.Schema({
     min: 1
   },
   nutritionPer100G: {
+    type: nutrientSchema,
+    default: () => ({}),
+  },
+  nutrientsPer100g: {
     type: nutrientSchema,
     default: () => ({}),
   },
@@ -194,6 +199,22 @@ ingredientSchema.pre("validate", function () {
   if (this.region && !this.regionNameTh) {
     this.regionNameTh = REGION[this.region] || (this.region === "all" ? "ทุกภูมิภาค (ทั่วไป)" : "ทั่วไป");
   }
+
+  // ซิงค์สารอาหารให้ครบทั้ง 7 ชนิดตาม Model
+  const n = this.nutrientsPer100g || this.nutritionPer100G || {};
+  const c = n.carb !== undefined ? n.carb : n.carbs !== undefined ? n.carbs : 0;
+  const completeNutrients = {
+    calories: Number(n.calories || 0),
+    carb: Number(c),
+    carbs: Number(c),
+    sugar: Number(n.sugar || 0),
+    fiber: Number(n.fiber || 0),
+    protein: Number(n.protein || 0),
+    fat: Number(n.fat || 0),
+    sodium: Number(n.sodium || 0),
+  };
+  this.nutritionPer100G = completeNutrients;
+  this.nutrientsPer100g = completeNutrients;
 });
 
 export const Ingredient = mongoose.model("Ingredient", ingredientSchema);

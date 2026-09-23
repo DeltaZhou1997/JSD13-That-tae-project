@@ -5,13 +5,12 @@ import MenuFilters from '../components/Menu/MenuFilters'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext.js'
 import { useProducts } from '../context/ProductsContext.js'
-import { dishes } from '../mock-data/index.js'
 import { getUserElement, ELEMENT_EN_TO_TH } from '../utils/quizHelpers.js'
 
 export default function MenuOverview() {
   const { language } = useApp() || { language: 'th' };
   const { currentUser } = useAuth();
-  const { products } = useProducts();
+  const { products, loading: productsLoading } = useProducts();
   const [searchParams] = useSearchParams();
   const [menus, setMenus] = useState([])
   const [status, setStatus] = useState('loading')
@@ -57,17 +56,17 @@ export default function MenuOverview() {
   }, [currentUser, userElement, initialElement]);
 
   useEffect(() => {
-    setStatus('loading');
+    if (productsLoading) {
+      setStatus('loading');
+      return;
+    }
     const timer = setTimeout(() => {
-      if (products && products.length > 0) {
-        setMenus(products);
-      } else {
-        setMenus(Object.values(dishes));
-      }
+      // ใช้เฉพาะข้อมูลจาก DB เท่านั้น — ไม่ fallback ไป mock data
+      setMenus(Array.isArray(products) ? products : []);
       setStatus('ready');
     }, 200);
     return () => clearTimeout(timer);
-  }, [products]);
+  }, [products, productsLoading]);
 
   const filteredMenus = useMemo(() => {
     return menus.filter((menu) => {
@@ -178,13 +177,23 @@ export default function MenuOverview() {
                     </div>
                   ))}
                 </div>
+              ) : menus.length === 0 ? (
+                <div className="bg-white dark:bg-[#3b2a1a] border border-[#d4c5b0] rounded-2xl p-10 text-center shadow-sm">
+                  <p className="text-4xl mb-4">🍽️</p>
+                  <p className="font-medium text-lg text-[#523a24] dark:text-[#dcb37b]">
+                    {language === 'th' ? 'ยังไม่มีเมนูอาหารในระบบ' : 'No menus available yet.'}
+                  </p>
+                  <p className="mt-2 text-sm opacity-60">
+                    {language === 'th' ? 'แอดมินสามารถเพิ่มเมนูได้ที่หน้าจัดการสินค้า' : 'An admin can add menus from the product management page.'}
+                  </p>
+                </div>
               ) : (
                 <div className="bg-white dark:bg-[#3b2a1a] border border-[#d4c5b0] rounded-2xl p-10 text-center shadow-sm">
                   <p className="font-medium text-lg text-[#523a24] dark:text-[#dcb37b]">
                     {language === 'th' ? 'ไม่พบเมนูที่ตรงกับการค้นหา' : 'No menus match your search.'}
                   </p>
                   <button
-                    onClick={() => setFilters({ search: '', region: [], health: [], element: '' })}
+                    onClick={() => setFilters({ search: '', region: [], health: [], element: [], restrictions: [] })}
                     className="mt-4 px-4 py-2 bg-[#8b5e34] text-white rounded-lg hover:bg-[#755535]"
                   >
                     {language === 'th' ? 'ล้างตัวกรอง' : 'Clear Filters'}

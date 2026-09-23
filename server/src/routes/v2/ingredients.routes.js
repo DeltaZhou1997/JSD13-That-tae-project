@@ -85,6 +85,30 @@ router.post("/", verifyToken, requireAdmin, async (req, res, next) => {
       });
     }
 
+    if (!req.body.nameEn) req.body.nameEn = nameTh;
+    if (!req.body.medicinalTaste) req.body.medicinalTaste = "จืด";
+    if (!req.body.elements || !req.body.elements.length) req.body.elements = ["ดิน"];
+
+    // รูปภาพไม่บังคับ (optional)
+    if (!req.body.imageUrl) req.body.imageUrl = "";
+    if (!req.body.imageId) req.body.imageId = null;
+
+    // ซิงค์สารอาหารให้ครบทั้ง 7 ชนิดตามโมเดล
+    const n = req.body.nutrientsPer100g || req.body.nutritionPer100G || {};
+    const c = n.carb !== undefined ? n.carb : n.carbs !== undefined ? n.carbs : 0;
+    const completeNutrients = {
+      calories: Number(n.calories || 0),
+      carb: Number(c),
+      carbs: Number(c),
+      sugar: Number(n.sugar || 0),
+      fiber: Number(n.fiber || 0),
+      protein: Number(n.protein || 0),
+      fat: Number(n.fat || 0),
+      sodium: Number(n.sodium || 0),
+    };
+    req.body.nutrientsPer100g = completeNutrients;
+    req.body.nutritionPer100G = completeNutrients;
+
     const newIngredient = new Ingredient(req.body);
     const saved = await newIngredient.save();
 
@@ -104,6 +128,23 @@ router.post("/", verifyToken, requireAdmin, async (req, res, next) => {
 // =========================================================================
 router.put("/:id", verifyToken, requireAdmin, async (req, res, next) => {
   try {
+    if (req.body.nutrientsPer100g || req.body.nutritionPer100G) {
+      const n = req.body.nutrientsPer100g || req.body.nutritionPer100G || {};
+      const c = n.carb !== undefined ? n.carb : n.carbs !== undefined ? n.carbs : 0;
+      const completeNutrients = {
+        calories: Number(n.calories || 0),
+        carb: Number(c),
+        carbs: Number(c),
+        sugar: Number(n.sugar || 0),
+        fiber: Number(n.fiber || 0),
+        protein: Number(n.protein || 0),
+        fat: Number(n.fat || 0),
+        sodium: Number(n.sodium || 0),
+      };
+      req.body.nutrientsPer100g = completeNutrients;
+      req.body.nutritionPer100G = completeNutrients;
+    }
+
     const updated = await Ingredient.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,

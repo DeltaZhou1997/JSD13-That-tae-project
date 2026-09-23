@@ -1,30 +1,32 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import {
-  ProductsContext,
-  createInitialProducts,
-} from "./ProductsContext.js";
+import { ProductsContext } from "./ProductsContext.js";
 import { createTempObjectId } from "../utils/objectId.js";
 import { getAuthHeaders, getApiUrl } from "../utils/authHeader.js";
 
 export default function ProductsProvider({ children }) {
-  const [products, setProducts] = useState(createInitialProducts);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const apiUrl = getApiUrl();
 
   useEffect(() => {
     let isMounted = true;
     async function loadProducts() {
+      setLoading(true);
       try {
         const res = await fetch(`${apiUrl}/api/v2/products`);
         if (res.ok) {
           const data = await res.json();
           const items = Array.isArray(data) ? data : data.products || data.data || [];
-          if (items.length > 0 && isMounted) {
+          if (isMounted) {
+            // Always sync with DB — even if empty (never fall back to mock data)
             setProducts(items);
           }
         }
       } catch (err) {
-        console.warn("⚠️ เซิร์ฟเวอร์ออฟไลน์ ใช้ mock products เริ่มต้น:", err.message);
+        console.warn("⚠️ ไม่สามารถโหลดสินค้าจากเซิร์ฟเวอร์:", err.message);
+      } finally {
+        if (isMounted) setLoading(false);
       }
     }
     loadProducts();
@@ -108,12 +110,13 @@ export default function ProductsProvider({ children }) {
   const value = useMemo(
     () => ({
       products,
+      loading,
       getProductById,
       addProduct,
       updateProduct,
       deleteProduct,
     }),
-    [products, getProductById, addProduct, updateProduct, deleteProduct],
+    [products, loading, getProductById, addProduct, updateProduct, deleteProduct],
   );
 
   return (
