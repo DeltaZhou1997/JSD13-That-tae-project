@@ -148,6 +148,13 @@ const productSchema = new mongoose.Schema(
     imageUrl: {
       type: String,
       default: "",
+      validate: {
+        validator: function (v) {
+          // เมนูอาหารต้องมีรูปภาพ (อย่างน้อย 1 แหล่ง: imageUrl หรือ imageId หรือ images)
+          return Boolean(v || this.imageId || (Array.isArray(this.images) && this.images.length > 0));
+        },
+        message: "เมนูอาหารต้องมีรูปภาพ (imageUrl หรือ imageId)",
+      },
     },
     isActive: {
       type: Boolean,

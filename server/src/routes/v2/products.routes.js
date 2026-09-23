@@ -134,6 +134,17 @@ router.post("/", verifyToken, requireAdmin, async (req, res, next) => {
       });
     }
 
+    const hasImage = Boolean(
+      req.body.imageUrl ||
+      req.body.imageId ||
+      (Array.isArray(req.body.images) && req.body.images.length > 0)
+    );
+    if (!hasImage) {
+      return res.status(400).json({
+        message: "กรุณาอัปโหลดรูปภาพเมนูอาหาร (เมนูอาหารจำเป็นต้องมีรูปภาพอาหาร)",
+      });
+    }
+
     const newProduct = new Product(req.body);
     const saved = await newProduct.save();
 
