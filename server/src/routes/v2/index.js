@@ -5,6 +5,7 @@ import ingredientsRouter from "./ingredients.routes.js";
 import productsRouter from "./products.routes.js";
 import cartRouter from "./cart.routes.js";
 import checkoutRouter from "./checkout.routes.js";
+import paymentRouter from "./payment.routes.js";
 
 export const router = Router();
 
@@ -30,5 +31,8 @@ router.use("/cart", cartRouter);
 // 6. Checkout & Order Management (Stock deduction, Status update)
 router.use("/checkout", checkoutRouter);
 router.use("/orders", checkoutRouter); // Alias ให้ Frontend เรียกผ่าน /api/v2/orders ได้
+
+// 7. Stripe Payment Intents
+router.use("/payment", paymentRouter);
 
 export default router;
