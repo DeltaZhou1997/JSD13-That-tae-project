@@ -291,7 +291,7 @@ export default function MenuFilters({ filters, setFilters }) {
     selectedElements.includes(userElement)
 
   return (
-    <aside className="h-fit self-start bg-[#faf7f2] dark:bg-[#3b2a1a] rounded-2xl p-3 sm:p-3.5 border border-[#d4c5b0] dark:border-[#523a24] shadow-xs lg:sticky lg:top-20 xl:top-24 transition-all">
+    <aside className="h-fit self-start bg-[#faf7f2] dark:bg-[#3b2a1a] rounded-2xl p-3 sm:p-3.5 border border-[#d4c5b0] dark:border-[#523a24] shadow-xs lg:sticky lg:top-24 xl:top-28 transition-all">
       {/* ===================================================================== */}
       {/* 1. Header: กะทัดรัด สบายตา ไม่กินความสูงหน้าจอ                        */}
       {/* ===================================================================== */}
@@ -589,7 +589,7 @@ export default function MenuFilters({ filters, setFilters }) {
       <div className="pt-2 border-t border-[#d4c5b0]/60 dark:border-[#6b4e33]">
         <div className="flex items-center justify-between mb-1.5">
           <div className="flex items-center gap-1.5">
-            <span className="text-xs">🏷️</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5 text-[#8d593a]"><path d="m20.6 13.4-7.2 7.2a2 2 0 0 1-2.8 0L3.4 13.4a2 2 0 0 1 0-2.8l7.2-7.2A2 2 0 0 1 12 2.8h6.2a2 2 0 0 1 2 2V11a2 2 0 0 1-.6 1.4Z"/><circle cx="16.5" cy="7.5" r="1"/></svg>
             <span className="text-xs font-bold text-[#3d2c2e] dark:text-[#dcb37b]">
               {language === 'th' ? 'โรค & ข้อจำกัดอาหาร' : 'Dietary & Restrictions'}
             </span>

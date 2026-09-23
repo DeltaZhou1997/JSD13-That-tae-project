@@ -168,6 +168,11 @@ const productSchema = new mongoose.Schema(
 
 // Pre-save hook: ซิงค์ nameTh/name และ Auto-generate imageUrl จาก imageId ของ GridFS
 productSchema.pre("save", function () {
+  // เก็บรหัสข้อจำกัดแบบ canonical ให้ตรงกับ filter ฝั่งลูกค้าและค้นหาใน MongoDB
+  if (Array.isArray(this.foodRestrictions)) {
+    this.foodRestrictions = [...new Set(this.foodRestrictions.map((value) => String(value).trim()).filter(Boolean))];
+    this.tags = [...new Set([...(this.tags || []), ...this.foodRestrictions])];
+  }
   if (this.name && !this.nameTh) {
     this.nameTh = this.name;
   } else if (this.nameTh && !this.name) {

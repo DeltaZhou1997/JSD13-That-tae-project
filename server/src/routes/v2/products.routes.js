@@ -5,6 +5,17 @@ import { verifyToken, requireAdmin } from "./users.routes.js";
 
 const router = Router();
 
+function normalizeProductTags(payload) {
+  const restrictions = Array.isArray(payload.foodRestrictions)
+    ? payload.foodRestrictions.map((value) => String(value).trim()).filter(Boolean)
+    : [];
+  return {
+    ...payload,
+    foodRestrictions: restrictions,
+    tags: [...new Set([...(Array.isArray(payload.tags) ? payload.tags : []), ...restrictions])],
+  };
+}
+
 // =========================================================================
 // 1. GET /api/v2/products — ดึงรายการสินค้าทั้งหมด (Search, Filter, Sort, Pagination)
 // สิทธิ์: ทุกคนเข้าถึงได้ (Public)
@@ -145,7 +156,7 @@ router.post("/", verifyToken, requireAdmin, async (req, res, next) => {
       });
     }
 
-    const newProduct = new Product(req.body);
+    const newProduct = new Product(normalizeProductTags(req.body));
     const saved = await newProduct.save();
 
     return res.status(201).json({
@@ -163,7 +174,7 @@ router.post("/", verifyToken, requireAdmin, async (req, res, next) => {
 // =========================================================================
 router.put("/:id", verifyToken, requireAdmin, async (req, res, next) => {
   try {
-    const updated = await Product.findByIdAndUpdate(req.params.id, req.body, {
+    const updated = await Product.findByIdAndUpdate(req.params.id, normalizeProductTags(req.body), {
       new: true,
       runValidators: true,
     });

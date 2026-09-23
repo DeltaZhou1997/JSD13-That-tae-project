@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate, useLocation, Outlet, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.js";
+import LoadingThai from "./LoadingThai.jsx";
 
 /**
  * ProtectedRoute Component
@@ -15,16 +16,7 @@ export default function ProtectedRoute({ allowedRoles, requireAuth = true, child
 
   // 1. ระหว่างที่ AuthProvider กำลังยืนยันความถูกต้องของ JWT Token กับเซิร์ฟเวอร์
   if (isLoading) {
-    return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
-        <div className="relative w-14 h-14 mb-4">
-          <div className="absolute inset-0 rounded-full border-4 border-amber-200 border-t-amber-600 animate-spin" />
-          <div className="absolute inset-2 rounded-full border-2 border-orange-100 border-b-orange-500 animate-spin [animation-direction:reverse]" />
-        </div>
-        <h3 className="text-base font-semibold text-stone-800">กำลังตรวจสอบสิทธิ์การเข้าใช้งาน...</h3>
-        <p className="text-xs text-stone-500 mt-1">กรุณารอสักครู่ ระบบกำลังยืนยันความปลอดภัยของบัญชี</p>
-      </div>
-    );
+    return <LoadingThai label="กำลังตรวจสอบสิทธิ์การเข้าใช้งาน..." className="min-h-[70vh]" />;
   }
 
   // 2. กรณีต้องเข้าสู่ระบบ แต่ผู้ใช้ยังไม่ได้เข้าสู่ระบบ (ไม่มี Token หรือ User)
