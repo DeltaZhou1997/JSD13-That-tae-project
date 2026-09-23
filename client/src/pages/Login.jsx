@@ -6,6 +6,7 @@ import useToast from "../hooks/useToast.js";
 function Login() {
   const [email, setEmail] = useState("");
   const [pwd, setPwd] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
@@ -15,6 +16,8 @@ function Login() {
 
   const handleLogin = async (event) => { // จัดการ การเข้าระบบ และเทียบรหัสสผ่าน
     event.preventDefault();
+    if (loading) return;
+    setLoading(true);
 
     try {
       const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
@@ -51,10 +54,13 @@ function Login() {
     } catch (error) {
       console.error("Error logging in:", error);
       toast.error("เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
+    <>
     <div className="max-w-md mx-auto my-10 p-6 bg-white rounded-2xl shadow-md border border-[#f1ead7]">
       <h2 className="text-2xl font-bold text-center text-[#4c1f08] mb-5">
         เข้าสู่ระบบ
@@ -99,9 +105,10 @@ function Login() {
         </div>
         <button
           type="submit"
-          className="w-full bg-[#4c1f08] text-white p-2.5 rounded-xl font-medium shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215] cursor-pointer"
+          disabled={loading}
+          className="w-full bg-[#4c1f08] text-white p-2.5 rounded-xl font-medium shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215] cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-2"
         >
-          เข้าสู่ระบบ
+          {loading ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> กำลังเข้าสู่ระบบ...</> : "เข้าสู่ระบบ"}
         </button>
       </form>
       <p className="text-center mt-4 text-sm text-[#4c1f08]">
@@ -113,7 +120,7 @@ function Login() {
           สมัครสมาชิก
         </Link>
       </p>
-    </div>
+    </div></>
   );
 }
 
