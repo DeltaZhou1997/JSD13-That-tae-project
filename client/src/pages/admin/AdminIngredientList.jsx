@@ -5,7 +5,6 @@ import {
   CATEGORY_MAP,
   getUnitInfo,
   isLowStock,
-  roundQty,
   useIngredients,
 } from "../../context/IngredientsContext.js";
 import useToast from "../../hooks/useToast.js";
@@ -16,7 +15,7 @@ const inputClass =
   "rounded border border-[#f1ead7] p-2 focus:border-[#4c1f08] focus:outline-none focus:ring-2 focus:ring-[#f1ead7]";
 
 function AdminIngredientList() {
-  const { ingredients, lowStockCount, updateStock, deleteIngredient } =
+  const { ingredients, lowStockCount, deleteIngredient } =
     useIngredients();
   const toast = useToast();
 
@@ -57,13 +56,6 @@ function AdminIngredientList() {
     toast.success(`ลบ "${item.nameTh}" ออกจากคลังแล้ว`);
   };
 
-  const handleStockChange = (id, value) => {
-    const stock = Number(value);
-    if (value === "" || Number.isNaN(stock) || stock < 0) return;
-    // หน่วย kg / l ใส่ทศนิยมได้ ส่วนชิ้นต้องเป็นจำนวนเต็ม
-    const item = ingredients.find((i) => i._id === id);
-    updateStock(id, item?.unit === "piece" ? Math.floor(stock) : roundQty(stock));
-  };
 
   return (
     <div className="mx-auto max-w-6xl p-6">
@@ -187,35 +179,28 @@ function AdminIngredientList() {
                       </span>
                     </td>
                     <td className="p-3 min-w-[210px]">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="text-xs font-bold text-[#4c1f08]">รวม:</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step={item.unit === "piece" ? 1 : "any"}
-                          defaultValue={item.currentStockGrams}
-                          onBlur={(event) => handleStockChange(item._id, event.target.value)}
-                          className={`w-24 font-bold ${inputClass}`}
-                        />
+                      {/* สต็อกดูอย่างเดียว — ปรับจำนวนได้ในหน้าแก้ไขวัตถุดิบ */}
+                      <div className="mb-1.5 flex items-baseline gap-1.5">
+                        <span className="text-xs text-[#7a5c4d]">รวม</span>
+                        <span className="text-base font-extrabold text-[#4c1f08]">
+                          {Number(item.currentStockGrams || 0).toLocaleString("th-TH")}
+                        </span>
                         <span className="text-xs text-[#7a5c4d]">{getUnitInfo(item.unit).short}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-1 text-[11px]">
-                        <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-1.5 py-0.5 text-emerald-800 border border-emerald-200" title="ภาคเหนือ">
-                          <span>⛰️</span>
-                          <span className="font-semibold">{item.regionalStocks?.north ?? 0}</span>
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-amber-800 border border-amber-200" title="ภาคอีสาน">
-                          <span>🌾</span>
-                          <span className="font-semibold">{item.regionalStocks?.northeast ?? 0}</span>
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded bg-sky-50 px-1.5 py-0.5 text-sky-800 border border-sky-200" title="ภาคกลาง">
-                          <span>🏛️</span>
-                          <span className="font-semibold">{item.regionalStocks?.central ?? (item.currentStockGrams || 0)}</span>
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded bg-teal-50 px-1.5 py-0.5 text-teal-800 border border-teal-200" title="ภาคใต้">
-                          <span>🌊</span>
-                          <span className="font-semibold">{item.regionalStocks?.south ?? 0}</span>
-                        </span>
+                        {[
+                          { key: "north", label: "เหนือ", cls: "bg-emerald-50 text-emerald-800 border-emerald-200" },
+                          { key: "northeast", label: "อีสาน", cls: "bg-amber-50 text-amber-800 border-amber-200" },
+                          { key: "central", label: "กลาง", cls: "bg-sky-50 text-sky-800 border-sky-200" },
+                          { key: "south", label: "ใต้", cls: "bg-teal-50 text-teal-800 border-teal-200" },
+                        ].map((r) => (
+                          <span key={r.key} className={`inline-flex items-center justify-between gap-1 rounded-full border px-2 py-0.5 ${r.cls}`}>
+                            <span>{r.label}</span>
+                            <span className="font-semibold">
+                              {Number(item.regionalStocks?.[r.key] ?? (r.key === "central" ? item.currentStockGrams : 0) ?? 0).toLocaleString("th-TH")}
+                            </span>
+                          </span>
+                        ))}
                       </div>
                       <span className="mt-1 block text-[10px] text-[#7a5c4d]">
                         จุดเตือน {item.lowStockThresholdGrams} {getUnitInfo(item.unit).short}

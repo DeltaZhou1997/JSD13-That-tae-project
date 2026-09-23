@@ -115,10 +115,10 @@ function emptyNutrientForm() {
 }
 
 export const REGIONAL_CONFIG = [
-  { key: "north", label: "ภาคเหนือ", icon: "⛰️", color: "border-emerald-300 bg-emerald-50/50 text-emerald-900" },
-  { key: "northeast", label: "ภาคอีสาน", icon: "🌾", color: "border-amber-300 bg-amber-50/50 text-amber-900" },
-  { key: "central", label: "ภาคกลาง", icon: "🏛️", color: "border-sky-300 bg-sky-50/50 text-sky-900" },
-  { key: "south", label: "ภาคใต้", icon: "🌊", color: "border-teal-300 bg-teal-50/50 text-teal-900" },
+  { key: "north", label: "ภาคเหนือ", color: "border-emerald-300 bg-emerald-50/50 text-emerald-900" },
+  { key: "northeast", label: "ภาคอีสาน", color: "border-amber-300 bg-amber-50/50 text-amber-900" },
+  { key: "central", label: "ภาคกลาง", color: "border-sky-300 bg-sky-50/50 text-sky-900" },
+  { key: "south", label: "ภาคใต้", color: "border-teal-300 bg-teal-50/50 text-teal-900" },
 ];
 
 function createEmptyForm() {
@@ -817,7 +817,7 @@ function IngredientForm() {
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h3 className="text-sm font-bold uppercase tracking-wider text-[#4c1f08]">
-                  📦 ปริมาณสต็อกแยกตาม 4 ภูมิภาค <span className="text-red-500">*</span>
+                  ปริมาณสต็อกแยกตาม 4 ภูมิภาค <span className="text-red-500">*</span>
                 </h3>
                 <p className="text-xs text-[#7a5c4d]">
                   ระบุสต็อกวัตถุดิบจริงที่มีในแต่ละภาค เพื่อให้ระบบคำนวณจำนวนชุดอาหารตามภาคนั้นๆ ได้จริง
@@ -832,11 +832,10 @@ function IngredientForm() {
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {REGIONAL_CONFIG.map(({ key, label, icon, color }) => (
+              {REGIONAL_CONFIG.map(({ key, label, color }) => (
                 <div key={key} className={`rounded-xl border p-3 ${color} bg-white shadow-2xs`}>
                   <div className="mb-1.5 flex items-center justify-between">
                     <label htmlFor={`reg-stock-${key}`} className="flex items-center gap-1.5 text-xs font-bold">
-                      <span>{icon}</span>
                       <span>{label}</span>
                     </label>
                     <span className="text-[10px] text-stone-500 font-medium">{unitInfo.label} ({unitInfo.short})</span>
