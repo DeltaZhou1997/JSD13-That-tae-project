@@ -6,7 +6,7 @@ import { useProducts } from '../context/ProductsContext.js';
 import { useIngredients } from '../context/IngredientsContext.js';
 import { getUnitInfo } from '../utils/units.js';
 import { buildRecipeRows, formatTastes } from '../utils/recipeRows.js';
-import { formatMissing, getStockStatus } from '../utils/stock.js';
+import { getStockStatus } from '../utils/stock.js';
 import RecipePieCharts from '../components/Menu/RecipePieChart.jsx';
 import SpeakButton from '../components/common/SpeakButton.jsx';
 
@@ -405,10 +405,7 @@ export default function MenuDetail() {
             ) : stock.soldOut ? (
               <div className="flex flex-col sm:flex-row gap-3 sm:items-center rounded-2xl border border-stone-200 bg-stone-50 p-3 sm:p-4">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-stone-600">สินค้าหมดชั่วคราว</p>
-                  <p className="text-xs text-stone-500 mt-0.5 break-words">
-                    วัตถุดิบไม่เพียงพอ{stock.missing.length > 0 ? ` — ${formatMissing(stock.missing, 3)}` : ''}
-                  </p>
+                  <p className="text-sm font-bold text-stone-600">สินค้าหมด</p>
                 </div>
                 <button
                   type="button"

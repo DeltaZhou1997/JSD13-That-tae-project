@@ -500,12 +500,13 @@ export default function ProfilePage() {
         {/* ===================================================================== */}
         {/* 🌟 Header Section: Profile Banner & Quick Actions                     */}
         {/* ===================================================================== */}
-        <div className="dashboard-card-enter bg-white border border-[#E8DFD1] rounded-3xl p-6 sm:p-8 shadow-xs relative overflow-hidden">
+        <div className="dashboard-card-enter bg-white border border-[#E8DFD1] rounded-3xl p-4 sm:p-8 shadow-xs relative overflow-hidden">
           {/* Subtle Decorative Background Blob */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-[#8D593A]/5 via-amber-50/20 to-transparent rounded-full -mr-20 -mt-20 pointer-events-none" />
 
-          <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="flex items-center gap-5">
+          <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-5 sm:gap-6">
+            {/* มือถือ: รูปอยู่บน ข้อมูลอยู่ล่าง (กันการ์ดสมาชิกล้นกรอบ) */}
+            <div className="flex min-w-0 flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-5 md:flex-1">
               {/* รูปโปรไฟล์ พร้อมปุ่มอัปโหลดรูปภาพ / Drag & Drop */}
               <div
                 className="relative shrink-0 group cursor-pointer"
@@ -560,9 +561,9 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-xl sm:text-2xl font-black text-[#3D2E2B]">
+              <div className="w-full min-w-0 flex-1 text-center sm:text-left">
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                  <h1 className="break-words text-xl sm:text-2xl font-black text-[#3D2E2B]">
                     {currentUser.firstName} {currentUser.lastName}
                   </h1>
                   {isAdmin && (
@@ -572,8 +573,8 @@ export default function ProfilePage() {
                     </span>
                   )}
                 </div>
-                <p className="text-xs sm:text-sm text-[#7A6B63] mt-1 flex items-center gap-2">
-                  <span>{currentUser.email}</span>
+                <p className="text-xs sm:text-sm text-[#7A6B63] mt-1 flex items-center justify-center gap-2 sm:justify-start">
+                  <span className="min-w-0 break-all">{currentUser.email}</span>
                 </p>
 
                 {/* การ์ดสมาชิก: ตรายศ + เบี้ย + ความคืบหน้า (แสดงระดับจุดเดียว) — กดเพื่อดูประวัติเบี้ย */}
@@ -581,14 +582,15 @@ export default function ProfilePage() {
                   <button
                     type="button"
                     onClick={() => setPointsModalOpen(true)}
-                    className="group mt-3 flex w-full max-w-md items-center gap-3 rounded-2xl border p-2.5 pr-3.5 text-left shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
+                    className="group mt-3 flex w-full max-w-md items-center gap-2.5 sm:gap-3 rounded-2xl border p-2.5 pr-3 sm:pr-3.5 text-left mx-auto sm:mx-0 shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
                     style={{ background: `linear-gradient(135deg, ${tierTheme.soft} 0%, #ffffff 85%)`, borderColor: `${tierTheme.mid}66` }}
                     aria-label="ดูเบี้ยและระดับสมาชิกเพิ่มเติม"
                   >
-                    <TierBadge tier={tierInfo.id} size={60} className="shrink-0 transition-transform group-hover:scale-105" />
+                    <TierBadge tier={tierInfo.id} size={52} className="shrink-0 transition-transform group-hover:scale-105 sm:hidden" />
+                    <TierBadge tier={tierInfo.id} size={60} className="hidden shrink-0 transition-transform group-hover:scale-105 sm:block" />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-black" style={{ color: tierTheme.text }}>
+                        <p className="min-w-0 truncate text-[13px] sm:text-sm font-black" style={{ color: tierTheme.text }}>
                           สมาชิก {tier}
                           {tierInfo.multiplier > 1 && (
                             <span className="ml-1.5 text-[10px] font-bold opacity-80">เบี้ย x{tierInfo.multiplier}</span>
@@ -623,7 +625,7 @@ export default function ProfilePage() {
                   </button>
                 )}
 
-                <div className="flex items-center gap-3 mt-2 text-xs text-[#7A6B63]">
+                <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mt-2 text-xs text-[#7A6B63] sm:justify-start">
                   <span className="flex items-center gap-1">
                     <PhoneIcon className="w-3.5 h-3.5 text-[#8D593A]" />
                     {currentUser.phone || "ยังไม่ได้ระบุเบอร์"}
@@ -642,12 +644,12 @@ export default function ProfilePage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2.5 sm:self-center">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-2.5 sm:self-center md:shrink-0">
               {/* ปุ่มเปิด Modal แก้ไขข้อมูลส่วนตัว */}
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(true)}
-                className="px-4 py-2.5 rounded-full bg-[#4C1F08] hover:bg-[#6B3215] text-white text-xs font-bold transition shadow-sm inline-flex items-center gap-2 cursor-pointer active:scale-95"
+                className="px-3 sm:px-4 py-2.5 rounded-full bg-[#4C1F08] hover:bg-[#6B3215] text-white text-xs font-bold transition shadow-sm inline-flex items-center justify-center gap-1.5 sm:gap-2 whitespace-nowrap cursor-pointer active:scale-95"
               >
                 <EditPencilIcon className="w-3.5 h-3.5" />
                 <span>แก้ไขข้อมูลส่วนตัว</span>
@@ -656,7 +658,7 @@ export default function ProfilePage() {
               {!isAdmin ? (
                 <Link
                   to="/orders"
-                  className="px-4 py-2.5 rounded-full border border-[#D4C5B0] bg-white hover:border-[#8D593A] text-[#4A3228] text-xs font-bold transition shadow-2xs inline-flex items-center gap-1.5"
+                  className="px-3 sm:px-4 py-2.5 rounded-full border border-[#D4C5B0] bg-white hover:border-[#8D593A] text-[#4A3228] text-xs font-bold transition shadow-2xs inline-flex items-center justify-center gap-1.5 whitespace-nowrap"
                 >
                   <OrderHistoryIcon className="w-3.5 h-3.5 text-[#8D593A]" />
                   <span>ประวัติคำสั่งซื้อ</span>
@@ -664,7 +666,7 @@ export default function ProfilePage() {
               ) : (
                 <Link
                   to="/admin/dashboard"
-                  className="px-4 py-2.5 rounded-full border border-[#D4C5B0] bg-white hover:border-[#8D593A] text-[#4A3228] text-xs font-bold transition shadow-2xs inline-flex items-center gap-1.5"
+                  className="px-3 sm:px-4 py-2.5 rounded-full border border-[#D4C5B0] bg-white hover:border-[#8D593A] text-[#4A3228] text-xs font-bold transition shadow-2xs inline-flex items-center justify-center gap-1.5 whitespace-nowrap"
                 >
                   <span>แดชบอร์ดผู้ดูแล &rarr;</span>
                 </Link>
@@ -1009,13 +1011,13 @@ export default function ProfilePage() {
       {/* ประวัติเบี้ย + ตรายศ + รายละเอียดระดับ */}
       <PointsHistoryModal open={pointsModalOpen} onClose={() => setPointsModalOpen(false)} currentUser={currentUser} />
 
-      {addressManagerOpen && <div className="modal-backdrop-enter fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" onClick={() => setAddressManagerOpen(false)}><div onClick={(e) => e.stopPropagation()} className="modal-panel-enter w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl">
+      {addressManagerOpen && <div className="modal-backdrop-enter fixed inset-0 z-[150] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" onClick={() => setAddressManagerOpen(false)}><div onClick={(e) => e.stopPropagation()} className="modal-panel-enter w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl">
         <div className="mb-4 flex items-center justify-between"><div><h2 className="text-lg font-black text-[#3D2E2B]">เลือกที่อยู่จัดส่ง</h2><p className="mt-1 text-xs text-[#7A6B63]">เลือกที่อยู่หลัก หรือจัดการรายการที่อยู่ของคุณ</p></div><button type="button" onClick={() => setAddressManagerOpen(false)}>✕</button></div>
         <div className="max-h-[55vh] space-y-3 overflow-y-auto">{addressBook.length === 0 && <p className="rounded-2xl bg-[#FAF8F5] p-5 text-center text-sm text-[#7A6B63]">ยังไม่มีที่อยู่ที่บันทึกไว้</p>}{addressBook.map((item) => <div key={item._id} className={`rounded-2xl border p-4 transition ${item.isDefault ? "border-[#8D593A] bg-[#FBF4EC]" : "border-[#E8DFD1]"}`}><div className="flex items-start justify-between gap-3"><div><div className="flex items-center gap-2"><strong>{item.label}</strong>{item.isDefault && <span className="rounded-full bg-[#8D593A] px-2 py-0.5 text-[10px] font-bold text-white">หลัก</span>}</div><p className="mt-1 text-xs leading-5 text-[#63534B]">{item.address} ต.{item.subdistrict} อ.{item.district} จ.{item.province} {item.zipcode}<br />โทร. {item.phone}</p></div><div className="flex gap-2 text-xs font-bold"><button type="button" className="text-[#8D593A]" onClick={() => { setAddressForm({ ...item }); setAddressModal(item); }}>แก้ไข</button><button type="button" className="text-rose-600" onClick={() => deleteBookAddress(item._id)}>ลบ</button></div></div>{!item.isDefault && <button type="button" onClick={() => setDefaultBookAddress(item)} className="mt-3 text-xs font-bold text-[#8D593A] underline">ตั้งเป็นที่อยู่หลัก</button>}</div>)}</div>
         <button type="button" onClick={() => { setAddressForm({ ...emptyAddress, phone: currentUser.phone || "" }); setAddressModal("new"); }} className="mt-4 w-full rounded-xl bg-[#4C1F08] py-3 text-sm font-bold text-white">+ เพิ่มที่อยู่ใหม่</button>
       </div></div>}
 
-      {addressModal && <div className="modal-backdrop-enter fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" onClick={() => !addressSaving && setAddressModal(null)}><form onSubmit={saveBookAddress} onClick={(e) => e.stopPropagation()} className="modal-panel-enter w-full max-w-xl space-y-4 rounded-3xl bg-white p-6 shadow-2xl">
+      {addressModal && <div className="modal-backdrop-enter fixed inset-0 z-[155] flex items-center justify-center bg-black/50 p-4" onClick={() => !addressSaving && setAddressModal(null)}><form onSubmit={saveBookAddress} onClick={(e) => e.stopPropagation()} className="modal-panel-enter max-h-[92dvh] w-full max-w-xl space-y-4 overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl sm:p-6">
         <div className="flex items-center justify-between"><h2 className="text-lg font-black text-[#3D2E2B]">{addressModal === "new" ? "เพิ่มที่อยู่ใหม่" : "แก้ไขที่อยู่"}</h2><button type="button" onClick={() => setAddressModal(null)}>✕</button></div>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{[["label","ชื่อที่อยู่ เช่น บ้าน / ที่ทำงาน"],["phone","เบอร์โทรศัพท์"],["address","บ้านเลขที่ อาคาร ถนน ซอย"],["subdistrict","ตำบล / แขวง"],["district","อำเภอ / เขต"],["province","จังหวัด"],["zipcode","รหัสไปรษณีย์"]].map(([name, label]) => <label key={name} className={name === "address" ? "sm:col-span-2 text-xs font-bold text-[#7A6B63]" : "text-xs font-bold text-[#7A6B63]"}>{label}<input required value={addressForm[name] || ""} onChange={(e) => setAddressForm((prev) => ({ ...prev, [name]: e.target.value }))} className="mt-1 w-full rounded-xl border border-[#E8DFD1] bg-[#FAF8F5] px-3 py-2 text-sm font-normal text-[#3D2E2B] outline-none focus:border-[#8D593A]" /></label>)}</div>
         <label className="flex items-center gap-2 text-xs font-bold text-[#63534B]"><input type="checkbox" checked={Boolean(addressForm.isDefault)} onChange={(e) => setAddressForm((prev) => ({ ...prev, isDefault: e.target.checked }))} /> ตั้งเป็นที่อยู่หลัก</label>
@@ -1027,17 +1029,17 @@ export default function ProfilePage() {
       {/* ===================================================================== */}
       {isEditModalOpen && (
         <div
-          className="modal-backdrop-enter fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/50 backdrop-blur-sm"
+          className="modal-backdrop-enter fixed inset-0 z-[150] flex items-end justify-center bg-black/50 backdrop-blur-sm sm:items-center sm:p-5"
           onClick={() => !isConfirmOpen && setIsEditModalOpen(false)}
         >
           <div
-            className="modal-panel-enter flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-[1.75rem] border border-[#E8DFD1] bg-white shadow-2xl"
+            className="modal-panel-enter flex max-h-[92dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-[1.75rem] border border-[#E8DFD1] bg-white shadow-2xl sm:max-h-[92vh] sm:rounded-[1.75rem]"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#F2ECE4] bg-[#FAF8F5]">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-[#8D593A] text-white flex items-center justify-center shadow-xs">
+            <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 border-b border-[#F2ECE4] bg-[#FAF8F5]">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <div className="w-8 h-8 shrink-0 rounded-xl bg-[#8D593A] text-white flex items-center justify-center shadow-xs">
                   <EditPencilIcon className="w-4 h-4" />
                 </div>
                 <div>
@@ -1049,7 +1051,7 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => setIsEditModalOpen(false)}
-                className="w-8 h-8 rounded-full hover:bg-[#EAE2D5] text-[#7A6B63] flex items-center justify-center transition cursor-pointer"
+                className="w-8 h-8 shrink-0 rounded-full hover:bg-[#EAE2D5] text-[#7A6B63] flex items-center justify-center transition cursor-pointer"
                 aria-label="ปิดหน้าต่าง"
               >
                 <CloseIcon className="w-4 h-4" />
@@ -1057,7 +1059,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Modal Body Form */}
-            <form onSubmit={handlePreSave} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5 sm:p-6">
+            <form onSubmit={handlePreSave} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label className="block text-xs font-bold text-[#3D2E2B] mb-1">ชื่อจริง *</label>
@@ -1204,7 +1206,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Modal Footer Buttons */}
-              <div className="sticky bottom-0 -mx-5 -mb-5 flex items-center justify-end gap-3 border-t border-[#F2ECE4] bg-white/95 px-5 py-4 backdrop-blur sm:-mx-6 sm:-mb-6 sm:px-6">
+              <div className="sticky bottom-0 -mx-4 -mb-4 flex items-center justify-end gap-3 border-t border-[#F2ECE4] bg-white/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:py-4 sm:-mx-6 sm:-mb-6 sm:px-6">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
@@ -1229,11 +1231,11 @@ export default function ProfilePage() {
       {/* ===================================================================== */}
       {isConfirmOpen && (
         <div
-          className="modal-backdrop-enter fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          className="modal-backdrop-enter fixed inset-0 z-[155] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           onClick={() => !saving && setIsConfirmOpen(false)}
         >
           <div
-          className="modal-panel-enter w-full max-w-md rounded-3xl border border-[#E8DFD1] bg-white p-6 shadow-2xl space-y-4"
+          className="modal-panel-enter max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl border border-[#E8DFD1] bg-white p-5 sm:p-6 shadow-2xl space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 pb-3 border-b border-[#F2ECE4]">

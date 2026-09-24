@@ -67,7 +67,7 @@ function Layout({ context }) {
     const check = await checkLiveStock(product, inCart + qtyToAdd);
     if (!check.ok) {
       if (check.message) toast?.error?.(check.message);
-      else if (check.stock?.soldOut) toast?.error?.(`${displayName} สินค้าหมด (วัตถุดิบไม่เพียงพอ)`);
+      else if (check.stock?.soldOut) toast?.error?.(`${displayName} สินค้าหมด`);
       else toast?.error?.(`${displayName} เหลือขายได้อีก ${Math.max(0, (check.available ?? 0) - inCart)} ชุด (ในตะกร้ามี ${inCart} ชุด)`);
       return;
     }

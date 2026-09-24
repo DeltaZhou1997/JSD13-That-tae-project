@@ -74,7 +74,7 @@ export default function TierDetailsModal({ open, onClose, currentTier = "BRONZE"
 
   return (
     <div
-      className="modal-backdrop-enter fixed inset-0 z-[70] flex items-center justify-center bg-black/55 p-3 sm:p-5 backdrop-blur-sm"
+      className="modal-backdrop-enter fixed inset-0 z-[160] flex items-end justify-center bg-black/55 backdrop-blur-sm sm:items-center sm:p-5"
       onClick={onClose}
     >
       <div
@@ -82,11 +82,11 @@ export default function TierDetailsModal({ open, onClose, currentTier = "BRONZE"
         aria-modal="true"
         aria-label="คู่มือเบี้ยและระดับสมาชิก"
         onClick={(e) => e.stopPropagation()}
-        className="modal-panel-enter flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-[#FDFBF7] shadow-2xl"
+        className="modal-panel-enter flex max-h-[92dvh] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-[#FDFBF7] shadow-2xl sm:max-h-[88vh] sm:rounded-3xl"
       >
         {/* หัว */}
-        <div className="flex items-start justify-between gap-3 border-b border-[#EAE2D5] bg-white px-5 py-4 sm:px-6">
-          <div>
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-[#EAE2D5] bg-white px-4 py-3 sm:px-6 sm:py-4">
+          <div className="min-w-0">
             <p className="text-[10px] font-bold uppercase tracking-widest text-[#8D593A]">That-Tae Membership</p>
             <h3 className="text-lg font-black text-[#3D2E2B] sm:text-xl">แผนสมาชิก “เบี้ย” ธาตุแท้</h3>
             <p className="text-xs text-[#7A6B63]">กินดี...ได้คุ้มกว่า • ยิ่งกิน ยิ่งได้เบี้ย ยิ่งคุ้ม!</p>
@@ -95,7 +95,7 @@ export default function TierDetailsModal({ open, onClose, currentTier = "BRONZE"
             type="button"
             onClick={onClose}
             aria-label="ปิด"
-            className="rounded-full p-2 text-[#7A6B63] hover:bg-[#FAF7F2] cursor-pointer"
+            className="shrink-0 rounded-full p-2 text-[#7A6B63] hover:bg-[#FAF7F2] cursor-pointer"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
               <path d="M18 6 6 18M6 6l12 12" />
@@ -103,9 +103,9 @@ export default function TierDetailsModal({ open, onClose, currentTier = "BRONZE"
           </button>
         </div>
 
-        <div className="space-y-5 overflow-y-auto px-4 py-5 sm:px-6">
+        <div className="space-y-4 overflow-y-auto px-3 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:space-y-5 sm:px-6 sm:py-5">
           {/* ===== 1. การได้เบี้ย ===== */}
-          <section className="rounded-3xl border border-[#EAE2D5] bg-white p-4 sm:p-5">
+          <section className="rounded-2xl border border-[#EAE2D5] bg-white p-3 sm:rounded-3xl sm:p-5">
             <SectionTitle no="1" title="การได้เบี้ย" sub="(หลังชำระเงินสำเร็จเท่านั้น)" />
 
             {/* เลือกระดับเพื่อดูตัวคูณ */}
@@ -127,7 +127,7 @@ export default function TierDetailsModal({ open, onClose, currentTier = "BRONZE"
               ))}
             </div>
 
-            <div className="grid gap-4 md:grid-cols-[220px_1fr]">
+            <div className="grid gap-4 md:grid-cols-[210px_minmax(0,1fr)]">
               {/* A La Carte + ลองคิด */}
               <div className="rounded-2xl p-4" style={{ background: theme.soft }}>
                 <p className="flex items-center gap-1.5 text-sm font-black text-[#3D2E2B]"><BagIcon className="h-4 w-4" style={{ color: theme.text }} /> A La Carte</p>
@@ -250,9 +250,9 @@ export default function TierDetailsModal({ open, onClose, currentTier = "BRONZE"
           </section>
 
           {/* ===== 2. ระดับสมาชิก ===== */}
-          <section className="rounded-3xl border border-[#EAE2D5] bg-white p-4 sm:p-5">
+          <section className="rounded-2xl border border-[#EAE2D5] bg-white p-3 sm:rounded-3xl sm:p-5">
             <SectionTitle no="2" title="ระดับสมาชิก" sub="(ขึ้นอัตโนมัติจากเบี้ยสะสมตลอดชีพ — ใช้เบี้ยแล้วระดับไม่ลด)" />
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
               {TIERS.map((t, i) => {
                 const th = TIER_THEME[t.id];
                 const active = viewTier === t.id;
@@ -261,12 +261,12 @@ export default function TierDetailsModal({ open, onClose, currentTier = "BRONZE"
                     key={t.id}
                     type="button"
                     onClick={() => setViewTier(t.id)}
-                    className={`points-row-in flex flex-col items-center rounded-2xl border-2 p-3 text-center transition-all cursor-pointer hover:-translate-y-0.5 ${
+                    className={`points-row-in flex min-w-0 flex-col items-center rounded-2xl border-2 p-2.5 text-center sm:p-3 transition-all cursor-pointer hover:-translate-y-0.5 ${
                       active ? "shadow-md" : "border-transparent"
                     }`}
                     style={{ animationDelay: `${i * 70}ms`, background: th.soft, borderColor: active ? th.ribbon : "transparent" }}
                   >
-                    <TierBadge tier={t.id} size={72} animated={active} />
+                    <TierBadge tier={t.id} size={56} animated={active} />
                     <p className="mt-1 text-sm font-black" style={{ color: th.text }}>
                       {t.name}
                       {t.id === currentTier && <span className="ml-1 text-[10px] font-bold">(คุณ)</span>}
@@ -284,7 +284,7 @@ export default function TierDetailsModal({ open, onClose, currentTier = "BRONZE"
           </section>
 
           {/* ===== 3. ใช้เบี้ย ===== */}
-          <section className="rounded-3xl border border-[#EAE2D5] bg-white p-4 sm:p-5">
+          <section className="rounded-2xl border border-[#EAE2D5] bg-white p-3 sm:rounded-3xl sm:p-5">
             <SectionTitle no="3" title="ใช้เบี้ยเป็นส่วนลดตอนชำระเงิน" />
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
               {[

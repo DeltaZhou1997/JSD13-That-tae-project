@@ -1,7 +1,7 @@
 import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext.js';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { formatMissing, getStockStatus } from '../../utils/stock.js';
+import { getStockStatus } from '../../utils/stock.js';
 import { restrictionShortLabel } from '../../constants/foodRestrictions.js';
 
 const ELEMENT_CONFIG = {
@@ -206,11 +206,6 @@ export default function MenuCard({ menu, index = 0 }) {
             <div className={`text-[1rem] sm:text-[1.2rem] font-bold ${soldOut ? 'text-stone-400' : 'text-[#8b5e34] dark:text-[#dcb37b]'}`}>
               ฿{menu.price}
             </div>
-            {soldOut && stock.missing.length > 0 && (
-              <p className="truncate text-[10px] sm:text-[11px] text-stone-400" title={stock.missing.join(', ')}>
-                {formatMissing(stock.missing, 1)}
-              </p>
-            )}
             {!soldOut && stock.availableKits !== null && (
               <p className={`text-[10px] sm:text-[11px] font-semibold ${stock.availableKits <= 5 ? 'text-amber-700' : 'text-emerald-700'}`}>
                 {stock.availableKits <= 5 ? `เหลือ ${stock.availableKits} ชุด` : `พร้อมขาย ${stock.availableKits} ชุด`}
@@ -227,7 +222,6 @@ export default function MenuCard({ menu, index = 0 }) {
               disabled
               onClick={(e) => e.stopPropagation()}
               className="shrink-0 whitespace-nowrap bg-stone-200 dark:bg-stone-700 text-stone-500 dark:text-stone-300 px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-sm font-semibold cursor-not-allowed"
-              title="วัตถุดิบไม่เพียงพอ"
             >
               สินค้าหมด
             </button>

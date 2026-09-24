@@ -3,7 +3,7 @@ import gsap from "gsap";
 import { useOutletContext } from "react-router-dom";
 import { resolveImageUrl } from "../../utils/imageUrl.js";
 import { useProducts } from "../../context/ProductsContext.js";
-import { formatMissing, getStockStatus } from "../../utils/stock.js";
+import { getStockStatus } from "../../utils/stock.js";
 
 export default function CartItem({
   item,
@@ -220,13 +220,8 @@ export default function CartItem({
                   <circle cx="12" cy="12" r="9" />
                   <path strokeLinecap="round" d="M12 8v4.5M12 16h.01" />
                 </svg>
-                สินค้าไม่เพียงพอจำหน่าย
+                สินค้าหมด
               </span>
-              {stock.missing.length > 0 && (
-                <span className="min-w-0 truncate text-[10px] sm:text-[11px] text-stone-500" title={stock.missing.join(", ")}>
-                  {formatMissing(stock.missing)}
-                </span>
-              )}
             </div>
           )}
           {!stock.short && !stock.soldOut && stock.availableKits !== null && (
@@ -236,8 +231,8 @@ export default function CartItem({
           )}
           {stock.short && (
             <p className="mt-1.5 inline-flex max-w-full items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold text-amber-800">
-              <span className="truncate" title={stock.limitedBy ? `วัตถุดิบที่จำกัด: ${stock.limitedBy}` : undefined}>
-                เหลือทำได้ {stock.availableKits} ชุด{stock.limitedBy ? ` · ${stock.limitedBy}ใกล้หมด` : ""}
+              <span className="truncate">
+                เหลือทำได้ {stock.availableKits} ชุด
               </span>
             </p>
           )}
