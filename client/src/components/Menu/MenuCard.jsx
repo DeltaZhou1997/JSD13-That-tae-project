@@ -2,6 +2,7 @@ import { useApp } from '../../context/AppContext';
 import { useAuth } from '../../context/AuthContext.js';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { formatMissing, getStockStatus } from '../../utils/stock.js';
+import { restrictionShortLabel } from '../../constants/foodRestrictions.js';
 
 const ELEMENT_CONFIG = {
   'ดิน': {
@@ -177,7 +178,7 @@ export default function MenuCard({ menu, index = 0 }) {
                   key={i}
                   className="rounded-md bg-[#f6ede5] dark:bg-[#483421] text-[#8d593a] dark:text-[#dcb37b] px-1.5 py-0.5 text-[9px] font-semibold"
                 >
-                  {r.replace(/_/g, ' ')}
+                  {restrictionShortLabel(r)}
                 </span>
               ))}
               {menu.foodRestrictions.length > 3 && (

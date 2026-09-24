@@ -74,6 +74,37 @@ for (const [id, label] of Object.entries(RESTRICTION_LABELS)) {
   restrictionLookup.set(normalizeName(id), id);
   restrictionLookup.set(normalizeName(label), id);
 }
+// ชื่อเต็มและชื่อเดิมก่อนปรับถ้อยคำ (ไฟล์ CSV เก่ายังใช้ได้)
+[
+  ["เหมาะกับผู้มีกรดไหลย้อน", "gerd_friendly"],
+  ["โซเดียมต่ำ (ไม่เค็ม)", "low_sodium"],
+  ["น้ำตาลต่ำ", "low_sugar"],
+  ["ไขมันต่ำ", "heart_healthy"],
+  ["พิวรีนต่ำ (เหมาะกับผู้เป็นเกาต์)", "gout_friendly"],
+  ["เหมาะกับผู้ป่วยโรคไต", "ckd_friendly"],
+  ["ไม่มีอาหารทะเล", "no_seafood"],
+  ["ไม่มีกุ้งและปู", "no_shrimp"],
+  ["ไม่มีกลูเตน (แป้งสาลี)", "gluten_free"],
+  ["ไม่มีถั่วลิสง", "no_peanuts"],
+  ["ไม่มีนมวัว", "dairy_free"],
+  ["ไม่มีไข่", "egg_free"],
+  ["มังสวิรัติ (ไม่มีเนื้อสัตว์)", "vegetarian"],
+  ["เจ / วีแกน (ไม่มีผลิตภัณฑ์จากสัตว์)", "vegan"],
+  ["ฮาลาล", "halal"],
+  ["คีโต / คาร์บต่ำ", "keto"],
+  ["กรดไหลย้อน", "gerd_friendly"],
+  ["ลดเค็ม", "low_sodium"],
+  ["เหมาะกับผู้ป่วยไต", "ckd_friendly"],
+  ["ผู้ป่วยไต", "ckd_friendly"],
+  ["ไม่ใส่อาหารทะเล", "no_seafood"],
+  ["ไม่ใส่ทะเล", "no_seafood"],
+  ["ไม่ใส่กุ้ง/ปู", "no_shrimp"],
+  ["ไม่ใส่ถั่วลิสง", "no_peanuts"],
+  ["ไม่ใส่นมวัว", "dairy_free"],
+  ["ไม่ใส่นม", "dairy_free"],
+  ["ไม่ใส่ไข่", "egg_free"],
+  ["คีโต / โลว์คาร์บ", "keto"],
+].forEach(([label, id]) => restrictionLookup.set(normalizeName(label), id));
 export const resolveRestriction = (value) => restrictionLookup.get(normalizeName(value)) || null;
 export const restrictionLabel = (id) => RESTRICTION_LABELS[id] || id;
 

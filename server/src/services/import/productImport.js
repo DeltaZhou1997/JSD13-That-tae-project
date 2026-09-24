@@ -28,7 +28,7 @@ export const PRODUCT_COLUMNS = [
   { key: "images", required: true, example: "laab-moo.png", note: "ชื่อไฟล์ในโฟลเดอร์ images/ หลายรูปคั่นด้วย |" },
   { key: "history", required: false, example: "", note: "ประวัติ/ภูมิปัญญา" },
   { key: "tags", required: false, example: "อาหารเหนือ|เผ็ด", note: "คั่นด้วย | (ระบบเติมธาตุ/ภาค/ข้อจำกัดให้เอง)" },
-  { key: "foodRestrictions", required: false, example: "low_sodium|halal", note: "รหัสหรือชื่อไทย เช่น ลดเค็ม|ฮาลาล" },
+  { key: "foodRestrictions", required: false, example: "low_sodium|halal", note: "รหัสหรือชื่อไทย เช่น โซเดียมต่ำ|ไม่มีอาหารทะเล|ฮาลาล" },
   { key: "servings", required: false, example: "2", note: "จำนวนที่ (ไม่ใส่ = 2)" },
   { key: "cookingSteps", required: false, example: "คั่วข้าวให้หอม|ลวกหมูสับ|คลุกเครื่องลาบ", note: "ขึ้นบรรทัดใหม่ในช่อง หรือคั่นด้วย |" },
   { key: "storageInstruction", required: false, example: "", note: "" },

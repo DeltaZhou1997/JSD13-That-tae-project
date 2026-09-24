@@ -73,24 +73,24 @@ export const TASTE_THEORY = `คัมภีร์รสยาตามศาส
 - รสขม เย็น จืด: ถอนพิษร้อน ดับพิษไข้ ลดความร้อนของธาตุไฟ
 - รสเมาเบื่อ: แก้พิษ ใช้ในปริมาณน้อย`;
 
-// ป้ายชื่อข้อจำกัดอาหาร (ตรงกับ client/src/constants/foodRestrictions.js)
+// ป้ายชื่อข้อจำกัดอาหาร (ตรงกับ shortLabel ใน client/src/constants/foodRestrictions.js)
 export const RESTRICTION_LABELS = {
   gerd_friendly: "กรดไหลย้อน",
-  low_sodium: "ลดเค็ม",
+  low_sodium: "โซเดียมต่ำ",
   low_sugar: "น้ำตาลต่ำ",
   heart_healthy: "ไขมันต่ำ",
   gout_friendly: "พิวรีนต่ำ",
-  ckd_friendly: "เหมาะกับผู้ป่วยไต",
-  no_seafood: "ไม่ใส่อาหารทะเล",
-  no_shrimp: "ไม่ใส่กุ้ง/ปู",
+  ckd_friendly: "โรคไต",
+  no_seafood: "ไม่มีอาหารทะเล",
+  no_shrimp: "ไม่มีกุ้ง/ปู",
   gluten_free: "ไม่มีกลูเตน",
-  no_peanuts: "ไม่ใส่ถั่วลิสง",
-  dairy_free: "ไม่ใส่นมวัว",
-  egg_free: "ไม่ใส่ไข่",
+  no_peanuts: "ไม่มีถั่วลิสง",
+  dairy_free: "ไม่มีนมวัว",
+  egg_free: "ไม่มีไข่",
   vegetarian: "มังสวิรัติ",
   vegan: "เจ / วีแกน",
   halal: "ฮาลาล",
-  keto: "คีโต / โลว์คาร์บ",
+  keto: "คีโต",
 };
 
 export const REGION_LABELS = {

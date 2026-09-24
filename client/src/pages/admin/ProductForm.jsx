@@ -1275,15 +1275,15 @@ export default function ProductForm() {
                   <div>
                     <label className="text-xs font-bold text-[#4c1f08] flex items-center gap-1.5">
                       <span className="text-base">🏷️</span>
-                      <span>ข้อจำกัดทางอาหาร & โภชนาการเฉพาะ (Food Restrictions)</span>
-                      <span className="text-xs text-[#8d593a] font-normal">(เลือกได้หลายแบบ ให้ลูกค้ากรองหาได้)</span>
+                      <span>เมนูนี้เหมาะกับใคร / ไม่มีอะไร</span>
+                      <span className="text-xs text-[#8d593a] font-normal">(เลือกได้หลายข้อ)</span>
                     </label>
                     <p className="text-[11px] text-[#7a5c4d] mt-0.5">
-                      เลือกโรคประจำตัว, การแพ้อาหาร หรือประเภทอาหารที่เมนูนี้รองรับอย่างปลอดภัย
+                      เลือกเฉพาะข้อที่เมนูนี้เป็นจริงตามสูตร ลูกค้าจะใช้ข้อเหล่านี้กรองหาเมนูที่กินได้
                     </p>
                   </div>
                   <span className="text-[11px] font-bold text-[#4c1f08] bg-white px-2.5 py-1 rounded-full border border-[#d9cbbd]">
-                    เลือกแล้ว {foodRestrictions.length} แท็ก
+                    เลือกแล้ว {foodRestrictions.length} ข้อ
                   </span>
                 </div>
 
