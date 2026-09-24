@@ -180,7 +180,11 @@ sequenceDiagram
 
 ### 4.6 วิดเจ็ต AI Advisor (RAG Nutrition Consultant)
 - **Floating Widget:** อยู่ที่มุมขวาล่างของทุกหน้าเว็บ ผู้ใช้สามารถเปิดแชทได้ตลอดเวลา
-- **Context Injection:** ดึงธาตุเจ้าเรือนของผู้ใช้จากโปรไฟล์ส่งไปพร้อมคำถาม ทำให้คำตอบของ AI ตรงกับสรีระของผู้ใช้จริง
+- **Server-side RAG:** widget ส่งแค่คำถามไปที่ `POST /api/v2/advisor/chat` (`utils/advisorApi.js`) ผ่าน token เดิม — server ตัดสินสิทธิ์ตาม role และดึงธาตุ/ข้อจำกัดอาหาร/ตะกร้า/คำสั่งซื้อจาก DB เอง (Guest ส่งได้แค่ธาตุจากผลควิซในเครื่องและ id เมนูในตะกร้า)
+- **การ์ดเมนูและ Actions:** แสดงการ์ดเมนูจากคำตอบ, ปุ่ม **เพิ่มทั้งเซตลงตะกร้า + เลือกแพ็กเกจ** (`handleAddSetToCart` ใน `Layout.jsx`), ปุ่มนำทางไปหน้าต่าง ๆ
+- **Admin Mode:** แอดมินเห็น widget แบบอ่านอย่างเดียว พร้อม Quick prompts เรื่องสต็อก/คำสั่งซื้อ
+- **Offline Fallback:** ถ้า server/AI ไม่พร้อม ใช้ตัวตอบเดิมใน `utils/aiAdvisorEngine.js`
+- รายละเอียดทั้งหมด: **[RAG_AI_ADVISOR.md](RAG_AI_ADVISOR.md)**
 
 ---
 

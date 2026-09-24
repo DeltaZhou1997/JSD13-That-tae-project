@@ -10,7 +10,8 @@
     "start": "node src/server.js",
     "dev": "node --env-file=.env --watch src/server.js",
     "seed": "node src/scripts/seedDatabase.js",
-    "clear": "node src/scripts/clearData.js"
+    "clear": "node src/scripts/clearData.js",
+    "advisor:index": "node src/scripts/buildAdvisorIndex.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

@@ -6,6 +6,7 @@ import productsRouter from "./products.routes.js";
 import cartRouter from "./cart.routes.js";
 import checkoutRouter from "./checkout.routes.js";
 import paymentRouter from "./payment.routes.js";
+import advisorRouter from "./advisor.routes.js";
 
 export const router = Router();
 
@@ -34,5 +35,8 @@ router.use("/orders", checkoutRouter); // Alias ให้ Frontend เรีย�
 
 // 7. Stripe Payment Intents
 router.use("/payment", paymentRouter);
+
+// 8. That-Tae Advisor (RAG AI — Gemini, จำกัดขอบเขตตาม role)
+router.use("/advisor", advisorRouter);
 
 export default router;

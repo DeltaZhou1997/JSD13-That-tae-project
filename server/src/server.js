@@ -7,6 +7,9 @@ import v2Router from "./routes/v2/index.js";
 const app = express();
 const port = process.env.PORT || 3001;
 
+// อยู่หลัง proxy ของ Render 1 ชั้น → req.ip เป็น IP จริงของผู้ใช้ (ใช้กับ rate limit ของ AI Advisor)
+app.set("trust proxy", 1);
+
 // Middlewares
 app.use(cookieParser());
 

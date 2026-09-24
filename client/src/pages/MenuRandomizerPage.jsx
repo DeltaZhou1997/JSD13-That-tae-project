@@ -5,6 +5,7 @@ import RandomResultCard from "../components/menu-randomizer/RandomResultCard.jsx
 import { useProducts } from "../context/ProductsContext.js";
 import gsap from "gsap";
 import LoadingThai from "../components/LoadingThai.jsx";
+import { resolveImageUrl } from "../utils/imageUrl.js";
 
 // 1. Import รูปภาพทั้งหมดจาก src/assets โดยตรง
 import elementEarth from "../assets/element-earth.png";
@@ -63,6 +64,7 @@ export default function MenuRandomizerPage() {
       },
     ];
 
+    // ภาคที่ยังไม่มีเมนู → ไม่แสดงการ์ด (กันรูปเสีย/การ์ดว่าง)
     return regionKeys.map((r) => {
       const matchDishes = allDishes.filter(
         (d) =>
@@ -85,18 +87,17 @@ export default function MenuRandomizerPage() {
         return {
           region: r.label,
           name: randomItem.nameTh || randomItem.name || "เมนูจากฐานข้อมูล",
-          image: img,
+          image: img ? resolveImageUrl(img) : "",
           id: randomItem._id || randomItem.id,
         };
       }
 
-      return {
-        region: r.label,
-        name: "ยังไม่มีเมนูในภูมิภาคนี้",
-        image: "",
-      };
-    });
+      return null;
+    }).filter(Boolean);
   }, [allDishes]);
+
+  // รูปที่โหลดไม่ขึ้น → ซ่อนเฉพาะรูป (แสดงพื้นหลังแทน) ไม่ให้เห็นไอคอนรูปเสีย
+  const [brokenImages, setBrokenImages] = useState({});
 
   // ข้อมูลการ์ดธาตุทั้ง 4
   const elementsList = [
@@ -343,29 +344,34 @@ export default function MenuRandomizerPage() {
         </div>
       </div>
 
-      {/* 3. เมนูแนะนำจาก 4 ภาค (ดึงมาจาก Database จริง) */}
+      {/* 3. เมนูแนะนำประจำภาค (ดึงมาจาก Database จริง — แสดงเฉพาะภาคที่มีเมนู) */}
+      {regionalFeatured.length > 0 && (
       <div className="max-w-5xl mx-auto pt-6 border-t border-[#EAE2D5]">
         <div className="text-center mb-6">
           <span className="text-xs font-bold text-[#8B5E34] tracking-[0.2em] uppercase">
-            ✦ เมนูแนะนำ 4 ภาค ✦
+            ✦ เมนูแนะนำ {regionalFeatured.length} ภาค ✦
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {regionalFeatured.map((item, idx) => (
+        <div className="flex flex-wrap justify-center gap-4">
+          {regionalFeatured.map((item) => (
             <div
-              key={idx}
+              key={item.region}
               onClick={() => {
                 if (item.id) navigate(`/menus/${item.id}`);
               }}
-              className="bg-white rounded-2xl overflow-hidden border border-[#EAE2D5] shadow-xs hover:shadow-md transition-all group cursor-pointer"
+              className="w-[calc(50%-0.5rem)] sm:w-[calc(25%-0.75rem)] bg-white rounded-2xl overflow-hidden border border-[#EAE2D5] shadow-xs hover:shadow-md transition-all group cursor-pointer"
             >
-              <div className="h-28 overflow-hidden bg-[#FAF7F2]">
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+              <div className="h-28 overflow-hidden bg-gradient-to-br from-[#FAF7F2] to-[#EFE6DA]">
+                {item.image && !brokenImages[item.region] && (
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    loading="lazy"
+                    onError={() => setBrokenImages((prev) => ({ ...prev, [item.region]: true }))}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                )}
               </div>
               <div className="p-3 text-center bg-[#FAF7F2]">
                 <span className="inline-block px-2.5 py-0.5 bg-white text-[11px] font-bold text-[#6E5A4E] rounded-full border border-[#E0D5C7] mb-1">
@@ -379,6 +385,7 @@ export default function MenuRandomizerPage() {
           ))}
         </div>
       </div>
+      )}
 
       {/* 4. Pop-up Modal สุ่มผลลัพธ์ (SVG Icons + Fluid Transitions) */}
       {modalState !== "IDLE" && (

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import useToast from "../../hooks/useToast.js";
 import { getAuthHeaders } from "../../utils/authHeader.js";
 import { formatDate } from "../../utils/dateFormatter.js";
+import { SHIPPING_CARRIERS, TRACKING_NUMBER_RE, getCarrierLabel, normalizeTrackingNumber } from "../../constants/shipping.js";
 
 // SVG ไอคอนระดับโปรสำหรับแดชบอร์ดและหน้ารายละเอียดคำสั่งซื้อ
 function CurrencyBahtIcon({ className = "h-5 w-5" }) {
@@ -139,13 +140,13 @@ const STATUS_CONFIG = {
   CANCELLED: { label: "ยกเลิกแล้ว", icon: XCircleIcon, color: "bg-rose-50 text-rose-800 border-rose-200" },
 };
 
-// ลำดับขั้นตอนคำสั่งซื้อตามกระบวนการจริง (Lifecycle Flow: 1 -> 2 -> 3 -> 4 -> 5)
+// ลำดับขั้นตอนคำสั่งซื้อตามกระบวนการจริง (PENDING → PAID → PREPARING → SHIPPED → DELIVERED)
 const ORDER_FLOW_STEPS = [
-  { step: 1, key: "PENDING", label: "ยังไม่ชำระเงิน", icon: ClockIcon, activeColor: "bg-amber-600 text-white border-amber-700", note: "รอลูกค้าชำระเงิน" },
-  { step: 2, key: "PAID", label: "ชำระเงินแล้ว", icon: CheckCircleIcon, activeColor: "bg-emerald-700 text-white border-emerald-800", note: "ตรวจสอบยอดเงินแล้ว" },
-  { step: 3, key: "PREPARING", label: "กำลังเตรียมจัดส่ง", icon: BoxIcon, activeColor: "bg-sky-700 text-white border-sky-800", note: "ครัวกำลังจัดชุด Cooking Kit" },
-  { step: 4, key: "SHIPPED", label: "จัดส่งแล้ว", icon: TruckIcon, activeColor: "bg-blue-700 text-white border-blue-800", note: "ส่งมอบบริษัทขนส่งแล้ว" },
-  { step: 5, key: "DELIVERED", label: "จัดส่งสำเร็จ", icon: CheckBadgeIcon, activeColor: "bg-purple-700 text-white border-purple-800", note: "ลูกค้าได้รับอาหารแล้ว" },
+  { key: "PENDING", label: "ยังไม่ชำระเงิน", icon: ClockIcon, activeColor: "bg-amber-600 text-white border-amber-700", note: "รอลูกค้าชำระเงิน" },
+  { key: "PAID", label: "ชำระเงินแล้ว", icon: CheckCircleIcon, activeColor: "bg-emerald-700 text-white border-emerald-800", note: "ตรวจสอบยอดเงินแล้ว" },
+  { key: "PREPARING", label: "กำลังเตรียมจัดส่ง", icon: BoxIcon, activeColor: "bg-sky-700 text-white border-sky-800", note: "ครัวกำลังจัดชุด Cooking Kit" },
+  { key: "SHIPPED", label: "จัดส่งแล้ว", icon: TruckIcon, activeColor: "bg-blue-700 text-white border-blue-800", note: "ส่งมอบบริษัทขนส่งแล้ว" },
+  { key: "DELIVERED", label: "จัดส่งสำเร็จ", icon: CheckBadgeIcon, activeColor: "bg-purple-700 text-white border-purple-800", note: "ลูกค้าได้รับอาหารแล้ว" },
 ];
 
 
@@ -156,6 +157,8 @@ export default function AdminOrderList() {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
+  // ฟอร์มกรอกเลขพัสดุ (เปิดเมื่อกด "จัดส่งแล้ว" — ต้องกรอกก่อนจึงบันทึกได้)
+  const [shipForm, setShipForm] = useState({ open: false, carrier: "", tracking: "" });
   const toast = useToast();
 
   const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
@@ -183,14 +186,20 @@ export default function AdminOrderList() {
     fetchOrders();
   }, [fetchOrders]);
 
-  // อัปเดตสถานะออเดอร์
-  const handleUpdateStatus = async (orderId, newStatus) => {
+  // ปิดฟอร์มเลขพัสดุทุกครั้งที่เปลี่ยนออเดอร์ที่เปิดดู
+  const selectedKey = selectedOrder?.orderId || selectedOrder?._id;
+  useEffect(() => {
+    setShipForm({ open: false, carrier: "", tracking: "" });
+  }, [selectedKey]);
+
+  // อัปเดตสถานะออเดอร์ (extra = ข้อมูลเพิ่ม เช่น เลขพัสดุ) — คืน true เมื่อบันทึกสำเร็จ
+  const handleUpdateStatus = async (orderId, newStatus, extra = {}) => {
     setUpdatingId(orderId);
     try {
       const res = await fetch(`${apiUrl}/api/v2/orders/${orderId}/status`, {
         method: "PATCH",
         headers: getAuthHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({ status: newStatus, orderStatus: newStatus }),
+        body: JSON.stringify({ status: newStatus, orderStatus: newStatus, ...extra }),
       });
 
       if (res.ok) {
@@ -206,15 +215,38 @@ export default function AdminOrderList() {
           setSelectedOrder((prev) => ({ ...prev, ...saved }));
         }
         toast?.success?.("อัปเดตสถานะคำสั่งซื้อในฐานข้อมูลเรียบร้อยแล้ว");
-      } else {
-        const errJson = await res.json().catch(() => ({}));
-        toast?.error?.(errJson.message || "ไม่สามารถอัปเดตสถานะในฐานข้อมูลได้");
+        return true;
       }
-    } catch (err) {
+      const errJson = await res.json().catch(() => ({}));
+      toast?.error?.(errJson.message || "ไม่สามารถอัปเดตสถานะในฐานข้อมูลได้");
+      return false;
+    } catch {
       toast?.error?.("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล");
+      return false;
     } finally {
       setUpdatingId(null);
     }
+  };
+
+  // กด "จัดส่งแล้ว" → เปิดฟอร์มเลขพัสดุก่อน (ยังไม่บันทึกลง DB)
+  const openShipForm = () => {
+    setShipForm({
+      open: true,
+      carrier: selectedOrder?.shippingCarrier || "",
+      tracking: selectedOrder?.trackingNumber || "",
+    });
+  };
+
+  const shipTracking = normalizeTrackingNumber(shipForm.tracking);
+  const isTrackingValid = TRACKING_NUMBER_RE.test(shipTracking);
+
+  const handleConfirmShipped = async () => {
+    if (!selectedOrder || !isTrackingValid || !shipForm.carrier) return;
+    const ok = await handleUpdateStatus(selectedOrder.orderId || selectedOrder._id, "SHIPPED", {
+      trackingNumber: shipTracking,
+      shippingCarrier: shipForm.carrier,
+    });
+    if (ok) setShipForm({ open: false, carrier: "", tracking: "" });
   };
 
   // กรองรายการออเดอร์
@@ -661,7 +693,7 @@ export default function AdminOrderList() {
                   })()}
                 </div>
 
-                {/* ลำดับกระบวนการ 5 ขั้นตอน (1 -> 2 -> 3 -> 4 -> 5) */}
+                {/* ลำดับกระบวนการ 5 ขั้นตอน */}
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between text-[11px] text-stone-500 font-semibold">
                     <span>ลำดับขั้นตอนการดำเนินงาน (Order Flow):</span>
@@ -669,28 +701,28 @@ export default function AdminOrderList() {
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                    {ORDER_FLOW_STEPS.map(({ step, key, label, icon: Icon, activeColor, note }) => {
+                    {ORDER_FLOW_STEPS.map(({ key, label, icon: Icon, activeColor, note }) => {
                       const isCurrent = (selectedOrder.status || "").toUpperCase() === key;
                       const isUpdating = updatingId === (selectedOrder.orderId || selectedOrder._id);
+                      const isShipFormFor = key === "SHIPPED" && shipForm.open;
                       return (
                         <button
                           key={key}
                           type="button"
                           disabled={isUpdating}
-                          onClick={() => handleUpdateStatus(selectedOrder.orderId || selectedOrder._id, key)}
+                          onClick={() =>
+                            key === "SHIPPED"
+                              ? openShipForm()
+                              : handleUpdateStatus(selectedOrder.orderId || selectedOrder._id, key)
+                          }
                           className={`flex items-center gap-2.5 rounded-xl p-2.5 text-left text-xs font-bold transition-all cursor-pointer border ${
                             isCurrent
                               ? `${activeColor} shadow-md ring-2 ring-offset-1 ring-[#4c1f08]/30 scale-[1.01]`
-                              : "bg-[#faf7f2] border-[#e8dfcf] text-stone-700 hover:bg-[#f1ead7] hover:border-[#dfd1c1]"
+                              : isShipFormFor
+                                ? "bg-blue-50 border-blue-300 text-blue-800 ring-2 ring-blue-300/50"
+                                : "bg-[#faf7f2] border-[#e8dfcf] text-stone-700 hover:bg-[#f1ead7] hover:border-[#dfd1c1]"
                           }`}
                         >
-                          <span
-                            className={`w-5 h-5 rounded-full text-[11px] font-black shrink-0 grid place-items-center ${
-                              isCurrent ? "bg-white/25 text-white" : "bg-stone-200 text-stone-600"
-                            }`}
-                          >
-                            {step}
-                          </span>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1 truncate">
                               <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -704,6 +736,87 @@ export default function AdminOrderList() {
                       );
                     })}
                   </div>
+
+                  {/* ฟอร์มเลขพัสดุ — ต้องกรอกก่อนจึงบันทึกสถานะ "จัดส่งแล้ว" ได้ */}
+                  {shipForm.open && (
+                    <div className="mt-1 rounded-xl border border-blue-200 bg-blue-50/60 p-3 space-y-2.5">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
+                        <TruckIcon className="w-4 h-4" />
+                        <span>ข้อมูลพัสดุ (ต้องกรอกก่อนบันทึก "จัดส่งแล้ว")</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <label className="block">
+                          <span className="text-[11px] font-semibold text-stone-600">บริษัทขนส่ง</span>
+                          <select
+                            value={shipForm.carrier}
+                            onChange={(e) => setShipForm((f) => ({ ...f, carrier: e.target.value }))}
+                            className="mt-1 w-full rounded-lg border border-[#dfd1c1] bg-white px-2.5 py-2 text-xs text-[#3b2a1a] focus:outline-none focus:ring-2 focus:ring-blue-300"
+                          >
+                            <option value="">— เลือกบริษัทขนส่ง —</option>
+                            {SHIPPING_CARRIERS.map((c) => (
+                              <option key={c.id} value={c.id}>{c.label}</option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="block">
+                          <span className="text-[11px] font-semibold text-stone-600">เลขพัสดุ (Tracking No.)</span>
+                          <input
+                            type="text"
+                            value={shipForm.tracking}
+                            maxLength={30}
+                            autoFocus
+                            onChange={(e) => setShipForm((f) => ({ ...f, tracking: e.target.value }))}
+                            onKeyDown={(e) => e.key === "Enter" && handleConfirmShipped()}
+                            placeholder="เช่น EF123456789TH"
+                            className={`mt-1 w-full rounded-lg border bg-white px-2.5 py-2 text-xs font-mono uppercase text-[#3b2a1a] focus:outline-none focus:ring-2 ${
+                              shipForm.tracking && !isTrackingValid
+                                ? "border-rose-300 focus:ring-rose-200"
+                                : "border-[#dfd1c1] focus:ring-blue-300"
+                            }`}
+                          />
+                        </label>
+                      </div>
+                      {shipForm.tracking && !isTrackingValid && (
+                        <p className="text-[11px] text-rose-600">เลขพัสดุต้องเป็นตัวอักษรอังกฤษ/ตัวเลข 6–30 ตัว</p>
+                      )}
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setShipForm({ open: false, carrier: "", tracking: "" })}
+                          className="rounded-full border border-stone-300 bg-white px-3 py-1.5 text-xs font-bold text-stone-600 hover:bg-stone-50 cursor-pointer"
+                        >
+                          ยกเลิก
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!isTrackingValid || !shipForm.carrier || updatingId === (selectedOrder.orderId || selectedOrder._id)}
+                          onClick={handleConfirmShipped}
+                          className="inline-flex items-center gap-1.5 rounded-full bg-blue-700 px-4 py-1.5 text-xs font-bold text-white hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+                        >
+                          <TruckIcon className="w-3.5 h-3.5" />
+                          <span>บันทึกสถานะ "จัดส่งแล้ว"</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* เลขพัสดุที่บันทึกแล้ว */}
+                  {!shipForm.open && selectedOrder.trackingNumber && (
+                    <div className="mt-1 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-blue-100 bg-blue-50/50 px-3 py-2 text-xs">
+                      <span className="inline-flex items-center gap-1.5 text-blue-900">
+                        <TruckIcon className="w-3.5 h-3.5" />
+                        <span>{getCarrierLabel(selectedOrder.shippingCarrier) || "ขนส่ง"}:</span>
+                        <span className="font-mono font-bold">{selectedOrder.trackingNumber}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={openShipForm}
+                        className="text-[11px] font-bold text-blue-700 hover:underline cursor-pointer"
+                      >
+                        แก้ไขเลขพัสดุ
+                      </button>
+                    </div>
+                  )}
 
                   {/* ตัวเลือกพิเศษ / ยกเลิกออเดอร์ */}
                   <div className="mt-3 pt-2.5 border-t border-dashed border-[#f1ead7] flex flex-wrap items-center justify-between gap-2">

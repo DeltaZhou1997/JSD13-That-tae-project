@@ -64,7 +64,7 @@ graph TD
     end
 
     subgraph CloudLayer ["5. Cloud Services"]
-        GeminiAPI["Google Gemini 1.5 Flash API"]
+        GeminiAPI["Google Gemini 3.5 Flash Lite API"]
         MongoAtlas[("🍃 MongoDB Atlas Cluster")]
     end
 
@@ -194,7 +194,7 @@ flowchart LR
     end
 
     subgraph Step3 ["3. Generation Step"]
-        SystemPrompt -->|HTTP POST| Gemini["Google Gemini 1.5 Flash API"]
+        SystemPrompt -->|HTTP POST| Gemini["Google Gemini 3.5 Flash Lite API"]
         Gemini -->|คำตอบที่อบอุ่นและถูกต้อง| Response["JSON Response สู่ Client"]
     end
 ```
@@ -314,3 +314,33 @@ app.use((err, req, res, next) => {
    - MongoDB Multi-document Transactions ต้องการ Replica Set ในการทำงาน หากทีมงานนำโค้ดไปรันบน Standalone MongoDB หรือ Atlas Sandbox ในบางช่วงเวลา Session จะ Error ทันที การใช้ `async/await` ตรวจสต็อกแล้วหักด้วย `$inc` มีความเสถียรสูงสุดและไม่เกิดข้อผิดพลาด
 3. **ทำไมต้องทำ RAG (Retrieval-Augmented Generation) แทนที่จะถาม AI ตรงๆ?**
    - AI ทั่วไปไม่ทราบว่าร้าน "ธาตุแท้" มีเมนูอะไรขายอยู่บ้าง หากไม่ส่ง Context ไป AI อาจแนะนำอาหารที่ร้านไม่มีขาย การดึงเมนูจริงจาก MongoDB ไปประกอบ Prompt ทำให้ AI แนะนำได้เฉพาะเมนูที่มีในร้านจริงเท่านั้น
+
+## 🧠 That-Tae Advisor (RAG AI — Google Gemini 3.5 Flash Lite)
+
+> เอกสารฉบับเต็ม: **[RAG_AI_ADVISOR.md](RAG_AI_ADVISOR.md)** (หลักการ/การทำงาน/ความปลอดภัย) และ **[RAG_AI_MONGODB.md](RAG_AI_MONGODB.md)** (ฝั่ง MongoDB) — แผนภาพ RAG Pipeline ด้านบนเป็นภาพรวมเดิม ขั้นตอนจริงดูในเอกสารฉบับเต็ม
+
+แชท AI มุมขวาล่าง ตอบจากข้อมูลจริงใน MongoDB ผ่าน `POST /api/v2/advisor/chat` และจำกัดขอบเขตตาม role จาก JWT
+
+| Role | ใช้ได้ |
+|---|---|
+| Guest | ความรู้ธาตุเจ้าเรือน, เมนู/วัตถุดิบที่เปิดขาย, วิธีใช้เว็บ, จัดเซตตามไซส์, สุ่มเมนู, นำทาง |
+| Customer | ทั้งหมดของ Guest + โปรไฟล์ ตะกร้า คำสั่งซื้อ **ของตัวเองเท่านั้น** (กรองเมนูตามข้อจำกัดอาหาร) |
+| Admin | ถาม-ตอบ/ชี้แนะ: สต็อกต่ำ เมนูหมด สถิติคำสั่งซื้อ + นำทางไปหน้าแอดมิน (**ไม่มีการแก้ไขข้อมูล**) |
+
+**ตั้งค่า** — เพิ่มใน `server/.env` (ดูตัวอย่างใน `.env.example`): `GEMINI_API_KEY`, `GEMINI_EMBEDDING_MODEL`, `GEMINI_GENERATION_MODEL`
+
+**สร้าง index ครั้งแรก**
+```bash
+cd server
+npm run advisor:index            # ฝังเฉพาะที่เปลี่ยน
+npm run advisor:index -- --force # ฝังใหม่ทั้งหมด (เช่น เปลี่ยน embedding model / ADVISOR_EMBEDDING_DIM)
+```
+หลังจากนั้น server จะซิงก์ index อัตโนมัติทุก `ADVISOR_SYNC_MINUTES` นาที (แอดมินสั่งทันทีได้ที่ `POST /api/v2/advisor/reindex`, ดูสถานะ `GET /api/v2/advisor/status`)
+
+**Atlas Vector Search (ไม่บังคับ)** — ค่าเริ่มต้นคำนวณ cosine ใน server ถ้าข้อมูลเยอะขึ้นให้สร้าง index บน collection `advisorchunks` แล้วตั้ง `ADVISOR_VECTOR_INDEX=<ชื่อ index>`
+```json
+{ "fields": [
+  { "type": "vector", "path": "embedding", "numDimensions": 768, "similarity": "cosine" },
+  { "type": "filter", "path": "visibility" }
+] }
+```

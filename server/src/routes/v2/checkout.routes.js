@@ -1,7 +1,7 @@
 import { Router } from "express";
 import mongoose from "mongoose";
 import Stripe from "stripe";
-import { Order } from "../../models/Order.model.js";
+import { Order, SHIPPING_CARRIERS, TRACKING_NUMBER_RE } from "../../models/Order.model.js";
 import { Product } from "../../models/Product.model.js";
 import { Ingredient } from "../../models/Ingredient.model.js";
 import { Cart } from "../../models/Cart.model.js";
@@ -528,7 +528,7 @@ const PAYMENT_STATUSES = ["PENDING", "PAID", "FAILED", "REFUNDED"];
 
 const handleUpdateStatus = async (req, res, next) => {
   try {
-    const { orderStatus, paymentStatus, status } = req.body;
+    const { orderStatus, paymentStatus, status, trackingNumber, shippingCarrier } = req.body;
     const finalStatus = status || orderStatus;
 
     if (finalStatus && !ORDER_STATUSES.includes(finalStatus)) {
@@ -541,6 +541,23 @@ const handleUpdateStatus = async (req, res, next) => {
     const order = await Order.findOne(orderQuery(req.params.id));
     if (!order) {
       return res.status(404).json({ message: "ไม่พบคำสั่งซื้อเพื่อทำการอัปเดต" });
+    }
+
+    // จัดส่งแล้ว (SHIPPED) → ต้องมีเลขพัสดุที่ถูกต้องก่อนบันทึก (ส่งมาใหม่ หรือมีอยู่แล้วในออเดอร์)
+    if (finalStatus === "SHIPPED" || trackingNumber !== undefined) {
+      const tracking = String(trackingNumber ?? order.trackingNumber ?? "").trim().toUpperCase();
+      const carrier = String(shippingCarrier ?? order.shippingCarrier ?? "").trim();
+      if (!TRACKING_NUMBER_RE.test(tracking)) {
+        return res.status(400).json({
+          message: "กรุณากรอกเลขพัสดุให้ถูกต้องก่อนเปลี่ยนสถานะเป็น \"จัดส่งแล้ว\" (ตัวอักษรอังกฤษ/ตัวเลข 6–30 ตัว)",
+        });
+      }
+      if (carrier && !SHIPPING_CARRIERS.includes(carrier)) {
+        return res.status(400).json({ message: `บริษัทขนส่ง "${carrier}" ไม่ถูกต้อง` });
+      }
+      order.trackingNumber = tracking;
+      order.shippingCarrier = carrier;
+      if (!order.shippedAt) order.shippedAt = new Date();
     }
 
     if (finalStatus) {

@@ -1,5 +1,10 @@
 import mongoose from "mongoose";
 
+// บริษัทขนส่ง (ต้องตรงกับ client/src/constants/shipping.js)
+export const SHIPPING_CARRIERS = ["thailandpost", "kerry", "flash", "jt", "dhl", "other"];
+// เลขพัสดุ: ตัวอักษรอังกฤษ/ตัวเลข/ขีด 6–30 ตัว
+export const TRACKING_NUMBER_RE = /^[A-Z0-9-]{6,30}$/;
+
 const orderItemSchema = new mongoose.Schema(
   {
     productId: {
@@ -134,6 +139,21 @@ const orderSchema = new mongoose.Schema(
     },
     stripePaymentIntentId: {
       type: String,
+      default: null,
+    },
+    // ข้อมูลพัสดุ — บังคับกรอกเลขพัสดุก่อนเปลี่ยนสถานะเป็น SHIPPED (ตรวจใน checkout.routes.js)
+    trackingNumber: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    shippingCarrier: {
+      type: String,
+      enum: ["", ...SHIPPING_CARRIERS],
+      default: "",
+    },
+    shippedAt: {
+      type: Date,
       default: null,
     },
   },

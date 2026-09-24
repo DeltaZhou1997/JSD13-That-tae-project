@@ -80,7 +80,7 @@ export function verifyToken(req, res, next) {
 }
 
 // อ่าน token แบบไม่บังคับ (ไม่มี/ไม่ถูกต้อง → null)
-function getOptionalUser(req) {
+export function getOptionalUser(req) {
     const authHeader = req.headers.authorization;
     const token =
         (authHeader && authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null) ||

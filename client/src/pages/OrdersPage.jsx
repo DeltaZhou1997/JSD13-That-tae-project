@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext.js";
 import { getAuthHeaders } from "../utils/authHeader.js";
 import { formatDate } from "../utils/dateFormatter.js";
 import { resolveImageUrl } from "../utils/imageUrl.js";
+import { getCarrierLabel } from "../constants/shipping.js";
 
 const CUSTOMER_STATUS_CONFIG = {
   PENDING: { label: "ยังไม่ชำระเงิน", color: "bg-amber-100 text-amber-800 border-amber-200" },
@@ -13,6 +14,60 @@ const CUSTOMER_STATUS_CONFIG = {
   DELIVERED: { label: "จัดส่งสำเร็จ", color: "bg-purple-100 text-purple-800 border-purple-200" },
   CANCELLED: { label: "ยกเลิกแล้ว", color: "bg-rose-100 text-rose-800 border-rose-200" },
 };
+
+// กล่องเลขพัสดุ (แสดงเมื่อจัดส่งแล้ว / จัดส่งสำเร็จ)
+function TrackingInfo({ order }) {
+  const [copied, setCopied] = useState(false);
+  const delivered = (order.status || "").toUpperCase() === "DELIVERED";
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(order.trackingNumber);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* เบราว์เซอร์ไม่อนุญาต clipboard — ผู้ใช้เลือกคัดลอกเองได้ */
+    }
+  };
+
+  return (
+    <div className={`px-6 py-3 border-t flex flex-wrap items-center justify-between gap-3 ${delivered ? "bg-purple-50/70 border-purple-200" : "bg-blue-50/70 border-blue-200"}`}>
+      <div className="flex items-center gap-3 min-w-0">
+        <div className={`w-9 h-9 shrink-0 rounded-xl grid place-items-center ${delivered ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" aria-hidden="true">
+            <path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z" />
+            <circle cx="7" cy="18" r="1.8" />
+            <circle cx="17" cy="18" r="1.8" />
+          </svg>
+        </div>
+        <div className="min-w-0">
+          <span className={`block text-[11px] font-semibold ${delivered ? "text-purple-800" : "text-blue-800"}`}>
+            {delivered ? "จัดส่งสำเร็จแล้ว" : "พัสดุกำลังเดินทาง"}
+            {getCarrierLabel(order.shippingCarrier) && ` · ${getCarrierLabel(order.shippingCarrier)}`}
+            {order.shippedAt && ` · ส่งเมื่อ ${formatDate(order.shippedAt)}`}
+          </span>
+          <span className="block text-xs text-[#6f675f]">
+            เลขพัสดุ:{" "}
+            <span className="font-mono text-sm font-bold tracking-wide text-[#2f2119] select-all">{order.trackingNumber}</span>
+          </span>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={handleCopy}
+        className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
+          copied
+            ? "border-emerald-300 bg-emerald-50 text-emerald-700"
+            : delivered
+              ? "border-purple-300 bg-white text-purple-700 hover:bg-purple-100"
+              : "border-blue-300 bg-white text-blue-700 hover:bg-blue-100"
+        }`}
+      >
+        {copied ? "คัดลอกแล้ว ✓" : "คัดลอกเลขพัสดุ"}
+      </button>
+    </div>
+  );
+}
 
 export default function OrdersPage() {
   const { currentUser } = useAuth();
@@ -245,6 +300,11 @@ export default function OrdersPage() {
                       </div>
                     ))}
                   </div>
+
+                  {/* เลขพัสดุ — แสดงเมื่อจัดส่งแล้ว */}
+                  {["SHIPPED", "DELIVERED"].includes((order.status || "").toUpperCase()) && order.trackingNumber && (
+                    <TrackingInfo order={order} />
+                  )}
 
                   {/* กล่องแจ้งและปุ่มชำระเงินต่อ หากสถานะเป็น PENDING */}
                   {(order.status || "").toUpperCase() === "PENDING" && (

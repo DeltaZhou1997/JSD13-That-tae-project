@@ -6,6 +6,7 @@ import AIAdvisorWidget from './ai/AIAdvisorWidget.jsx'
 import useToast from '../hooks/useToast.js'
 import useCartSync from '../hooks/useCartSync.js'
 import { getStockStatus } from '../utils/stock.js'
+import { SUBSCRIPTION_PLANS } from '../constants/checkout.js'
 
 function Layout({ context }) {
   // ตะกร้าจำสถานะ: guest เก็บในคุกกี้ / ล็อกอินแล้วซิงก์กับ DB (ย้ายตะกร้า guest เข้าบัญชีตอนล็อกอิน)
@@ -71,6 +72,42 @@ function Layout({ context }) {
     }
   };
 
+  // AI Advisor จัดเซต: เพิ่มหลายเมนูในครั้งเดียว (ข้ามเมนูที่หมด) + เลือกแพ็กเกจตามไซส์ แจ้งเตือนครั้งเดียว
+  const handleAddSetToCart = (products = [], planId) => {
+    const addable = products.filter((p) => !getStockStatus(p, 1).soldOut);
+    if (addable.length === 0) {
+      toast?.error?.('เมนูในเซตนี้สินค้าหมดทั้งหมด');
+      return;
+    }
+    setCartItems((prevItems) => {
+      const next = [...prevItems];
+      for (const product of addable) {
+        const targetId = product._id || product.id;
+        const idx = next.findIndex((item) => (item._id || item.id) === targetId);
+        if (idx >= 0) {
+          next[idx] = { ...next[idx], quantity: next[idx].quantity + 1 };
+        } else {
+          const displayName = product.nameTh || product.name || 'สินค้า';
+          next.push({
+            _id: targetId,
+            id: targetId,
+            productId: targetId,
+            name: displayName,
+            nameTh: displayName,
+            price: Number(product.price) || 0,
+            quantity: 1,
+            imageUrl: Array.isArray(product.imageUrl) ? product.imageUrl[0] : product.imageUrl || '',
+            region: product.regionNameTh || product.region || '',
+          });
+        }
+      }
+      return next;
+    });
+    const plan = SUBSCRIPTION_PLANS[planId];
+    if (plan) setSelectedPlan(plan);
+    toast?.success?.(`เพิ่ม ${addable.length} เมนูลงตะกร้าแล้ว${plan ? ` (แพ็กเกจ ${plan.name})` : ''}`);
+  };
+
   const handleClearCart = () => {
     setCartItems([]);
   };
@@ -115,7 +152,11 @@ function Layout({ context }) {
       </main>
 
       {/* 🌟 That-Tae RAG AI Health & Nutrition Advisor */}
-      <AIAdvisorWidget cartItems={currentCartItems} />
+      <AIAdvisorWidget
+        cartItems={currentCartItems}
+        onAddToCart={context?.handleAddToCart ?? handleAddToCart}
+        onAddSet={handleAddSetToCart}
+      />
 
       <Footer />
     </div>

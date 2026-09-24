@@ -1,6 +1,12 @@
 # 🌿 "ธาตุแท้" (That Tae) — Thai 4-Element Cooking Kit & Health Cuisine Platform
 ### JSD13 Group 4 — Full Stack Web Application (MERN + MongoDB Atlas + GridFS + RAG AI)
 
+
+RAG_AI_ADVISOR.md เป็นคู่มือหลัก มีหลักการ RAG, แผนภาพลำดับการทำงาน, ตาราง role, การกันใช้งานผิด 9 ชั้น, วิธีติดตั้งและ deploy, API reference และ checklist ทดสอบ 13 ข้อ
+RAG_AI_MONGODB.md เน้นฝั่ง MongoDB มี schema ของ advisorchunks, indexer, การค้น 2 โหมด, ขั้นตอนตั้ง Atlas Vector Search ที่ถูกต้อง, ตารางเทียบกับแนวทางของครู และคำสั่งตรวจใน Mongo Shell
+README ทั้ง 3 ไฟล์แก้เป็น Gemini 3.5 Flash Lite และใส่ลิงก์ไปเอกสารใหม่แล้ว
+
+
 > **"ธาตุแท้" (That Tae)** คือแพลตฟอร์ม E-Commerce อาหารสุขภาพและชุดวัตถุดิบพร้อมปรุง (**Cooking Kit**) สไตล์ไทยดั้งเดิมและฟิวชั่น ผสานองค์ความรู้ **ศาสตร์การแพทย์แผนไทยเรื่อง 4 ธาตุเจ้าเรือน (ดิน, น้ำ, ลม, ไฟ)** และโภชนาการรายบุคคล ช่วยให้ผู้ใช้ประเมินธาตุเจ้าเรือน เลือกเมนูอาหารที่ปรับสมดุลร่างกาย สั่งซื้อ Cooking Kit ที่ชั่งตวงวัดวัตถุดิบพอดีมื้อพร้อมปรุงได้เองที่บ้าน พร้อมระบบ **RAG AI Advisor** ช่วยให้คำปรึกษาด้านโภชนาการแบบเฉพาะเจาะจง
 
 ---
@@ -52,7 +58,9 @@
 - วิดเจ็ตแชท AI ลอยตัว (Floating Widget) แนะนำการทานอาหารปรับสมดุลธาตุ
 - ทำงานด้วยสถาปัตยกรรม **RAG (Retrieval-Augmented Generation)**:
   - ดึงข้อมูลเมนูอาหารจริงในร้านจาก MongoDB มาเป็นความรู้ (Context)
-  - ส่งต่อไปยัง **Google Gemini 1.5 Flash API** เพื่อตอบคำถามอย่างถูกต้องและแม่นยำ
+  - ส่งต่อไปยัง **Google Gemini 3.5 Flash Lite API** เพื่อตอบคำถามอย่างถูกต้องและแม่นยำ (ค้นความรู้ด้วย `gemini-embedding-001` + MongoDB)
+  - จำกัดขอบเขตตาม role: Guest / Customer (เห็นเฉพาะข้อมูลตัวเอง) / Admin (ถาม-ตอบอย่างเดียว) และกันการใช้งานผิดวัตถุประสงค์
+  - ลูกค้าจัดเซตอาหารตามไซส์ สุ่มเมนู เช็กคำสั่งซื้อ และนำทางในเว็บผ่านแชทได้ — รายละเอียด: **[RAG_AI_ADVISOR.md](RAG_AI_ADVISOR.md)**
 
 ### 8. ระบบบริหารจัดการหลังบ้าน (Admin Back-Office Dashboard)
 - แดชบอร์ดสรุปยอดขายรวม, จำนวนคำสั่งซื้อ, สินค้าขายดี, และสินค้าที่ใกล้หมดสต็อก (Low Stock Alert)
@@ -101,7 +109,7 @@ flowchart TB
     end
 
     subgraph ExternalServices ["☁️ External Cloud Services"]
-        GeminiAPI["Google Gemini 1.5 Flash API"]
+        GeminiAPI["Google Gemini 3.5 Flash Lite API"]
         StripeAPI["Stripe Payment Gateway"]
     end
 
@@ -247,7 +255,7 @@ PJ-G4-SP2/
 | **Database** | **MongoDB Atlas (Mongoose 8.x)** | ฐานข้อมูล NoSQL ที่ยืดหยุ่น เหมาะกับเอกสารอาหารที่มีสูตรและสารอาหารแบบ Nesting Array |
 | **File Storage** | **MongoDB GridFS** | เก็บไฟล์ภาพขนาดใหญ่ใน Database ได้โดยตรง ไม่ต้องเสียค่าบริการ S3 หรือตั้งโฟลเดอร์ในเซิร์ฟเวอร์ |
 | **Authentication** | **JWT (JSON Web Token)** | ตรวจสอบตัวตนแบบ Stateless ประหยัดทรัพยากรเซิร์ฟเวอร์ และเก็บใน HttpOnly Cookie ได้ปลอดภัย |
-| **AI Integration** | **Google Gemini 1.5 Flash** | ประมวลผลคำตอบรวดเร็ว รองรับภาษาไทยได้เป็นธรรมชาติ และรองรับ Context ขนาดยาวสำหรับ RAG |
+| **AI Integration** | **Google Gemini 3.5 Flash Lite + gemini-embedding-001** | ประมวลผลคำตอบรวดเร็ว รองรับภาษาไทยได้เป็นธรรมชาติ และรองรับ Context ขนาดยาวสำหรับ RAG |
 | **Payment Gateway** | **Stripe SDK + PromptPay QR** | รองรับการชำระเงินที่ปลอดภัยตามมาตรฐานสากล และตรงกับพฤติกรรมผู้บริโภคชาวไทย |
 
 ---
@@ -293,6 +301,8 @@ CLIENT_URL=http://localhost:5173
 JWT_SECRET=that-tae-super-secret-key-2026
 GRIDFS_BUCKET=uploads
 GEMINI_API_KEY=AIzaSyYourGeminiApiKeyHere
+GEMINI_GENERATION_MODEL=gemini-3.5-flash-lite
+GEMINI_EMBEDDING_MODEL=gemini-embedding-001
 STRIPE_SECRET_KEY=sk_test_51UHJNTBjQBqcLrb8...
 ```
 
@@ -330,3 +340,5 @@ npm run dev
 
 - 💻 **[README_Client.md](file:///e:/PJ-G4-SP2/README_Client.md)**: สถาปัตยกรรมฝั่งหน้าบ้าน, State Management, แผนผัง Navigation, การออกแบบ Bento Grid, และคู่มือ Component
 - ⚙️ **[README_Server.md](file:///e:/PJ-G4-SP2/README_Server.md)**: สถาปัตยกรรมฝั่งหลังบ้าน, ตาราง API Endpoints V2, การทำงานของ GridFS Streaming, RAG AI Pipeline, และ Mongoose Data Models
+- 🧠 **[RAG_AI_ADVISOR.md](RAG_AI_ADVISOR.md)**: ระบบ RAG AI Advisor โดยละเอียด — หลักการ, ลำดับการทำงาน, การจำกัดขอบเขตตาม role, การกันใช้งานผิด, วิธีติดตั้งและทดสอบ
+- 🍃 **[RAG_AI_MONGODB.md](RAG_AI_MONGODB.md)**: RAG AI ฝั่ง MongoDB — collection `advisorchunks`, การซิงก์เวกเตอร์, Atlas Vector Search

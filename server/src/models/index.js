@@ -3,3 +3,4 @@ export { default as Ingredient, Ingredient as IngredientModel } from "./Ingredie
 export { default as User, User as UserModel } from "./User.model.js";
 export { default as Cart, Cart as CartModel } from "./Cart.model.js";
 export { default as Order, Order as OrderModel } from "./Order.model.js";
+export { default as AdvisorChunk } from "./AdvisorChunk.model.js";
