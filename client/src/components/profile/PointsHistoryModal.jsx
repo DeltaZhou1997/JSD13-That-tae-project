@@ -26,6 +26,33 @@ function formatDateTime(value) {
   };
 }
 
+// สร้างประวัติเบี้ยจากรายการคำสั่งซื้อ (สำรองเมื่อ Server ยังไม่มี /me/points) — ตรรกะเดียวกับฝั่ง Server
+function orderLabel(order) {
+  if (order.planDetails?.planName) return `แพ็กเกจ ${order.planDetails.planName}`;
+  const count = (order.items || []).reduce((sum, i) => sum + (Number(i.quantity) || 1), 0);
+  return `A La Carte ${count} ชุด`;
+}
+
+function buildTransactionsFromOrders(orders = []) {
+  const list = [];
+  for (const o of orders) {
+    const base = { orderId: o.orderId, label: orderLabel(o) };
+    if (o.pointsRedeemed > 0) {
+      list.push({ ...base, type: "REDEEM", points: -o.pointsRedeemed, date: o.createdAt, detail: `ใช้เป็นส่วนลด ฿${Number(o.pointsDiscount || 0).toLocaleString()}` });
+      if (o.pointsRefunded) {
+        list.push({ ...base, type: "REFUND", points: o.pointsRedeemed, date: o.pointsRefundedAt || o.updatedAt, detail: "คืนเบี้ยจากการยกเลิกคำสั่งซื้อ" });
+      }
+    }
+    const awarded = o.pointsAwarded === true || (o.pointsAwarded === undefined && o.paymentStatus === "PAID");
+    if (o.earnedPoints > 0 && awarded) {
+      list.push({ ...base, type: "EARN", points: o.earnedPoints, date: o.pointsAwardedAt || o.updatedAt || o.createdAt, detail: `ซื้อ ฿${Number(o.itemsSubtotal || 0).toLocaleString()}` });
+    }
+  }
+  list.sort((a, b) => new Date(b.date) - new Date(a.date));
+  const sum = (type) => list.filter((t) => t.type === type).reduce((s, t) => s + Math.abs(t.points), 0);
+  return { transactions: list, totals: { earned: sum("EARN"), redeemed: sum("REDEEM"), refunded: sum("REFUND") } };
+}
+
 // วงแหวนความคืบหน้าไประดับถัดไป (เคลื่อนไหวตอนเปิด)
 function ProgressRing({ percent, color, size = 132 }) {
   const [shown, setShown] = useState(0);
@@ -67,15 +94,25 @@ export default function PointsHistoryModal({ open, onClose, currentUser }) {
     setError("");
     try {
       const res = await fetch(`${getApiUrl()}/api/v2/users/me/points`, { headers: getAuthHeaders() });
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json.message || "โหลดประวัติเบี้ยไม่สำเร็จ");
-      setData(json);
+      const json = await res.json().catch(() => null);
+      if (res.ok && json) {
+        setData(json);
+        return;
+      }
+      // Server ยังไม่อัปเดต (ไม่มี endpoint) → ใช้ประวัติคำสั่งซื้อแทน
+      const userId = currentUser?.id || currentUser?._id;
+      const ordersRes = userId
+        ? await fetch(`${getApiUrl()}/api/v2/orders/user/${userId}`, { headers: getAuthHeaders() })
+        : null;
+      const orders = ordersRes?.ok ? await ordersRes.json().catch(() => null) : null;
+      if (!Array.isArray(orders)) throw new Error(json?.message || "โหลดประวัติเบี้ยไม่สำเร็จ");
+      setData(buildTransactionsFromOrders(orders));
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentUser?.id, currentUser?._id]);
 
   useEffect(() => {
     if (open) {

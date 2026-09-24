@@ -9,6 +9,8 @@ import { getAuthHeaders, getApiUrl } from "../utils/authHeader.js";
 import { THAI_PROVINCES } from "../constants/thaiProvinces";
 import { getTier, tierProgress as getTierProgress } from "../constants/membership";
 import PointsHistoryModal from "../components/profile/PointsHistoryModal";
+import TierBadge from "../components/profile/TierBadge";
+import { TIER_THEME } from "../constants/tierTheme";
 
 // =========================================================================
 // 🌟 SVGs & Visual Icons (User-friendly & Premium)
@@ -486,6 +488,7 @@ export default function ProfilePage() {
   const tierInfo = getTier(progressInfo.tier);
   const nextTierInfo = progressInfo.nextTier ? getTier(progressInfo.nextTier) : null;
   const tier = tierInfo.name;
+  const tierTheme = TIER_THEME[tierInfo.id];
   const tierProgress = nextTierInfo
     ? Math.max(0, Math.min(100, Math.round(((lifetimePoints - tierInfo.minLifetime) / (nextTierInfo.minLifetime - tierInfo.minLifetime)) * 100)))
     : 100;
@@ -549,10 +552,12 @@ export default function ProfilePage() {
                     <span>เปลี่ยนรูป</span>
                   </div>
                 )}
-                <span className="absolute -bottom-1 -right-1 bg-[#8D593A] text-white text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-xs flex items-center gap-1 z-10">
-                  <SparklesIcon className="w-3 h-3 text-amber-300" />
-                  {isAdmin ? "Admin" : tier}
-                </span>
+                {isAdmin && (
+                  <span className="absolute -bottom-1 -right-1 bg-[#8D593A] text-white text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-xs flex items-center gap-1 z-10">
+                    <SparklesIcon className="w-3 h-3 text-amber-300" />
+                    Admin
+                  </span>
+                )}
               </div>
 
               <div>
@@ -560,51 +565,62 @@ export default function ProfilePage() {
                   <h1 className="text-xl sm:text-2xl font-black text-[#3D2E2B]">
                     {currentUser.firstName} {currentUser.lastName}
                   </h1>
-                  <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#FAF7F2] border border-[#EAE2D5] text-[#8D593A]">
-                    <ShieldCheckIcon className="w-3.5 h-3.5" />
-                    {isAdmin ? "ผู้ดูแลระบบ (Admin)" : `สมาชิก ${tier}`}
-                  </span>
+                  {isAdmin && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#FAF7F2] border border-[#EAE2D5] text-[#8D593A]">
+                      <ShieldCheckIcon className="w-3.5 h-3.5" />
+                      ผู้ดูแลระบบ (Admin)
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs sm:text-sm text-[#7A6B63] mt-1 flex items-center gap-2">
                   <span>{currentUser.email}</span>
                 </p>
 
-                {/* ส่วนแสดงคะแนนและระดับสมาชิก อยู่กับข้อมูลคน (User Header) */}
+                {/* การ์ดสมาชิก: ตรายศ + เบี้ย + ความคืบหน้า (แสดงระดับจุดเดียว) — กดเพื่อดูประวัติเบี้ย */}
                 {!isAdmin && (
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-2.5">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-amber-50 border border-amber-200/80 shadow-2xs">
-                      <CoinIcon className="w-3.5 h-3.5 text-amber-600" />
-                      <span className="text-xs font-bold text-[#8D593A]">{points}</span>
-                      <span className="text-[10px] text-[#A09289]">เบี้ย</span>
-                    </div>
-
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-[#FAF8F5] border border-[#EAE2D5] text-xs">
-                      <span className="text-[11px] text-[#7A6B63] font-medium">ระดับ: <strong className="text-[#3D2E2B] font-bold">{tier}</strong></span>
-                      <div className="w-16 bg-[#EAE2D5] h-1.5 rounded-full overflow-hidden inline-block align-middle">
+                  <button
+                    type="button"
+                    onClick={() => setPointsModalOpen(true)}
+                    className="group mt-3 flex w-full max-w-md items-center gap-3 rounded-2xl border p-2.5 pr-3.5 text-left shadow-2xs transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
+                    style={{ background: `linear-gradient(135deg, ${tierTheme.soft} 0%, #ffffff 85%)`, borderColor: `${tierTheme.mid}66` }}
+                    aria-label="ดูเบี้ยและระดับสมาชิกเพิ่มเติม"
+                  >
+                    <TierBadge tier={tierInfo.id} size={60} className="shrink-0 transition-transform group-hover:scale-105" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-black" style={{ color: tierTheme.text }}>
+                          สมาชิก {tier}
+                          {tierInfo.multiplier > 1 && (
+                            <span className="ml-1.5 text-[10px] font-bold opacity-80">เบี้ย x{tierInfo.multiplier}</span>
+                          )}
+                        </p>
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-white/90 px-2 py-0.5 shadow-2xs">
+                          <CoinIcon className="w-3.5 h-3.5 text-amber-600" />
+                          <span className="text-xs font-black text-[#8D593A]">{points.toLocaleString()}</span>
+                          <span className="text-[10px] text-[#A09289]">เบี้ย</span>
+                        </span>
+                      </div>
+                      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#EAE2D5]">
                         <div
-                          className="bg-gradient-to-r from-[#8D593A] to-amber-500 h-full rounded-full"
-                          style={{ width: `${tierProgress}%` }}
+                          className="h-full rounded-full transition-[width] duration-700"
+                          style={{ width: `${tierProgress}%`, background: `linear-gradient(90deg, ${tierTheme.mid}, ${tierTheme.ribbon})` }}
                         />
                       </div>
-                      <span className="text-[10px] text-[#8D593A] font-bold">{tierProgress}%</span>
+                      <div className="mt-1 flex items-center justify-between gap-2 text-[10px] text-[#7A6B63]">
+                        <span className="truncate">
+                          {nextTierInfo
+                            ? `อีก ${progressInfo.pointsToNext.toLocaleString()} เบี้ยสะสม ขึ้นเป็น ${nextTierInfo.name}`
+                            : "ระดับสูงสุดแล้ว"}
+                        </span>
+                        <span className="inline-flex shrink-0 items-center gap-0.5 font-bold text-[#8D593A] group-hover:underline">
+                          ดูเพิ่มเติม
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3 w-3">
+                            <path d="m9 18 6-6-6-6" />
+                          </svg>
+                        </span>
+                      </div>
                     </div>
-                    <span className="text-[10px] text-[#A09289]">
-                      {nextTierInfo
-                        ? `อีก ${progressInfo.pointsToNext.toLocaleString()} เบี้ยสะสม ขึ้นเป็น ${nextTierInfo.name}`
-                        : "ระดับสูงสุดแล้ว"}
-                      {tierInfo.multiplier > 1 ? ` • รับเบี้ย x${tierInfo.multiplier}` : ""}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setPointsModalOpen(true)}
-                      className="inline-flex items-center gap-1 rounded-full border border-[#8D593A] bg-white px-2.5 py-0.5 text-[11px] font-bold text-[#8D593A] shadow-2xs transition-colors hover:bg-[#8D593A] hover:text-white cursor-pointer"
-                    >
-                      ดูเพิ่มเติม
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3 w-3">
-                        <path d="m9 18 6-6-6-6" />
-                      </svg>
-                    </button>
-                  </div>
+                  </button>
                 )}
 
                 <div className="flex items-center gap-3 mt-2 text-xs text-[#7A6B63]">

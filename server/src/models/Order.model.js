@@ -48,6 +48,8 @@ const shippingAddressSchema = new mongoose.Schema(
     district: { type: String, default: "" },
     province: { type: String, default: "" },
     zipcode: { type: String, default: "" },
+    // รอบจัดส่งที่ลูกค้าเลือกตอน checkout (เช่น "12")
+    deliveryDate: { type: String, default: "" },
     note: { type: String, default: "" },
   },
   { _id: false }

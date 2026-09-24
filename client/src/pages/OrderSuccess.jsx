@@ -2,89 +2,91 @@ import React, { useState } from "react";
 import { useLocation, Link, useOutletContext } from "react-router-dom";
 import OrderEarnedPoints from "../components/order-success/OrderEarnedPoints";
 import OrderDetailsCard from "../components/order-success/OrderDetailsCard";
-import { formatDate } from "../utils/dateFormatter.js";
-import { getAuthHeaders } from "../utils/authHeader.js";
+import { getAuthHeaders, getApiUrl } from "../utils/authHeader.js";
+import { useAuth } from "../context/AuthContext.js";
 
-const DEFAULT_ORDER_DATA = {
-  orderId: "ORD-882940",
-  createdAt: formatDate(new Date()),
-  grandTotal: 959,
-  earnedPoints: 0,
-  deliveryDate: "12 พ.ย.",
-  shippingAddress: {
-    fullName: "ณัฐชา สุขใจ",
-    phone: "081-234-5678",
-    address: "123/45 ถนนวงศ์สว่าง บางซื่อ กรุงเทพมหานคร 10800",
-  },
-  paymentMethod: "PROMPTPAY",
-  isFallbackPayment: false,
-};
-
+// ดึงคำสั่งซื้อจริงจาก Server (ไม่ใช้ข้อมูลตัวอย่าง) — ยืนยัน Stripe ก่อนถ้าเด้งกลับมาจากหน้าชำระเงิน
 export default function OrderSuccess() {
   const { handleClearCart } = useOutletContext() || {};
+  const { refreshUser } = useAuth();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
 
-  // ดึงข้อมูลจาก URL Query Params (กรณีเด้งกลับมาจาก Stripe v2)
   const sessionId = searchParams.get("session_id");
   const urlOrderId = searchParams.get("order_id");
-
-  // 1. อ่านจาก React Router State (กรณีสั่งซื้อผ่าน v1)
   const stateOrder = location.state?.order;
 
-  // 2. อ่านจาก sessionStorage (กรณีเด้งกลับมาจาก Stripe v2)
   let savedV2Order = null;
   try {
     const raw = sessionStorage.getItem("last_v2_order");
     if (raw) savedV2Order = JSON.parse(raw);
-  } catch (err) {
-    console.error("Failed to parse last_v2_order:", err);
+  } catch {
+    savedV2Order = null;
   }
+  const orderId = urlOrderId || stateOrder?.orderId || savedV2Order?.orderId || "";
 
-  // เลือกลำดับข้อมูล: state (v1) ➔ sessionStorage (v2) ➔ DEFAULT_ORDER_DATA (fallback สุดท้าย)
-  const baseOrder = stateOrder || savedV2Order || DEFAULT_ORDER_DATA;
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(Boolean(orderId));
+  const [loadError, setLoadError] = useState("");
 
-  const orderData = {
-    ...baseOrder,
-    orderId: urlOrderId || baseOrder.orderId,
-    paymentMethod: sessionId ? "STRIPE" : baseOrder.paymentMethod,
-    isFallbackPayment: false,
-  };
-
-  const points = orderData.earnedPoints ?? orderData.pricing?.earnedPoints ?? 0;
-  const isCOD = orderData.paymentMethod === "COD";
-  // แสดงกล่องแนบสลิปเฉพาะเมื่อเป็น PromptPay ที่เข้าโหมด Fallback เท่านั้น (COD ห้ามแสดง)
-  const isFallback = !isCOD && orderData.isFallbackPayment === true;
-  const displayTotal =
-    orderData.grandTotal || orderData.pricing?.grandTotal || 0;
-
-  // ยืนยันการชำระเงิน Stripe กับฐานข้อมูลและเคลียร์ตะกร้า
   React.useEffect(() => {
-    async function confirmPaymentOnServer() {
-      if (urlOrderId || sessionId) {
-        const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:3001").replace(/\/+$/, "");
-        for (let attempt = 0; attempt < 5; attempt += 1) {
-          try {
+    if (!orderId) return undefined;
+    let alive = true;
+    const apiUrl = getApiUrl();
+
+    async function load() {
+      setLoading(true);
+      setLoadError("");
+      try {
+        // 1. เด้งกลับจาก Stripe → ยืนยันการชำระเงิน (PromptPay อาจยืนยันช้า ลองซ้ำได้)
+        if (sessionId || urlOrderId) {
+          for (let attempt = 0; attempt < 5 && alive; attempt += 1) {
             const res = await fetch(`${apiUrl}/api/v2/checkout/confirm-stripe`, {
               method: "POST",
               headers: getAuthHeaders({ "Content-Type": "application/json" }),
-              body: JSON.stringify({ orderId: urlOrderId, sessionId }),
-            });
-            if (res.ok && res.status !== 202) {
+              body: JSON.stringify({ orderId: urlOrderId || orderId, sessionId }),
+            }).catch(() => null);
+            if (res?.ok && res.status !== 202) {
               sessionStorage.removeItem("last_v2_order");
               if (handleClearCart) handleClearCart();
-              return;
+              break;
             }
-            if (res.status !== 202) return; // จ่ายไม่สำเร็จ/ไม่พบ — ไม่ต้องลองซ้ำ
-          } catch (err) {
-            console.warn("Auto-confirm payment error:", err);
+            if (!res || res.status !== 202) break;
+            await new Promise((r) => setTimeout(r, 2000));
           }
-          await new Promise((r) => setTimeout(r, 2000));
         }
+
+        // 2. อ่านคำสั่งซื้อล่าสุดจากฐานข้อมูล
+        const res = await fetch(`${apiUrl}/api/v2/checkout/${encodeURIComponent(orderId)}`, {
+          headers: getAuthHeaders(),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data) throw new Error(data?.message || "ไม่พบข้อมูลคำสั่งซื้อ");
+        if (!alive) return;
+        setOrder(data);
+        // เบี้ย/ระดับสมาชิกอาจเปลี่ยนหลังชำระเงิน
+        refreshUser?.();
+      } catch (err) {
+        if (alive) setLoadError(err.message || "โหลดข้อมูลคำสั่งซื้อไม่สำเร็จ");
+      } finally {
+        if (alive) setLoading(false);
       }
     }
-    confirmPaymentOnServer();
-  }, [urlOrderId, sessionId, handleClearCart]);
+    load();
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId, sessionId, urlOrderId]);
+
+  const orderData = order || {};
+  const isCOD = orderData.paymentMethod === "COD";
+  const isPaid = orderData.paymentStatus === "PAID";
+  // PromptPay โหมดสำรอง (รอตรวจสลิป) = ยังไม่ชำระ และไม่ใช่ COD / Stripe
+  const isFallback = Boolean(order) && !isCOD && !isPaid && orderData.paymentMethod === "PROMPTPAY";
+  const isPendingOnline = Boolean(order) && !isCOD && !isPaid && !isFallback;
+  const displayTotal = Number(orderData.grandTotal) || 0;
+  const points = Number(orderData.earnedPoints) || 0;
 
   // State สำหรับจัดการสลิป
   const [slipImage, setSlipImage] = useState(null);
@@ -106,6 +108,33 @@ export default function OrderSuccess() {
       setIsSlipSubmitted(true);
     }, 800);
   };
+
+  if (loading || !order) {
+    return (
+      <div className="min-h-[70vh] bg-[#fdfbf7] flex flex-col items-center justify-center p-6 text-center text-[#2f2119]">
+        {loading ? (
+          <>
+            <div className="w-14 h-14 border-4 border-[#8d593a] border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-sm font-semibold text-[#6f675f]">กำลังตรวจสอบคำสั่งซื้อ...</p>
+          </>
+        ) : (
+          <>
+            <div className="w-20 h-20 bg-[#fcf8f2] border border-[#e8dfd1] rounded-full flex items-center justify-center text-3xl mb-4">🧾</div>
+            <h2 className="text-xl font-bold text-[#3d2c2e] mb-1">ไม่พบข้อมูลคำสั่งซื้อ</h2>
+            <p className="text-sm text-[#6f675f] mb-5">{loadError || "ไม่มีคำสั่งซื้อที่ต้องแสดง"}</p>
+            <div className="flex gap-3">
+              <Link to="/orders" className="rounded-full bg-[#3d2c2e] px-6 py-2.5 text-xs font-bold text-white hover:bg-[#8d593a]">
+                ดูประวัติคำสั่งซื้อ
+              </Link>
+              <Link to="/" className="rounded-full border border-[#e8dfd1] bg-white px-6 py-2.5 text-xs font-bold text-[#3d2c2e]">
+                กลับหน้าหลัก
+              </Link>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#fdfbf7] py-12 px-4 sm:px-6 lg:px-8 text-[#2f2119]">
@@ -316,8 +345,17 @@ export default function OrderSuccess() {
           </div>
         )}
 
-        {/* กล่อง Online ปกติ (Stripe ไม่ล่ม) */}
-        {!isCOD && !isFallback && (
+        {/* ชำระออนไลน์แล้ว แต่ Stripe ยังไม่ยืนยัน */}
+        {isPendingOnline && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6">
+            <p className="text-sm font-semibold text-amber-800">
+              ⏳ กำลังรอยืนยันการชำระเงิน ฿{displayTotal.toLocaleString()} จาก Stripe — ตรวจสอบสถานะได้ที่หน้าประวัติคำสั่งซื้อ
+            </p>
+          </div>
+        )}
+
+        {/* กล่อง Online ชำระสำเร็จ */}
+        {isPaid && !isCOD && (
           <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mb-6">
             <div className="flex items-center justify-center gap-2">
               <span className="text-lg">✅</span>
@@ -329,9 +367,13 @@ export default function OrderSuccess() {
           </div>
         )}
 
-        {/* แต้มสะสม & รายละเอียดการสั่งซื้อ */}
-        <OrderEarnedPoints points={points} />
-        <OrderDetailsCard orderData={orderData} />
+        {/* เบี้ยสะสม & รายละเอียดการสั่งซื้อ */}
+        {order && (
+          <>
+            <OrderEarnedPoints points={points} awarded={orderData.pointsAwarded === true} order={orderData} />
+            <OrderDetailsCard orderData={orderData} />
+          </>
+        )}
 
         {/* ปุ่มกลับหน้าหลัก */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
