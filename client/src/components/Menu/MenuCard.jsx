@@ -159,6 +159,13 @@ export default function MenuCard({ menu, index = 0 }) {
           }`}>
             {title}
           </h4>
+          {/* ชื่อภาษาอีกภาษา (ไทย → อังกฤษ / อังกฤษ → ไทย) ตัวเล็กใต้ชื่อ */}
+          {(() => {
+            const sub = language === 'th' ? menu.nameEn : (menu.nameTh || menu.name);
+            return sub && sub !== title ? (
+              <p className="-mt-0.5 mb-1.5 text-[10px] sm:text-xs italic text-stone-500 dark:text-stone-400 line-clamp-1">{sub}</p>
+            ) : null;
+          })()}
           <p className="text-[11px] sm:text-sm opacity-70 mb-2 line-clamp-1 sm:line-clamp-2">
             {menu.description}
           </p>

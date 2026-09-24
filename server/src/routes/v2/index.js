@@ -8,6 +8,7 @@ import checkoutRouter from "./checkout.routes.js";
 import paymentRouter from "./payment.routes.js";
 import advisorRouter from "./advisor.routes.js";
 import auditLogsRouter from "./auditLogs.routes.js";
+import importRouter from "./import.routes.js";
 
 export const router = Router();
 
@@ -42,5 +43,8 @@ router.use("/advisor", advisorRouter);
 
 // 9. Audit Logs — ประวัติใครสร้าง/แก้ไข/ลบ ข้อมูลหลังบ้าน (Admin)
 router.use("/audit-logs", auditLogsRouter);
+
+// 10. นำเข้าวัตถุดิบ/เมนูจาก ZIP + ตรวจชื่อซ้ำ (Admin)
+router.use("/import", importRouter);
 
 export default router;

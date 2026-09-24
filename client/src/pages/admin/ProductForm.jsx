@@ -18,6 +18,8 @@ import {
 } from "../../context/IngredientsContext.js";
 import useToast from "../../hooks/useToast.js";
 import IngredientCombobox from "../../components/admin/IngredientCombobox.jsx";
+import SimilarNameDialog from "../../components/admin/SimilarNameDialog.jsx";
+import { fetchSimilarNames } from "../../utils/adminImportApi.js";
 
 // ปริมาณเริ่มต้นต่อชุดตามหน่วยของวัตถุดิบ
 const DEFAULT_QTY_BY_UNIT = { g: 50, ml: 50, kg: 0.1, l: 0.1, piece: 1 };
@@ -46,6 +48,10 @@ export const REGION_MAP_TO_INGREDIENT = {
   southern: "south",
   fusion: "central", // ไทยฟิวชั่น ภาคกลางซัพพอร์ตเสมอ
 };
+
+// เทียบชื่อแบบไม่สนช่องว่าง/ตัวพิมพ์ (ใช้ดูว่าเปลี่ยนชื่อหรือไม่)
+const sameName = (a, b) =>
+  String(a || "").replace(/\s+/g, "").toLowerCase() === String(b || "").replace(/\s+/g, "").toLowerCase();
 
 export const REGION_TH_TITLES = {
   north: "ภาคเหนือ",
@@ -158,6 +164,9 @@ export default function ProductForm() {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [errors, setErrors] = useState({});
+  // ชื่อเดิม (โหมดแก้ไข) + กล่องถามยืนยันเมื่อชื่อซ้ำ/ใกล้เคียง
+  const originalNameRef = useRef("");
+  const [similarPrompt, setSimilarPrompt] = useState(null);
   const [notFound, setNotFound] = useState(false);
   // computed fields จาก RecipeBuilder (สารอาหาร, elements, recipe)
   const [computed, setComputed] = useState(null);
@@ -262,6 +271,7 @@ export default function ProductForm() {
       dominantElement: product.dominantElement,
       elementSuitability: product.elementSuitability,
     });
+    originalNameRef.current = product.nameTh || product.name || "";
     setFormData({
       name: product.name || product.nameTh || "",
       nameEn: product.nameEn || "",
@@ -574,7 +584,7 @@ export default function ProductForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (!validateForm()) {
       toast.error("กรุณากรอกข้อมูลในฟอร์มให้ครบถ้วนและถูกต้อง");
@@ -645,12 +655,29 @@ export default function ProductForm() {
       })),
     };
 
+    // ชื่อซ้ำ/ใกล้เคียงกับเมนูที่มีอยู่ → ถามยืนยันก่อนบันทึก (เพิ่มใหม่ หรือแก้ไขแล้วเปลี่ยนชื่อ)
+    if (!isEditMode || !sameName(payload.nameTh, originalNameRef.current)) {
+      try {
+        const matches = await fetchSimilarNames("products", payload.nameTh, isEditMode ? id : undefined);
+        if (matches.length > 0) {
+          setSimilarPrompt({ matches, payload });
+          return;
+        }
+      } catch {
+        // ตรวจชื่อไม่สำเร็จ (เช่น เน็ตหลุด) ไม่ขวางการบันทึก
+      }
+    }
+    saveProduct(payload);
+  };
+
+  const saveProduct = (payload) => {
+    setSimilarPrompt(null);
     if (isEditMode) {
       updateProduct(id, payload);
-      toast.success(`อัปเดตเมนู "${formData.name}" เรียบร้อยแล้ว ✨`);
+      toast.success(`อัปเดตเมนู "${payload.nameTh}" เรียบร้อยแล้ว ✨`);
     } else {
       addProduct(payload);
-      toast.success(`เพิ่มเมนู "${formData.name}" เข้าระบบเรียบร้อยแล้ว 🍲`);
+      toast.success(`เพิ่มเมนู "${payload.nameTh}" เข้าระบบเรียบร้อยแล้ว 🍲`);
     }
 
     navigate("/admin/products");
@@ -676,6 +703,15 @@ export default function ProductForm() {
 
   return (
     <div className="mx-auto my-8 max-w-7xl px-4 sm:px-6 lg:px-8">
+      <SimilarNameDialog
+        open={Boolean(similarPrompt)}
+        kind="เมนู"
+        name={similarPrompt?.payload?.nameTh}
+        matches={similarPrompt?.matches}
+        editPath={(mid) => `/admin/products/edit/${mid}`}
+        onConfirm={() => saveProduct(similarPrompt.payload)}
+        onCancel={() => setSimilarPrompt(null)}
+      />
       <div className="mb-4 flex items-center gap-2 text-xs font-semibold text-[#8d593a]">
         <Link to="/admin/dashboard" className="hover:underline">
           แผงควบคุมแอดมิน

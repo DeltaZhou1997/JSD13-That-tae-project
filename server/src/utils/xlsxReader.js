@@ -2,42 +2,7 @@
 // .xlsx = zip ที่ข้างในเป็น XML → อ่าน central directory ของ zip แล้วแตกด้วย zlib
 // รองรับเฉพาะค่าที่ใช้ในโปรเจกต์: ข้อความ (shared/inline string) และตัวเลข
 import fs from "fs";
-import zlib from "zlib";
-
-function unzip(buffer) {
-  // หา End of Central Directory (signature 0x06054b50) จากท้ายไฟล์
-  let eocd = -1;
-  for (let i = buffer.length - 22; i >= Math.max(0, buffer.length - 65557); i--) {
-    if (buffer.readUInt32LE(i) === 0x06054b50) {
-      eocd = i;
-      break;
-    }
-  }
-  if (eocd < 0) throw new Error("ไม่ใช่ไฟล์ zip/xlsx ที่ถูกต้อง");
-
-  const count = buffer.readUInt16LE(eocd + 10);
-  let ptr = buffer.readUInt32LE(eocd + 16);
-  const files = {};
-
-  for (let n = 0; n < count; n++) {
-    const method = buffer.readUInt16LE(ptr + 10);
-    const compSize = buffer.readUInt32LE(ptr + 20);
-    const nameLen = buffer.readUInt16LE(ptr + 28);
-    const extraLen = buffer.readUInt16LE(ptr + 30);
-    const commentLen = buffer.readUInt16LE(ptr + 32);
-    const localOffset = buffer.readUInt32LE(ptr + 42);
-    const name = buffer.toString("utf8", ptr + 46, ptr + 46 + nameLen);
-
-    const localNameLen = buffer.readUInt16LE(localOffset + 26);
-    const localExtraLen = buffer.readUInt16LE(localOffset + 28);
-    const start = localOffset + 30 + localNameLen + localExtraLen;
-    const data = buffer.subarray(start, start + compSize);
-    files[name] = method === 8 ? zlib.inflateRawSync(data) : data;
-
-    ptr += 46 + nameLen + extraLen + commentLen;
-  }
-  return files;
-}
+import { readZip } from "./zip.js";
 
 const decodeXml = (s) =>
   s
@@ -62,7 +27,7 @@ function colIndex(ref) {
  * @returns {Record<string, Array<Array<string|number|null>>>} ชื่อชีต → แถว (อาร์เรย์ของค่าแต่ละคอลัมน์)
  */
 export function readXlsx(filePath) {
-  const files = unzip(fs.readFileSync(filePath));
+  const files = readZip(fs.readFileSync(filePath));
   const str = (name) => (files[name] ? files[name].toString("utf8") : "");
 
   const shared = [...str("xl/sharedStrings.xml").matchAll(/<si>([\s\S]*?)<\/si>/g)].map((m) => textOf(m[1]));

@@ -315,6 +315,14 @@ Base URL: **`http://localhost:3001/api/v2`**
 | **DELETE** | `/ingredients/:id` | requireAdmin | ปิดใช้งานวัตถุดิบ (soft delete) |
 | **GET** | `/audit-logs` | requireAdmin | ประวัติการสร้าง/แก้ไข/ลบ กรองได้ `?entity=&entityId=&actorId=&action=&from=&to=&page=&limit=` |
 | **GET** | `/audit-logs/:entity/:id` | requireAdmin | ประวัติของข้อมูลชิ้นเดียว เช่น `/audit-logs/product/<id>` |
+| **GET** | `/import/similar/:type?name=&excludeId=` | requireAdmin | ชื่อซ้ำ/ใกล้เคียง (`type` = `products` / `ingredients`) ใช้ในฟอร์มก่อนบันทึก |
+| **GET** | `/import/template/:type` | requireAdmin | ดาวน์โหลดไฟล์ตัวอย่าง .zip |
+| **GET** | `/import/columns/:type` | requireAdmin | คำอธิบายคอลัมน์ของไฟล์ |
+| **POST** | `/import/:type/preview` | requireAdmin | อัปโหลด zip (`file`, ≤ 50MB) → ตรวจทุกแถว **ยังไม่บันทึก** → คืน `importId` + ผลแต่ละแถว |
+| **GET** | `/import/:importId/image/:name` | requireAdmin | รูปจาก zip สำหรับ preview |
+| **POST** | `/import/:importId/commit` | requireAdmin | เริ่มนำเข้า `{ choices: { [row]: { action: create/update/skip, targetId } } }` |
+| **GET** | `/import/:importId/status` | requireAdmin | ความคืบหน้า `{ state, done, total, result }` |
+| **DELETE** | `/import/:importId` | requireAdmin | ยกเลิกรอบนำเข้า |
 | **GET** | `/users/me` | requireAuth | ดูข้อมูลโปรไฟล์ตนเอง |
 | **PUT** | `/users/me` | requireAuth | อัปเดตข้อมูลตนเอง (ชื่อ, เบอร์โทร, ธาตุ, ที่อยู่) |
 | **GET** | `/users` | requireAdmin | รายชื่อผู้ใช้ทั้งหมดในระบบ |
@@ -346,6 +354,25 @@ app.use((err, req, res, next) => {
    - MongoDB Multi-document Transactions ต้องการ Replica Set ในการทำงาน หากทีมงานนำโค้ดไปรันบน Standalone MongoDB หรือ Atlas Sandbox ในบางช่วงเวลา Session จะ Error ทันที การใช้ `async/await` ตรวจสต็อกแล้วหักด้วย `$inc` มีความเสถียรสูงสุดและไม่เกิดข้อผิดพลาด
 3. **ทำไมต้องทำ RAG (Retrieval-Augmented Generation) แทนที่จะถาม AI ตรงๆ?**
    - AI ทั่วไปไม่ทราบว่าร้าน "ธาตุแท้" มีเมนูอะไรขายอยู่บ้าง หากไม่ส่ง Context ไป AI อาจแนะนำอาหารที่ร้านไม่มีขาย การดึงเมนูจริงจาก MongoDB ไปประกอบ Prompt ทำให้ AI แนะนำได้เฉพาะเมนูที่มีในร้านจริงเท่านั้น
+
+## 📦 นำเข้าวัตถุดิบ / เมนูจาก ZIP (`services/import/`)
+
+```
+ingredients.zip                 products.zip
+└── ingredients.csv             ├── products.csv   (1 แถว = 1 เมนู, มีคอลัมน์ code)
+                                ├── recipes.csv    (code, ingredient, quantity, unit)
+                                └── images/        (.jpg .png .webp ≤ 5MB)
+```
+
+- **Preview ก่อนบันทึก:** อ่าน zip (`utils/zip.js`) + CSV UTF-8 จาก Excel (`utils/csv.js`) → ตรวจทุกแถวกับ schema จริง + กฎธุรกิจ → เก็บผลใน session 30 นาที
+- **คำนวณให้เอง:** ธาตุวัตถุดิบจากรสยา (`utils/medicinalTaste.js` สูตรเดียวกับฟอร์ม), ธาตุเด่น/แคลอรี/จำนวนชุดของเมนู, แท็กธาตุ/ภาค/ข้อจำกัด
+- **ชื่อซ้ำ/ใกล้เคียง** (`utils/nameSimilarity.js`): เทียบแบบไม่สนช่องว่าง + edit distance + bigram (ไม่สนลำดับคำ) เกณฑ์ ≥ 0.75 — ชื่อเดียวกันค่าเริ่มต้น "ข้าม", ใกล้เคียงค่าเริ่มต้น "เพิ่มใหม่" แอดมินเปลี่ยนเป็น อัปเดตทับ/ข้าม ได้ทีละแถว
+- **แถวที่ผิด** ถูกข้าม นำเข้าเฉพาะแถวที่ผ่าน
+- **Commit:** อัปโหลดรูปเข้า GridFS → บันทึก (createdBy = แอดมินผู้นำเข้า) → audit log → อัปเดตข้อมูล AI Advisor; ล้มกลางทาง = ลบของที่เพิ่ม/คืนค่าที่อัปเดต/ลบรูปของรอบนั้นทั้งหมด
+- **ขีดจำกัด:** zip ≤ 50MB, ≤ 500 แถว, ≤ 300 รูป, ไฟล์ในzip ≤ 60MB หลังแตก (กัน zip bomb), ข้าม path แปลก (zip-slip)
+- วัตถุดิบนำเข้าแบบ CSV อย่างเดียว (ระบบยังไม่มีรูปวัตถุดิบ)
+
+---
 
 ## 🌱 Seed วัตถุดิบจาก Excel (`npm run seed:ingredients`)
 

@@ -9,15 +9,29 @@ import {
 } from "../../context/IngredientsContext.js";
 import useToast from "../../hooks/useToast.js";
 import AuditStamp from "../../components/admin/AuditStamp.jsx";
+import SortHeader from "../../components/admin/SortHeader.jsx";
+import useTableSort from "../../hooks/useTableSort.js";
+import ImportZipModal from "../../components/admin/ImportZipModal.jsx";
 
 const PAGE_SIZE = 20;
+
+// ค่าที่ใช้เรียงแต่ละคอลัมน์
+const SORT_GETTERS = {
+  name: (i) => i.nameTh || "",
+  category: (i) => i.categoryTh || "",
+  taste: (i) => i.medicinalTaste || "",
+  element: (i) => (i.elements || [])[0] || "",
+  calories: (i) => Number(i.nutrientsPer100g?.calories) || 0,
+  stock: (i) => Number(i.currentStockGrams) || 0,
+};
 
 const inputClass =
   "rounded border border-[#f1ead7] p-2 focus:border-[#4c1f08] focus:outline-none focus:ring-2 focus:ring-[#f1ead7]";
 
 function AdminIngredientList() {
-  const { ingredients, lowStockCount, deleteIngredient } =
+  const { ingredients, lowStockCount, deleteIngredient, refreshIngredients } =
     useIngredients();
+  const [importOpen, setImportOpen] = useState(false);
   const toast = useToast();
 
   const [search, setSearch] = useState("");
@@ -39,9 +53,16 @@ function AdminIngredientList() {
     });
   }, [ingredients, search, category, onlyLowStock]);
 
+  const { sorted, sortKey, sortDir, toggleSort } = useTableSort(filtered, SORT_GETTERS);
+  const handleSort = (key) => {
+    toggleSort(key);
+    setPage(1);
+  };
+  const headerProps = { activeKey: sortKey, dir: sortDir, onSort: handleSort };
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
-  const pageItems = filtered.slice(
+  const pageItems = sorted.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE,
   );
@@ -72,7 +93,17 @@ function AdminIngredientList() {
             )}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="inline-flex items-center gap-2 rounded-full border border-[#4c1f08] bg-white px-4 py-2 font-medium text-[#4c1f08] shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#f1ead7] cursor-pointer"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" />
+            </svg>
+            นำเข้าจาก ZIP
+          </button>
           <Link
             to="/admin/ingredients/new"
             className="rounded-full bg-[#4c1f08] px-4 py-2 font-medium text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215]"
@@ -83,6 +114,13 @@ function AdminIngredientList() {
       </div>
 
       
+      <ImportZipModal
+        type="ingredients"
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={() => refreshIngredients?.()}
+      />
+
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <input
           type="search"
@@ -117,12 +155,12 @@ function AdminIngredientList() {
         <table className="w-full border-collapse text-left">
           <thead>
             <tr className="border-b border-[#f1ead7] bg-[#f1ead7] text-[#4c1f08]">
-              <th className="p-3">ชื่อวัตถุดิบ</th>
-              <th className="p-3">หมวดหมู่</th>
-              <th className="p-3">รสยา</th>
-              <th className="p-3">ธาตุ</th>
-              <th className="p-3">แคลอรี</th>
-              <th className="p-3">สต็อก</th>
+              <th className="p-3"><SortHeader label="ชื่อวัตถุดิบ" sortKey="name" {...headerProps} /></th>
+              <th className="p-3"><SortHeader label="หมวดหมู่" sortKey="category" {...headerProps} /></th>
+              <th className="p-3"><SortHeader label="รสยา" sortKey="taste" {...headerProps} /></th>
+              <th className="p-3"><SortHeader label="ธาตุ" sortKey="element" {...headerProps} /></th>
+              <th className="p-3"><SortHeader label="แคลอรี" sortKey="calories" {...headerProps} /></th>
+              <th className="p-3"><SortHeader label="สต็อก" sortKey="stock" {...headerProps} /></th>
               <th className="p-3 text-center">การจัดการ</th>
             </tr>
           </thead>

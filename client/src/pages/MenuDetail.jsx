@@ -8,6 +8,7 @@ import { getUnitInfo } from '../utils/units.js';
 import { buildRecipeRows, formatTastes } from '../utils/recipeRows.js';
 import { formatMissing, getStockStatus } from '../utils/stock.js';
 import RecipePieCharts from '../components/Menu/RecipePieChart.jsx';
+import SpeakButton from '../components/common/SpeakButton.jsx';
 
 const CATEGORY_LABELS = {
   meat: 'เนื้อสัตว์ & โปรตีน',
@@ -320,9 +321,21 @@ export default function MenuDetail() {
               </div>
             )}
 
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-stone-900 tracking-tight leading-snug mb-3">
-              {title}
-            </h1>
+            {/* ชื่อไทย + ชื่ออังกฤษ พร้อมปุ่มฟังการออกเสียง */}
+            <div className="mb-4">
+              <div className="flex items-start gap-2.5">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-stone-900 tracking-tight leading-snug">
+                  {menu.nameTh || menu.name}
+                </h1>
+                <SpeakButton text={menu.nameTh || menu.name} lang="th-TH" label="ฟังชื่อเมนูภาษาไทย" className="mt-1 sm:mt-1.5" />
+              </div>
+              {menu.nameEn && menu.nameEn !== (menu.nameTh || menu.name) && (
+                <div className="mt-1 flex items-center gap-2">
+                  <p className="text-sm sm:text-base font-medium italic text-stone-500 tracking-wide">{menu.nameEn}</p>
+                  <SpeakButton text={menu.nameEn} lang="en-US" label="Listen to the English name" size="sm" />
+                </div>
+              )}
+            </div>
 
             <p className="text-stone-600 text-base sm:text-lg leading-relaxed mb-6 font-normal">
               {menu.description}

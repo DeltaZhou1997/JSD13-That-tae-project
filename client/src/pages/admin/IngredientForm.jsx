@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import {
@@ -11,6 +11,8 @@ import {
   useIngredients,
 } from "../../context/IngredientsContext.js";
 import useToast from "../../hooks/useToast.js";
+import SimilarNameDialog from "../../components/admin/SimilarNameDialog.jsx";
+import { fetchSimilarNames } from "../../utils/adminImportApi.js";
 import {
   ELEMENTS,
   MEDICINAL_TASTES,
@@ -21,6 +23,10 @@ import {
 } from "../../utils/recipeCalculator.js";
 
 import { formatDate } from "../../utils/dateFormatter.js";
+
+// เทียบชื่อแบบไม่สนช่องว่าง/ตัวพิมพ์ (ใช้ดูว่าเปลี่ยนชื่อหรือไม่)
+const sameName = (a, b) =>
+  String(a || "").replace(/\s+/g, "").toLowerCase() === String(b || "").replace(/\s+/g, "").toLowerCase();
 
 const inputClass =
   "w-full rounded border border-[#f1ead7] p-2 focus:border-[#4c1f08] focus:outline-none focus:ring-2 focus:ring-[#f1ead7]";
@@ -158,6 +164,9 @@ function IngredientForm() {
 
   const [formData, setFormData] = useState(createEmptyForm);
   const [errors, setErrors] = useState({});
+  // ชื่อเดิม (โหมดแก้ไข) + กล่องถามยืนยันเมื่อชื่อซ้ำ/ใกล้เคียง
+  const originalNameRef = useRef("");
+  const [similarPrompt, setSimilarPrompt] = useState(null);
   const [notFound, setNotFound] = useState(false);
   // หน่วยที่บันทึกไว้ใน DB (ใช้เตือนเรื่องสูตรเมนูเมื่อเปลี่ยนหน่วยตอนแก้ไข)
   const [originalUnit, setOriginalUnit] = useState(null);
@@ -172,6 +181,7 @@ function IngredientForm() {
 
     setNotFound(false);
     setOriginalUnit(getUnitInfo(item.unit).value);
+    originalNameRef.current = item.nameTh || "";
     setFormData({
       ...createEmptyForm(),
       ...item,
@@ -436,6 +446,23 @@ function IngredientForm() {
       isActive: formData.isActive !== false,
     };
 
+    // ชื่อซ้ำ/ใกล้เคียงกับวัตถุดิบที่มีอยู่ → ถามยืนยันก่อนบันทึก (เพิ่มใหม่ หรือแก้ไขแล้วเปลี่ยนชื่อ)
+    if (!isEditMode || !sameName(payload.nameTh, originalNameRef.current)) {
+      try {
+        const matches = await fetchSimilarNames("ingredients", payload.nameTh, isEditMode ? id : undefined);
+        if (matches.length > 0) {
+          setSimilarPrompt({ matches, payload });
+          return;
+        }
+      } catch {
+        // ตรวจชื่อไม่สำเร็จ ไม่ขวางการบันทึก
+      }
+    }
+    await saveIngredient(payload);
+  };
+
+  const saveIngredient = async (payload) => {
+    setSimilarPrompt(null);
     if (isEditMode) {
       const result = await updateIngredient(id, payload);
       if (!result?.ok) {
@@ -476,6 +503,15 @@ function IngredientForm() {
 
   return (
     <div className="mx-auto mt-24 mb-8 grid max-w-6xl gap-6 px-4 lg:grid-cols-[1fr_320px]">
+      <SimilarNameDialog
+        open={Boolean(similarPrompt)}
+        kind="วัตถุดิบ"
+        name={similarPrompt?.payload?.nameTh}
+        matches={similarPrompt?.matches}
+        editPath={(mid) => `/admin/ingredients/edit/${mid}`}
+        onConfirm={() => saveIngredient(similarPrompt.payload)}
+        onCancel={() => setSimilarPrompt(null)}
+      />
       <div className="rounded-lg border border-[#f1ead7] bg-white p-6 shadow-md">
         <h1 className="mb-6 text-2xl font-bold text-[#4c1f08]">
           {isEditMode ? "แก้ไขข้อมูลวัตถุดิบ" : "เพิ่มวัตถุดิบ"}
