@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { CoinIcon, TrophyIcon } from "./MembershipIcons";
 import TierBadge from "./TierBadge";
 import { TIER_THEME } from "../../constants/tierTheme";
 import TierDetailsModal from "./TierDetailsModal";
@@ -209,7 +210,9 @@ export default function PointsHistoryModal({ open, onClose, currentUser }) {
                         <strong>{next.name}</strong> (ได้เบี้ย x{next.multiplier})
                       </>
                     ) : (
-                      "คุณอยู่ระดับสูงสุดแล้ว 🎉"
+                      <span className="inline-flex items-center gap-1">
+                        คุณอยู่ระดับสูงสุดแล้ว <TrophyIcon className="h-4 w-4" style={{ color: theme.text }} />
+                      </span>
                     )}
                   </p>
                   <div className="mt-3 grid grid-cols-3 gap-2">
@@ -288,7 +291,7 @@ export default function PointsHistoryModal({ open, onClose, currentUser }) {
                 </div>
               ) : transactions.length === 0 ? (
                 <div className="flex h-40 flex-col items-center justify-center text-center text-sm text-[#7A6B63]">
-                  <span className="text-3xl">🪙</span>
+                  <CoinIcon className="mb-1 h-9 w-9 text-[#C9A27E]" />
                   ยังไม่มีรายการเบี้ย{filter !== "ALL" && "ในหมวดนี้"}
                   <span className="text-[11px]">สั่งซื้อครั้งแรกเพื่อเริ่มสะสมเบี้ย (฿10 = 1 เบี้ย)</span>
                 </div>

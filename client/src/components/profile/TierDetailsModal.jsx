@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { BagIcon, CrownIcon, PlusCircleIcon, HeartIcon } from "./MembershipIcons";
 import TierBadge from "./TierBadge";
 import { TIER_THEME } from "../../constants/tierTheme";
 import {
@@ -129,7 +130,7 @@ export default function TierDetailsModal({ open, onClose, currentTier = "BRONZE"
             <div className="grid gap-4 md:grid-cols-[220px_1fr]">
               {/* A La Carte + ลองคิด */}
               <div className="rounded-2xl p-4" style={{ background: theme.soft }}>
-                <p className="text-sm font-black text-[#3D2E2B]">🛍️ A La Carte</p>
+                <p className="flex items-center gap-1.5 text-sm font-black text-[#3D2E2B]"><BagIcon className="h-4 w-4" style={{ color: theme.text }} /> A La Carte</p>
                 <p className="mt-1 text-2xl font-black" style={{ color: theme.text }}>
                   ฿{BAHT_PER_POINT} = 1 เบี้ย
                 </p>
@@ -186,8 +187,9 @@ export default function TierDetailsModal({ open, onClose, currentTier = "BRONZE"
 
               {/* ตารางกล่อง */}
               <div>
-                <p className="mb-2 text-sm font-black text-[#3D2E2B]">
-                  👑 กล่อง Cooking Kit รายสัปดาห์{" "}
+                <p className="mb-2 flex flex-wrap items-center gap-x-1.5 text-sm font-black text-[#3D2E2B]">
+                  <CrownIcon className="h-4 w-4" style={{ color: theme.text }} />
+                  กล่อง Cooking Kit รายสัปดาห์{" "}
                   <span className="text-[11px] font-semibold text-[#7A6B63]">(ยิ่งกล่องใหญ่ ยิ่งคุ้ม — กดแถวเพื่อเทียบ)</span>
                 </p>
                 <div className="overflow-x-auto rounded-2xl border border-[#EAE2D5]">
@@ -242,7 +244,7 @@ export default function TierDetailsModal({ open, onClose, currentTier = "BRONZE"
                     </p>
                   );
                 })()}
-                <p className="mt-2 text-[11px] text-[#7A6B63]">➕ เมนูเสริมที่เกินโควตากล่อง คิดแบบ A La Carte (฿{BAHT_PER_POINT} = 1 เบี้ย) บวกเพิ่ม</p>
+                <p className="mt-2 flex items-center gap-1 text-[11px] text-[#7A6B63]"><PlusCircleIcon className="h-3.5 w-3.5 shrink-0 text-[#8D593A]" /> เมนูเสริมที่เกินโควตากล่อง คิดแบบ A La Carte (฿{BAHT_PER_POINT} = 1 เบี้ย) บวกเพิ่ม</p>
               </div>
             </div>
           </section>
@@ -303,7 +305,7 @@ export default function TierDetailsModal({ open, onClose, currentTier = "BRONZE"
             </p>
           </section>
 
-          <p className="pb-1 text-center text-xs font-semibold text-[#8D593A]">เบี้ยทุกบาท... คือรอยยิ้มของคุณ ♡</p>
+          <p className="flex items-center justify-center gap-1 pb-1 text-xs font-semibold text-[#8D593A]">เบี้ยทุกบาท... คือรอยยิ้มของคุณ <HeartIcon className="h-3.5 w-3.5" /></p>
         </div>
       </div>
     </div>
