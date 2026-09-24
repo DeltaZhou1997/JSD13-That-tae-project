@@ -365,7 +365,19 @@ async function main() {
   const links = await relinkProducts(insertedWithVariants);
   console.log("\n🍲 ผูกสูตรเมนูเดิมกับวัตถุดิบใหม่:");
   for (const l of links) console.log(`   ${l.product}: ผูกได้ ${l.linked}/${l.total}${l.missing.length ? ` — ไม่พบ: ${l.missing.join(", ")} (แก้ในหน้าแอดมิน)` : ""}`);
-  console.log("\n🎉 เสร็จแล้ว — AI Advisor จะซิงก์ข้อมูลวัตถุดิบใหม่เองในรอบถัดไป");
+  // อัปเดตข้อมูลของ AI Advisor ทันที (ไม่ต้องรอรอบซิงก์)
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      const { syncAdvisorIndex } = await import("../services/advisor/indexer.js");
+      const r = await syncAdvisorIndex();
+      console.log(`🧠 อัปเดต AI Advisor แล้ว: ฝังใหม่ ${r.embedded} / ลบ ${r.removed} / ทั้งหมด ${r.total}`);
+    } catch (err) {
+      console.warn("⚠️ อัปเดต AI Advisor ไม่สำเร็จ (server จะซิงก์เองในรอบถัดไป):", err.message);
+    }
+  } else {
+    console.log("ℹ️  ไม่มี GEMINI_API_KEY — ข้ามการอัปเดต AI Advisor");
+  }
+  console.log("\n🎉 เสร็จแล้ว");
 }
 
 try {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../context/AuthContext.js";
 import { useProducts } from "../context/ProductsContext.js";
 import { getApiUrl, getAuthHeaders } from "../utils/authHeader.js";
@@ -25,6 +25,8 @@ export default function useCartSync() {
   const hydratedFor = useRef(null); // โหลดตะกร้าของใครเสร็จแล้ว (กันบันทึกทับก่อนโหลดเสร็จ)
   const prevUserKey = useRef(null);
   const productsRef = useRef(products);
+  const skipSaveRef = useRef(false); // ข้อมูลเพิ่งโหลดจาก DB → ไม่ต้องบันทึกกลับ
+  const pendingSaveRef = useRef(false); // มีการแก้ไขที่รอบันทึกอยู่ → ห้ามรีเฟรชทับ
   productsRef.current = products;
 
   // แปลงรายการ (productId + จำนวน) เป็นรายการที่หน้าเว็บใช้ โดยเติมข้อมูลจากสินค้า
@@ -105,22 +107,58 @@ export default function useCartSync() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [products.length, userKey]);
 
+  // รีเฟรชตะกร้าจาก DB (เรียกตอนเปลี่ยนหน้า) — ราคา/ชื่อล่าสุดจาก server
+  // ข้ามถ้ายังมีการแก้ไขที่รอบันทึก เพื่อไม่ให้ทับของที่ผู้ใช้เพิ่งกด
+  const refreshCart = useCallback(async () => {
+    if (hydratedFor.current !== userKey) return;
+    if (userKey === "guest") {
+      if (productsRef.current.length > 0) {
+        skipSaveRef.current = true;
+        setCartItems(toCartItems(readGuestCart()));
+      }
+      return;
+    }
+    if (pendingSaveRef.current) return;
+    try {
+      const res = await fetch(`${getApiUrl()}/api/v2/cart`, { headers: getAuthHeaders() });
+      if (!res.ok || pendingSaveRef.current || hydratedFor.current !== userKey) return;
+      const data = await res.json();
+      skipSaveRef.current = true; // ข้อมูลมาจาก DB แล้ว ไม่ต้องเขียนกลับ
+      setCartItems(toCartItems(data.items || []));
+    } catch (err) {
+      console.warn("รีเฟรชตะกร้าไม่สำเร็จ:", err.message);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userKey]);
+
   // บันทึกทุกครั้งที่ตะกร้าเปลี่ยน (หลังโหลดเสร็จแล้วเท่านั้น)
   useEffect(() => {
     if (hydratedFor.current !== userKey) return undefined;
+    if (skipSaveRef.current) {
+      skipSaveRef.current = false;
+      return undefined;
+    }
     if (userKey === "guest") {
       writeGuestCart(cartItems);
       return undefined;
     }
+    pendingSaveRef.current = true;
     const timer = setTimeout(() => {
       fetch(`${getApiUrl()}/api/v2/cart`, {
         method: "PUT",
         headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify({ items: toLines(cartItems) }),
-      }).catch((err) => console.warn("บันทึกตะกร้าไม่สำเร็จ:", err.message));
+      })
+        .catch((err) => console.warn("บันทึกตะกร้าไม่สำเร็จ:", err.message))
+        .finally(() => {
+          pendingSaveRef.current = false;
+        });
     }, SAVE_DELAY_MS);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      pendingSaveRef.current = false;
+    };
   }, [cartItems, userKey]);
 
-  return [cartItems, setCartItems];
+  return [cartItems, setCartItems, refreshCart];
 }

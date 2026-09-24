@@ -16,31 +16,30 @@ export default function ProductsProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const apiUrl = getApiUrl();
 
-  useEffect(() => {
-    let isMounted = true;
-    async function loadProducts() {
-      setLoading(true);
+  // โหลดสินค้าจาก DB (silent = รีเฟรชเบื้องหลัง ไม่แสดงสถานะกำลังโหลด)
+  const refreshProducts = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!silent) setLoading(true);
       try {
         const res = await fetch(`${apiUrl}/api/v2/products`);
         if (res.ok) {
           const data = await res.json();
           const items = Array.isArray(data) ? data : data.products || data.data || [];
-          if (isMounted) {
-            // Always sync with DB — even if empty (never fall back to mock data)
-            setProducts(items.map(normalizeProductImage));
-          }
+          // Always sync with DB — even if empty (never fall back to mock data)
+          setProducts(items.map(normalizeProductImage));
         }
       } catch (err) {
         console.warn("⚠️ ไม่สามารถโหลดสินค้าจากเซิร์ฟเวอร์:", err.message);
       } finally {
-        if (isMounted) setLoading(false);
+        if (!silent) setLoading(false);
       }
-    }
-    loadProducts();
-    return () => {
-      isMounted = false;
-    };
-  }, [apiUrl]);
+    },
+    [apiUrl],
+  );
+
+  useEffect(() => {
+    refreshProducts();
+  }, [refreshProducts]);
 
   const getProductById = useCallback(
     (id) => products.find((product) => product._id === id || product.id === id),
@@ -122,8 +121,9 @@ export default function ProductsProvider({ children }) {
       addProduct,
       updateProduct,
       deleteProduct,
+      refreshProducts,
     }),
-    [products, loading, getProductById, addProduct, updateProduct, deleteProduct],
+    [products, loading, getProductById, addProduct, updateProduct, deleteProduct, refreshProducts],
   );
 
   return (

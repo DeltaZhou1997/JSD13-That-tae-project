@@ -12,27 +12,24 @@ export default function IngredientsProvider({ children }) {
   const [ingredients, setIngredients] = useState([]);
   const apiUrl = getApiUrl();
 
-  useEffect(() => {
-    let isMounted = true;
-    async function loadIngredients() {
-      try {
-        const res = await fetch(`${apiUrl}/api/v2/ingredients`);
-        if (res.ok) {
-          const json = await res.json();
-          const items = Array.isArray(json) ? json : json.data || [];
-          if (items.length > 0 && isMounted) {
-            if (isMounted) setIngredients(items.map(normalizeIngredient));
-          }
-        }
-      } catch (err) {
-        console.warn("⚠️ ไม่สามารถโหลดวัตถุดิบจากเซิร์ฟเวอร์:", err.message);
+  // โหลดวัตถุดิบจาก DB (เรียกซ้ำได้ทุกครั้งที่เปลี่ยนหน้า)
+  const refreshIngredients = useCallback(async () => {
+    try {
+      const res = await fetch(`${apiUrl}/api/v2/ingredients`);
+      if (res.ok) {
+        const json = await res.json();
+        const items = Array.isArray(json) ? json : json.data || [];
+        // ซิงก์กับ DB เสมอ แม้ว่างเปล่า
+        setIngredients(items.map(normalizeIngredient));
       }
+    } catch (err) {
+      console.warn("⚠️ ไม่สามารถโหลดวัตถุดิบจากเซิร์ฟเวอร์:", err.message);
     }
-    loadIngredients();
-    return () => {
-      isMounted = false;
-    };
   }, [apiUrl]);
+
+  useEffect(() => {
+    refreshIngredients();
+  }, [refreshIngredients]);
 
   const getIngredientById = useCallback(
     (id) => ingredients.find((item) => item._id === id),
@@ -157,8 +154,10 @@ export default function IngredientsProvider({ children }) {
       updateIngredient,
       updateStock,
       deleteIngredient,
+      refreshIngredients,
     }),
     [
+      refreshIngredients,
       ingredients,
       lowStockCount,
       getIngredientById,

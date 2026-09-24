@@ -147,6 +147,41 @@ export async function syncAdvisorIndex({ force = false } = {}) {
 let lastSyncAt = 0;
 let syncing = null;
 
+/**
+ * ซิงก์ index ทันที (เบื้องหลัง) หลังแอดมินสร้าง/แก้ไข/ลบ วัตถุดิบหรือเมนู — ให้ AI เห็นข้อมูลใหม่แบบเรียลไทม์
+ * รวบการแก้ไขที่เข้ามาติด ๆ กัน (debounce) ให้ซิงก์รอบเดียว และฝังเวกเตอร์ใหม่เฉพาะเอกสารที่เปลี่ยน
+ */
+const REALTIME_SYNC_DELAY_MS = 1500;
+let realtimeTimer = null;
+let resyncAfterCurrent = false;
+
+export function scheduleAdvisorSync() {
+  if (!process.env.GEMINI_API_KEY) return; // ยังไม่เปิดใช้ AI
+  clearTimeout(realtimeTimer);
+  realtimeTimer = setTimeout(runRealtimeSync, REALTIME_SYNC_DELAY_MS);
+  realtimeTimer.unref?.();
+}
+
+function runRealtimeSync() {
+  if (syncing) {
+    // มีการซิงก์ค้างอยู่ → ซิงก์ซ้ำอีกรอบเมื่อเสร็จ (กันพลาดการแก้ไขล่าสุด)
+    resyncAfterCurrent = true;
+    return;
+  }
+  syncing = syncAdvisorIndex()
+    .then((r) => {
+      if (r.embedded || r.removed) console.log("🧠 Advisor index synced (realtime):", r);
+    })
+    .catch((err) => console.error("Advisor realtime sync failed:", err.message))
+    .finally(() => {
+      syncing = null;
+      if (resyncAfterCurrent) {
+        resyncAfterCurrent = false;
+        scheduleAdvisorSync();
+      }
+    });
+}
+
 /** รอให้ index พร้อม (ครั้งแรก) แล้วซิงก์เบื้องหลังตามรอบ */
 export async function ensureIndexFresh() {
   const cfg = getAdvisorConfig();

@@ -595,6 +595,11 @@ export default function ProductForm() {
 
     const payload = {
       ...formData,
+      // ขั้นตอนการปรุง: 1 บรรทัด = 1 ขั้นตอน (เก็บเป็น array ตาม model)
+      cookingSteps: String(formData.cookingSteps || "")
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean),
       ...(computed || {}),
       dominantElement: dominantElementToSave,
       elementSuitability: calculatedElementMetrics.elementSuitability,

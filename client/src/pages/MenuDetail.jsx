@@ -28,6 +28,26 @@ const CATEGORY_LABELS = {
   other: 'วัตถุดิบ',
 };
 
+// ขั้นตอนการปรุง: รองรับทั้ง array ของข้อความ, array ของ object และข้อความก้อนเดียวที่ขึ้นบรรทัดใหม่
+// ตัดเลขลำดับที่พิมพ์มาเอง (เช่น "1." "2)" "ขั้นตอนที่ 3:") เพราะหน้าเว็บใส่ลำดับให้เอง
+const normalizeCookingSteps = (steps) =>
+  (Array.isArray(steps) ? steps : [steps])
+    .flatMap((step) => {
+      if (!step) return [];
+      if (typeof step === 'object') {
+        const text = step.text || step.description || step.instruction || step.detail || step.step || '';
+        return [{ title: String(step.title || ''), text: String(text) }];
+      }
+      return String(step)
+        .split(/\r?\n/)
+        .map((line) => ({ title: '', text: line }));
+    })
+    .map((s) => ({
+      title: s.title.trim(),
+      text: s.text.replace(/^\s*(?:ขั้นตอนที่\s*)?\d+\s*[.):-]\s*/, '').trim(),
+    }))
+    .filter((s) => s.text || s.title);
+
 const getCategoryBadge = (category, categoryTh) => {
   const cat = (category || '').toLowerCase();
   const th = categoryTh || CATEGORY_LABELS[category] || '';
@@ -217,7 +237,7 @@ export default function MenuDetail() {
 
   return (
     <div className="bg-[#faf8f5] min-h-screen pb-16">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
 
         {/* Breadcrumbs */}
         <nav className="mb-6 flex items-center gap-2 text-xs sm:text-sm text-stone-500 font-medium">
@@ -430,7 +450,7 @@ export default function MenuDetail() {
 
         {/* Ingredients & Nutrition Breakdown Section */}
         {recipe.length > 0 && (
-          <section className="bg-white rounded-3xl border border-[#ebe4dc] p-6 sm:p-8 lg:p-10 shadow-xs mt-10">
+          <section className="bg-white rounded-3xl border border-[#ebe4dc] p-6 sm:p-8 shadow-xs mt-10">
 
             {/* Header & View Switcher */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-stone-100">
@@ -566,14 +586,14 @@ export default function MenuDetail() {
             {/* View 2: High-contrast Detailed Nutrition Table */}
             {viewMode === 'table' && (
               <div className="overflow-x-auto mt-6 rounded-2xl border border-stone-200 bg-white shadow-2xs">
-                <table className="w-full text-left text-sm min-w-[860px]">
+                <table className="w-full text-left text-sm min-w-[820px]">
                   <thead>
                     <tr className="bg-stone-50/90 border-b border-stone-200 text-xs font-bold text-stone-700 uppercase tracking-wider">
-                      <th className="py-3.5 px-4 min-w-[200px]">วัตถุดิบ (Ingredient)</th>
-                      <th className="py-3.5 px-3 text-center min-w-[130px]">หมวดหมู่</th>
-                      <th className="py-3.5 px-3 text-center min-w-[120px]">รสยา (แพทย์แผนไทย)</th>
-                      <th className="py-3.5 px-3 text-center min-w-[110px]">ธาตุที่ควรกิน</th>
-                      <th className="py-3.5 px-3 text-right min-w-[100px]">ปริมาณในชุด</th>
+                      <th className="py-3.5 px-4 min-w-[170px]">วัตถุดิบ (Ingredient)</th>
+                      <th className="py-3.5 px-3 text-center min-w-[110px]">หมวดหมู่</th>
+                      <th className="py-3.5 px-3 text-center min-w-[110px]">รสยา (แพทย์แผนไทย)</th>
+                      <th className="py-3.5 px-3 text-center min-w-[80px]">ธาตุที่ควรกิน</th>
+                      <th className="py-3.5 px-3 text-right min-w-[90px]">ปริมาณในชุด</th>
                       <th className="py-3.5 px-3 text-right min-w-[100px]">พลังงาน (ตามปริมาณ)</th>
                       <th className="py-3.5 px-3 text-right min-w-[80px]">โปรตีน (ตามปริมาณ)</th>
                       <th className="py-3.5 px-3 text-right min-w-[80px]">คาร์บ (ตามปริมาณ)</th>
@@ -679,6 +699,51 @@ export default function MenuDetail() {
             )}
           </section>
         )}
+
+        {/* Cooking Steps — ขั้นตอนการปรุง */}
+        {(() => {
+          const steps = normalizeCookingSteps(menu.cookingSteps);
+          return (
+            <section className="bg-white rounded-3xl border border-[#ebe4dc] p-6 sm:p-8 shadow-xs mt-10">
+              <div className="flex items-center gap-3 pb-5 border-b border-stone-100">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-[#8b5e34] border border-amber-100 flex items-center justify-center shrink-0">
+                  <svg className="w-5 h-5 fill-none stroke-current stroke-2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-stone-900">ขั้นตอนการปรุง</h2>
+                  <p className="text-xs sm:text-sm text-stone-500 font-medium">
+                    {steps.length > 0 ? `ทำตามลำดับ ${steps.length} ขั้นตอน` : 'คู่มือการปรุงแนบมาพร้อมชุด Cooking Kit'}
+                  </p>
+                </div>
+              </div>
+
+              {steps.length > 0 ? (
+                <ol className="mt-6 grid gap-3 md:grid-cols-2">
+                  {steps.map((step, idx) => (
+                    <li
+                      key={idx}
+                      className="flex gap-3.5 rounded-2xl border border-stone-200/80 bg-[#faf8f5] p-4"
+                    >
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#8b5e34] text-sm font-extrabold text-white shadow-sm">
+                        {idx + 1}
+                      </span>
+                      <div className="min-w-0 pt-1">
+                        {step.title && <p className="mb-1 text-sm font-bold text-stone-900">{step.title}</p>}
+                        <p className="text-sm leading-relaxed text-stone-700 whitespace-pre-line break-words">{step.text}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="mt-6 rounded-2xl border border-dashed border-stone-200 bg-[#faf8f5] p-5 text-center text-sm text-stone-500">
+                  ยังไม่มีขั้นตอนการปรุงสำหรับเมนูนี้ — ดูคู่มือที่แนบมาในกล่อง Cooking Kit
+                </p>
+              )}
+            </section>
+          );
+        })()}
 
         {/* Culinary Heritage & Storage/Reheating Section */}
         <section className="mt-10 grid gap-6 md:grid-cols-2">

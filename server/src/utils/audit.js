@@ -1,5 +1,6 @@
 // ตัวช่วยบันทึก "ใครสร้าง/แก้ไข" (createdBy / updatedBy) และประวัติ (AuditLog)
 import { AuditLog } from "../models/AuditLog.model.js";
+import { scheduleAdvisorSync } from "../services/advisor/indexer.js";
 
 // ฟิลด์ที่ไม่บันทึกใน changes (ซ้ำซ้อน/ระบบจัดการเอง/ความลับ)
 const IGNORED_FIELDS = new Set([
@@ -70,6 +71,8 @@ export function diffFields(before = {}, after = {}, fields = []) {
  * @param {{ action, entity, doc, actor, changes? }} input
  */
 export async function logAudit({ action, entity, doc, actor, changes = [] }) {
+  // วัตถุดิบ/เมนูเปลี่ยน → อัปเดตข้อมูลของ AI Advisor ทันที (ข้อมูลผู้ใช้ไม่ได้ฝังเวกเตอร์ AI ดึงสดอยู่แล้ว)
+  if (entity === "ingredient" || entity === "product") scheduleAdvisorSync();
   try {
     if (!doc || !actor) return;
     await AuditLog.create({

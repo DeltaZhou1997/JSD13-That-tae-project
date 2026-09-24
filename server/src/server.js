@@ -52,6 +52,13 @@ app.use((req, res, next) => {
 
 
 
+// ข้อมูล API เปลี่ยนตาม MongoDB ตลอด → ห้ามเบราว์เซอร์/พร็อกซี cache
+// (route รูปภาพ GridFS ตั้ง Cache-Control ของตัวเองทับได้)
+app.use("/api", (req, res, next) => {
+  res.set("Cache-Control", "no-store");
+  next();
+});
+
 // Health Check & Root Endpoints
 app.get("/", (req, res) => {
   res.status(200).json({

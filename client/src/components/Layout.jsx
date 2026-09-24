@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Navbar from './Navbar.jsx'
 import Footer from './Footer.jsx'
@@ -6,13 +6,34 @@ import AIAdvisorWidget from './ai/AIAdvisorWidget.jsx'
 import useToast from '../hooks/useToast.js'
 import useCartSync from '../hooks/useCartSync.js'
 import { getStockStatus } from '../utils/stock.js'
+import { useProducts } from '../context/ProductsContext.js'
+import { useIngredients } from '../context/IngredientsContext.js'
+import { useAuth } from '../context/AuthContext.js'
 import { SUBSCRIPTION_PLANS } from '../constants/checkout.js'
 
 function Layout({ context }) {
   // ตะกร้าจำสถานะ: guest เก็บในคุกกี้ / ล็อกอินแล้วซิงก์กับ DB (ย้ายตะกร้า guest เข้าบัญชีตอนล็อกอิน)
-  const [cartItems, setCartItems] = useCartSync()
+  const [cartItems, setCartItems, refreshCart] = useCartSync()
   const location = useLocation()
   const toast = useToast()
+  const { refreshProducts } = useProducts()
+  const { refreshIngredients } = useIngredients()
+  const { refreshUser, isAuthenticated } = useAuth()
+
+  // เปลี่ยนหน้า/แท็บ (ทั้งลูกค้าและแอดมิน) → ดึงข้อมูลล่าสุดจาก MongoDB ใหม่ทุกครั้ง
+  // (ครั้งแรกข้าม เพราะ Provider แต่ละตัวโหลดตอนเปิดเว็บอยู่แล้ว)
+  const firstRouteRef = useRef(true)
+  useEffect(() => {
+    if (firstRouteRef.current) {
+      firstRouteRef.current = false
+      return
+    }
+    refreshProducts?.({ silent: true })
+    refreshIngredients?.()
+    refreshCart?.()
+    if (isAuthenticated) refreshUser?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname])
 
   const [selectedPlan, setSelectedPlan] = useState(null)
 
