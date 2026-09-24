@@ -8,6 +8,7 @@ import { getUserElement, ELEMENT_TH_TO_EN } from "../utils/quizHelpers.js";
 import { getAuthHeaders, getApiUrl } from "../utils/authHeader.js";
 import { THAI_PROVINCES } from "../constants/thaiProvinces";
 import { getTier, tierProgress as getTierProgress } from "../constants/membership";
+import PointsHistoryModal from "../components/profile/PointsHistoryModal";
 
 // =========================================================================
 // 🌟 SVGs & Visual Icons (User-friendly & Premium)
@@ -252,6 +253,7 @@ export default function ProfilePage() {
 
   // Modal States
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [pointsModalOpen, setPointsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -592,6 +594,16 @@ export default function ProfilePage() {
                         : "ระดับสูงสุดแล้ว"}
                       {tierInfo.multiplier > 1 ? ` • รับเบี้ย x${tierInfo.multiplier}` : ""}
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => setPointsModalOpen(true)}
+                      className="inline-flex items-center gap-1 rounded-full border border-[#8D593A] bg-white px-2.5 py-0.5 text-[11px] font-bold text-[#8D593A] shadow-2xs transition-colors hover:bg-[#8D593A] hover:text-white cursor-pointer"
+                    >
+                      ดูเพิ่มเติม
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3 w-3">
+                        <path d="m9 18 6-6-6-6" />
+                      </svg>
+                    </button>
                   </div>
                 )}
 
@@ -977,6 +989,9 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* ประวัติเบี้ย + ตรายศ + รายละเอียดระดับ */}
+      <PointsHistoryModal open={pointsModalOpen} onClose={() => setPointsModalOpen(false)} currentUser={currentUser} />
 
       {addressManagerOpen && <div className="modal-backdrop-enter fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm" onClick={() => setAddressManagerOpen(false)}><div onClick={(e) => e.stopPropagation()} className="modal-panel-enter w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl">
         <div className="mb-4 flex items-center justify-between"><div><h2 className="text-lg font-black text-[#3D2E2B]">เลือกที่อยู่จัดส่ง</h2><p className="mt-1 text-xs text-[#7A6B63]">เลือกที่อยู่หลัก หรือจัดการรายการที่อยู่ของคุณ</p></div><button type="button" onClick={() => setAddressManagerOpen(false)}>✕</button></div>

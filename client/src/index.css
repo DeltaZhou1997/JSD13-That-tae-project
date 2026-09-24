@@ -426,3 +426,38 @@ a {
 
 
 
+
+/* ปุ่มทุกปุ่มเป็นรูปมือเมื่อชี้ (Tailwind v4 ตั้ง cursor ของ button เป็น default) — ปุ่มที่กดไม่ได้เป็นรูปห้าม */
+@layer base {
+  button:not(:disabled),
+  [role="button"],
+  input[type="submit"]:not(:disabled),
+  input[type="button"]:not(:disabled),
+  select:not(:disabled),
+  label[for],
+  summary {
+    cursor: pointer;
+  }
+  button:disabled,
+  input:disabled,
+  select:disabled {
+    cursor: not-allowed;
+  }
+}
+
+/* ตรายศระดับสมาชิก + ประวัติเบี้ย (PointsHistoryModal) */
+@keyframes tierBadgeFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes tierBadgeShine { 0% { transform: skewX(-20deg) translateX(0); } 60%, 100% { transform: skewX(-20deg) translateX(320px); } }
+@keyframes tierBadgePulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes tierBadgeSpin { to { transform: rotate(360deg); } }
+@keyframes tierBadgeIn { from { opacity: 0; transform: scale(.6) rotate(-8deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes pointsRowIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.tier-badge-float { animation: tierBadgeFloat 3.2s ease-in-out infinite; }
+.tier-badge-shine { animation: tierBadgeShine 3.6s ease-in-out infinite; }
+.tier-badge-pulse { animation: tierBadgePulse 2.4s ease-in-out infinite; }
+.tier-badge-spin { animation: tierBadgeSpin 24s linear infinite; }
+.tier-badge-in { animation: tierBadgeIn .6s cubic-bezier(.22,1.4,.36,1) both; }
+.points-row-in { animation: pointsRowIn .35s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .tier-badge-float, .tier-badge-shine, .tier-badge-pulse, .tier-badge-spin, .tier-badge-in, .points-row-in { animation: none; }
+}

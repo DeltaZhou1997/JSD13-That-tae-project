@@ -133,6 +133,15 @@ const orderSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // เวลาที่ได้รับเบี้ย / คืนเบี้ย (ใช้แสดงประวัติเบี้ยหน้าโปรไฟล์)
+    pointsAwardedAt: {
+      type: Date,
+      default: null,
+    },
+    pointsRefundedAt: {
+      type: Date,
+      default: null,
+    },
     // ช่องทางที่จ่ายจริงผ่าน Stripe: card / promptpay / apple_pay / google_pay
     paymentChannel: {
       type: String,

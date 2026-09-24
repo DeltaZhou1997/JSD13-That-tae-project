@@ -4,7 +4,8 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { User } from "../../models/User.model.js";
 import { actorFromReq, stripAuditFields, diffFields, logAudit } from "../../utils/audit.js";
-import { effectiveLifetime } from "../../utils/membership.js";
+import { Order } from "../../models/Order.model.js";
+import { effectiveLifetime, tierProgress } from "../../utils/membership.js";
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "that-tae-secret-key-2026";
@@ -265,6 +266,74 @@ const handleRegister = async (req, res, next) => {
 
 router.post("/register", handleRegister);
 router.post("/", handleRegister); // รองรับ Frontend ที่เรียก POST /api/v2/users (เหมือน Register.jsx และ AdminUserList.jsx)
+
+// ประวัติเบี้ย (ได้ / ใช้ลดราคา / คืน) — สร้างจากคำสั่งซื้อของผู้ใช้ ไม่ต้องมี collection แยก
+function orderLabel(order) {
+    if (order.planDetails?.planName) return `แพ็กเกจ ${order.planDetails.planName}`;
+    const count = (order.items || []).reduce((sum, i) => sum + (Number(i.quantity) || 1), 0);
+    return `A La Carte ${count} ชุด`;
+}
+
+router.get("/me/points", verifyToken, async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.id).select("points lifetimePoints membership.tier").lean();
+        if (!user) return res.status(404).json({ message: "ไม่พบผู้ใช้" });
+
+        const orders = await Order.find({
+            userId: String(req.user.id),
+            $or: [{ earnedPoints: { $gt: 0 } }, { pointsRedeemed: { $gt: 0 } }],
+        })
+            .select("orderId planDetails items itemsSubtotal grandTotal earnedPoints pointsAwarded pointsAwardedAt pointsRedeemed pointsDiscount pointsRefunded pointsRefundedAt paymentStatus createdAt updatedAt")
+            .sort({ createdAt: -1 })
+            .limit(200)
+            .lean();
+
+        const transactions = [];
+        for (const o of orders) {
+            const base = { orderId: o.orderId, label: orderLabel(o) };
+            if (o.pointsRedeemed > 0) {
+                transactions.push({
+                    ...base,
+                    type: "REDEEM",
+                    points: -o.pointsRedeemed,
+                    date: o.createdAt,
+                    detail: `ใช้เป็นส่วนลด ฿${Number(o.pointsDiscount || 0).toLocaleString()}`,
+                });
+            }
+            if (o.pointsRedeemed > 0 && o.pointsRefunded) {
+                transactions.push({
+                    ...base,
+                    type: "REFUND",
+                    points: o.pointsRedeemed,
+                    date: o.pointsRefundedAt || o.updatedAt,
+                    detail: "คืนเบี้ยจากการยกเลิกคำสั่งซื้อ",
+                });
+            }
+            // ออเดอร์เก่าที่ไม่มีฟิลด์ pointsAwarded ได้เบี้ยไปแล้วตอนชำระเงิน
+            const awarded = o.pointsAwarded === true || (o.pointsAwarded === undefined && o.paymentStatus === "PAID");
+            if (o.earnedPoints > 0 && awarded) {
+                transactions.push({
+                    ...base,
+                    type: "EARN",
+                    points: o.earnedPoints,
+                    date: o.pointsAwardedAt || o.updatedAt || o.createdAt,
+                    detail: `ซื้อ ฿${Number(o.itemsSubtotal || 0).toLocaleString()}`,
+                });
+            }
+        }
+        transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        const lifetimePoints = effectiveLifetime(user);
+        const sum = (type) => transactions.filter((t) => t.type === type).reduce((s, t) => s + Math.abs(t.points), 0);
+        return res.json({
+            points: user.points || 0,
+            lifetimePoints,
+            ...tierProgress(user.membership?.tier, lifetimePoints),
+            totals: { earned: sum("EARN"), redeemed: sum("REDEEM"), refunded: sum("REFUND") },
+            transactions,
+        });
+    } catch (err) { next(err); }
+});
 
 // Address book: รองรับหลายที่อยู่ต่อผู้ใช้
 router.get("/me/addresses", verifyToken, async (req, res, next) => {

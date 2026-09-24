@@ -136,10 +136,11 @@ async function awardPointsOnce(order) {
   if (!order?.earnedPoints || !mongoose.Types.ObjectId.isValid(order.userId)) return;
   const claimed = await Order.findOneAndUpdate(
     { _id: order._id, pointsAwarded: false },
-    { $set: { pointsAwarded: true } },
+    { $set: { pointsAwarded: true, pointsAwardedAt: new Date() } },
   );
   if (!claimed) return;
   order.pointsAwarded = true;
+  order.pointsAwardedAt = new Date();
 
   const before = await User.findById(order.userId).select("points lifetimePoints membership.tier").lean();
   if (!before) return;
@@ -174,11 +175,12 @@ async function refundPointsOnce(order) {
   if (!order?.pointsRedeemed || !mongoose.Types.ObjectId.isValid(order.userId)) return;
   const claimed = await Order.findOneAndUpdate(
     { _id: order._id, pointsRefunded: { $ne: true } },
-    { $set: { pointsRefunded: true } },
+    { $set: { pointsRefunded: true, pointsRefundedAt: new Date() } },
   );
   if (claimed) {
     await User.updateOne({ _id: order.userId }, { $inc: { points: order.pointsRedeemed } });
     order.pointsRefunded = true;
+    order.pointsRefundedAt = new Date();
   }
 }
 
