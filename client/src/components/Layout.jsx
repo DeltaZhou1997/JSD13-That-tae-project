@@ -6,6 +6,7 @@ import AIAdvisorWidget from './ai/AIAdvisorWidget.jsx'
 import useToast from '../hooks/useToast.js'
 import useCartSync from '../hooks/useCartSync.js'
 import { getStockStatus } from '../utils/stock.js'
+import { fetchLiveProduct } from '../utils/liveStock.js'
 import { useProducts } from '../context/ProductsContext.js'
 import { useIngredients } from '../context/IngredientsContext.js'
 import { useAuth } from '../context/AuthContext.js'
@@ -16,7 +17,7 @@ function Layout({ context }) {
   const [cartItems, setCartItems, refreshCart] = useCartSync()
   const location = useLocation()
   const toast = useToast()
-  const { refreshProducts } = useProducts()
+  const { refreshProducts, products } = useProducts()
   const { refreshIngredients } = useIngredients()
   const { refreshUser, isAuthenticated } = useAuth()
 
@@ -46,20 +47,28 @@ function Layout({ context }) {
     })
   }, [location.pathname, location.search])
 
-  const handleAddToCart = (product, count = 1) => {
+  // ตรวจสต็อกกับ DB ทุกครั้งก่อนเพิ่ม (สต็อกวัตถุดิบอาจลดลงหลังเปิดหน้าไว้) — ต่อไม่ได้ใช้ข้อมูลเดิม
+  const checkLiveStock = async (product, wantTotal) => {
+    const id = product._id || product.id;
+    const live = await fetchLiveProduct(id);
+    if (live?.removed) return { ok: false, message: `${product.nameTh || product.name} ปิดการขายแล้ว`, available: 0 };
+    const stock = getStockStatus(live || product, wantTotal);
+    if (live) refreshProducts?.({ silent: true }); // ให้ตัวเลขคงเหลือบนหน้าจอตรงกับ DB
+    return { ok: !stock.soldOut && !stock.short, stock, available: stock.availableKits };
+  };
+
+  const handleAddToCart = async (product, count = 1) => {
     const targetId = product._id || product.id;
     const qtyToAdd = Math.max(1, Number(count) || 1);
     const displayName = product.nameTh || product.name || 'สินค้า';
 
-    // กันเพิ่มเมนูที่วัตถุดิบไม่พอ (ทุกหน้าที่เรียก handleAddToCart)
+    // กันเพิ่มเมนูที่วัตถุดิบไม่พอ (ทุกหน้าที่เรียก handleAddToCart) — เช็กกับ DB
     const inCart = Number(cartItems.find((item) => (item._id || item.id) === targetId)?.quantity) || 0;
-    const stock = getStockStatus(product, inCart + qtyToAdd);
-    if (stock.soldOut) {
-      toast?.error?.(`${displayName} สินค้าหมด (วัตถุดิบไม่เพียงพอ)`);
-      return;
-    }
-    if (stock.short) {
-      toast?.error?.(`${displayName} เหลือทำได้อีก ${Math.max(0, stock.availableKits - inCart)} ชุด`);
+    const check = await checkLiveStock(product, inCart + qtyToAdd);
+    if (!check.ok) {
+      if (check.message) toast?.error?.(check.message);
+      else if (check.stock?.soldOut) toast?.error?.(`${displayName} สินค้าหมด (วัตถุดิบไม่เพียงพอ)`);
+      else toast?.error?.(`${displayName} เหลือขายได้อีก ${Math.max(0, (check.available ?? 0) - inCart)} ชุด (ในตะกร้ามี ${inCart} ชุด)`);
       return;
     }
 
@@ -133,7 +142,24 @@ function Layout({ context }) {
     setCartItems([]);
   };
 
-  const handleUpdateQuantity = (id, delta) => {
+  const handleUpdateQuantity = async (id, delta) => {
+    // กด + → เช็กกับ DB ว่ายังขายได้อีกไหม
+    if (delta > 0) {
+      const item = cartItems.find((i) => (i._id || i.id) === id);
+      const product = products?.find((p) => (p._id || p.id) === id) || item;
+      if (item && product) {
+        const want = (Number(item.quantity) || 0) + delta;
+        const check = await checkLiveStock(product, want);
+        if (!check.ok) {
+          const name = item.nameTh || item.name || 'เมนูนี้';
+          toast?.error?.(
+            check.message ||
+              (check.stock?.soldOut ? `${name} สินค้าหมดแล้ว` : `${name} ขายได้สูงสุด ${check.available ?? 0} ชุด`),
+          );
+          return;
+        }
+      }
+    }
     setCartItems((prevItems) =>
       prevItems.map((item) => {
         if ((item._id || item.id) === id) {

@@ -229,6 +229,11 @@ export default function CartItem({
               )}
             </div>
           )}
+          {!stock.short && !stock.soldOut && stock.availableKits !== null && (
+            <p className="mt-1 text-[10px] sm:text-[11px] font-medium text-stone-500">
+              คงเหลือพร้อมขาย {stock.availableKits} ชุด
+            </p>
+          )}
           {stock.short && (
             <p className="mt-1.5 inline-flex max-w-full items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] sm:text-[11px] font-semibold text-amber-800">
               <span className="truncate" title={stock.limitedBy ? `วัตถุดิบที่จำกัด: ${stock.limitedBy}` : undefined}>

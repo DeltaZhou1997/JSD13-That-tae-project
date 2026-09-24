@@ -1,5 +1,23 @@
 import { reviews } from "../../mock-data/index.js";
 
+// รีวิวเพิ่มเติม (ตัวอย่าง) — ไม่มีรูปใช้อักษรแรกของชื่อแทน
+const EXTRA_REVIEWS = [
+  { id: "REV-101", quote: "แกงฮังเลหอมเครื่องเทศเหมือนกินที่เชียงใหม่ วัตถุดิบตวงมาพอดี ไม่เหลือทิ้งเลย", name: "คุณนุ่น", detail: "สมาชิก Size M", rating: 5 },
+  { id: "REV-102", quote: "ทำงานเลิกดึกแต่ยังได้กินอาหารไทยทำเอง ใช้เวลาไม่ถึง 30 นาทีจริง", name: "คุณบอส", detail: "สั่งรายชุด", rating: 5 },
+  { id: "REV-103", quote: "ชอบที่บอกธาตุเจ้าเรือนกับรสยา ทำให้เลือกเมนูได้เหมาะกับตัวเองมากขึ้น", name: "คุณมิ้นท์", detail: "สมาชิก Size S", rating: 5 },
+  { id: "REV-104", quote: "ส้มตำกับแกงอ่อมรสชาติจัดจ้านแบบอีสานแท้ ๆ แม่ยังชมว่าอร่อย", name: "คุณต้น", detail: "สมาชิก Size L", rating: 4 },
+  { id: "REV-105", quote: "ขั้นตอนเขียนเข้าใจง่ายมาก คนไม่เคยเข้าครัวแบบผมก็ทำได้", name: "คุณเจมส์", detail: "สั่งรายชุด", rating: 5 },
+  { id: "REV-106", quote: "กรองเมนูโซเดียมต่ำได้ สะดวกมากสำหรับคุณพ่อที่ต้องคุมความดัน", name: "คุณฝน", detail: "สมาชิก Size M", rating: 5 },
+  { id: "REV-107", quote: "แพ็กเกจรายสัปดาห์คุ้มกว่าซื้อแยก ได้ลองอาหารครบทั้ง 4 ภาค", name: "ครอบครัวคุณเก่ง", detail: "สมาชิก Size XL", rating: 5 },
+  { id: "REV-108", quote: "วัตถุดิบสดมาก ผักยังกรอบ แพ็กมาดี จัดส่งตรงเวลา", name: "คุณแอน", detail: "สมาชิก Size S", rating: 4 },
+  { id: "REV-109", quote: "ไก่กอแระหอมเครื่องแกงใต้ ลูก ๆ ขอให้สั่งซ้ำทุกอาทิตย์", name: "คุณหมิว", detail: "สมาชิก Size L", rating: 5 },
+  { id: "REV-110", quote: "ได้เรียนรู้ที่มาของแต่ละเมนูไปด้วย เหมือนได้เที่ยวเมืองไทยผ่านอาหาร", name: "คุณปาล์ม", detail: "สั่งรายชุด", rating: 5 },
+];
+const ALL_REVIEWS = [...reviews, ...EXTRA_REVIEWS];
+
+const AVATAR_COLORS = ["#8d593a", "#b5764e", "#9b6747", "#6e432a", "#a77b45", "#7b5139"];
+const avatarColor = (name) => AVATAR_COLORS[[...name].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % AVATAR_COLORS.length];
+
 export default function ReviewsSection() {
   return (
     <>
@@ -11,31 +29,47 @@ export default function ReviewsSection() {
               เรื่องเล่าจากคนที่อยากทำอาหารไทยเอง และค้นพบว่ามันง่ายกว่าที่คิด
             </span>
           </div>
-          <div className="grid gap-6 md:grid-cols-3">
-            {reviews.map(({ id, quote, name, detail, rating, avatar }) => (
-              <blockquote
-                key={id}
-                className="flex h-full flex-col rounded-[1.8rem] border border-white/60 bg-[#fdfbf7] p-7 shadow-[0_18px_45px_rgba(61,44,46,0.06)]"
-              >
-                <div className="text-[#c58a42]" aria-label={`${rating} ดาว`}>
-                  {"★".repeat(rating)}
-                </div>
-                <p className="mb-6 mt-5 text-lg leading-8 text-[#2f2119]">
-                  “{quote}”
-                </p>
-                <footer className="mt-auto flex items-center justify-between gap-4 border-t border-[#e8dfd1] pt-5">
-                  <div>
-                    <strong className="block text-2xl">{name}</strong>
-                    <span className="text-lg text-[#6f675f]">{detail}</span>
-                  </div>
-                  <img
-                    src={avatar}
-                    alt={`ภาพผู้รีวิว ${name}`}
-                    className="h-14 w-14 shrink-0 rounded-full border-2 border-white object-cover shadow-md"
-                    loading="lazy"
-                  />
-                </footer>
-              </blockquote>
+        </div>
+
+        {/* รีวิวไหลวนต่อเนื่อง (ไม่หยุดเมื่อเมาส์ชี้) — ขอบซ้าย/ขวาค่อย ๆ จาง */}
+        <style>{`
+          @keyframes reviewsMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+          .reviews-track { animation: reviewsMarquee 70s linear infinite; }
+          @media (prefers-reduced-motion: reduce) { .reviews-track { animation-duration: 240s; } }
+        `}</style>
+        <div
+          className="relative w-full overflow-hidden py-2"
+          style={{ maskImage: "linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent)", WebkitMaskImage: "linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent)" }}
+        >
+          <div className="reviews-track flex w-max">
+            {[0, 1].map((copy) => (
+              <div key={copy} className="flex shrink-0 gap-6 pr-6" aria-hidden={copy === 1}>
+                {ALL_REVIEWS.map(({ id, quote, name, detail, rating, avatar }) => (
+                  <blockquote
+                    key={`${copy}-${id}`}
+                    className="flex w-[300px] shrink-0 flex-col rounded-[1.8rem] border border-white/60 bg-[#fdfbf7] p-6 shadow-[0_18px_45px_rgba(61,44,46,0.06)] sm:w-[360px] sm:p-7"
+                  >
+                    <div className="text-[#c58a42]" aria-label={`${rating} ดาว`}>
+                      {"★".repeat(rating)}
+                      <span className="text-[#e3d3bd]">{"★".repeat(5 - rating)}</span>
+                    </div>
+                    <p className="mb-6 mt-4 text-base leading-7 text-[#2f2119] sm:text-lg sm:leading-8">“{quote}”</p>
+                    <footer className="mt-auto flex items-center justify-between gap-4 border-t border-[#e8dfd1] pt-5">
+                      <div className="min-w-0">
+                        <strong className="block truncate text-xl">{name}</strong>
+                        <span className="text-base text-[#6f675f]">{detail}</span>
+                      </div>
+                      {avatar ? (
+                        <img src={avatar} alt={`ภาพผู้รีวิว ${name}`} className="h-14 w-14 shrink-0 rounded-full border-2 border-white object-cover shadow-md" loading="lazy" />
+                      ) : (
+                        <span className="grid h-14 w-14 shrink-0 place-items-center rounded-full border-2 border-white text-xl font-bold text-white shadow-md" style={{ background: avatarColor(name) }}>
+                          {name.replace(/^(คุณ|ครอบครัว)/, "").trim().charAt(0)}
+                        </span>
+                      )}
+                    </footer>
+                  </blockquote>
+                ))}
+              </div>
             ))}
           </div>
         </div>

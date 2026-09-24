@@ -5,6 +5,11 @@ import { regions } from "../../mock-data/index.js";
 import { useProducts } from "../../context/ProductsContext.js";
 import LoadingThai from "../LoadingThai.jsx";
 import { Link } from "react-router-dom";
+import { resolveImageUrl } from "../../utils/imageUrl.js";
+
+// รูปแรกของเมนู — ข้อมูลจาก DB เก็บ imageUrl เป็น string (ของ mock เป็น array)
+const firstImage = (dish) =>
+  resolveImageUrl((Array.isArray(dish.imageUrl) ? dish.imageUrl[0] : dish.imageUrl) || (Array.isArray(dish.images) ? dish.images[0] : "") || "");
 
 export default function RegionalMapSection() {
   const { products } = useProducts();
@@ -17,8 +22,11 @@ export default function RegionalMapSection() {
   const marqueeRef = useRef(null);
   const marqueeTweenRef = useRef(null);
   const active = regions[activeIndex];
+  // เมนูจริงจาก MongoDB (เปิดขายอยู่) ของภาคที่เลือก — ไทยฟิวชั่นแสดงรวมกับภาคกลาง
   const activeDishes = (products || []).filter(
-    (dish) => dish.region === active.dataRegion,
+    (dish) =>
+      dish.isActive !== false &&
+      (dish.region === active.dataRegion || (active.dataRegion === "central" && dish.region === "fusion")),
   );
 
   const isMapPreparedRef = useRef(false);
@@ -316,15 +324,15 @@ export default function RegionalMapSection() {
                       >
                         <div className="h-[220px] sm:h-[260px] xl:h-[300px] w-full overflow-hidden bg-[#e8ded0]">
                           <img
-                            src={dish.imageUrl[0]}
-                            alt={copyIndex === 0 ? dish.nameTh : ""}
+                            src={firstImage(dish)}
+                            alt={copyIndex === 0 ? dish.nameTh || dish.name : ""}
                             className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                             loading="lazy"
                           />
                         </div>
                         <div className="p-5 sm:p-6">
                           <h4 className="font-bold text-xl sm:text-2xl text-[#251911]">
-                            {dish.nameTh}
+                            {dish.nameTh || dish.name}
                           </h4>
                           <p className="mt-2 line-clamp-2 text-sm sm:text-base leading-snug text-[#766b63]">
                             {dish.description}

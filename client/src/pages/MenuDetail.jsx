@@ -419,6 +419,13 @@ export default function MenuDetail() {
                 </button>
               </div>
             ) : (
+              <>
+              {stock.availableKits !== null && (
+                <p className={`mb-2 text-sm font-semibold ${stock.availableKits <= 5 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                  {stock.availableKits <= 5 ? `เหลือเพียง ${stock.availableKits} ชุด` : `พร้อมขาย ${stock.availableKits} ชุด`}
+                  <span className="ml-1 font-normal text-stone-500">(ตามสต็อกวัตถุดิบล่าสุด)</span>
+                </p>
+              )}
               <div className="flex gap-4 items-center">
                 <div className="flex items-center border border-stone-300 rounded-2xl bg-stone-50 p-1">
                   <button
@@ -457,6 +464,7 @@ export default function MenuDetail() {
                   <span>{language === 'th' ? 'เพิ่มลงตะกร้า' : 'Add to Cart'}</span>
                 </button>
               </div>
+              </>
             )}
           </div>
         </section>

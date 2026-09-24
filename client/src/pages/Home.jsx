@@ -34,14 +34,15 @@ export default function HomePage() {
       <div data-animate-section>
         <RegionalMapSection />
       </div>
+      {/* แพ็กเกจรายสัปดาห์ ต่อจากแผนที่เมนู 4 ภาค */}
+      <div data-animate-section>
+        <ElementsSection />
+      </div>
       <div data-animate-section>
         <StorySection />
       </div>
       <div data-animate-section>
         <StepsSection />
-      </div>
-      <div data-animate-section>
-        <ElementsSection />
       </div>
       <div data-animate-section>
         <ReviewsSection />

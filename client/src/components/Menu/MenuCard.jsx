@@ -211,6 +211,11 @@ export default function MenuCard({ menu, index = 0 }) {
                 {formatMissing(stock.missing, 1)}
               </p>
             )}
+            {!soldOut && stock.availableKits !== null && (
+              <p className={`text-[10px] sm:text-[11px] font-semibold ${stock.availableKits <= 5 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                {stock.availableKits <= 5 ? `เหลือ ${stock.availableKits} ชุด` : `พร้อมขาย ${stock.availableKits} ชุด`}
+              </p>
+            )}
           </div>
           {isAdmin ? (
             <span className="text-[10px] sm:text-xs font-bold text-[#8b5e34] dark:text-[#dcb37b] hover:underline">
