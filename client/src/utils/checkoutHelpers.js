@@ -1,19 +1,11 @@
-import { SHIPPING_FEE, POINT_CALCULATION } from "../constants/checkout";
+import { SHIPPING_FEE } from "../constants/checkout";
 
-//ฟังก์ชันคำนวณสะสม
-export const calculateEarnedPoints = (itemsSubtotal) => {
-  if (!itemsSubtotal || itemsSubtotal < POINT_CALCULATION.MIN_AMOUNT_TO_EARN) {
-    return 0;
-  }
-  return (
-    Math.floor(itemsSubtotal / POINT_CALCULATION.BASE_AMOUNT) *
-    POINT_CALCULATION.POINTS_PER_BASE
-  );
-};
+// กติกาคิดเบี้ยอยู่ที่ constants/membership.js (ใช้สูตรเดียวกับ Server)
+export { calculateEarnedPoints } from "../constants/membership";
 
 //ฟังก์ชันคำนวณราคารวมทั้งหมด
-export const calculateGrandTotal = (itemsSubtotal) => {
-  return itemsSubtotal + SHIPPING_FEE;
+export const calculateGrandTotal = (itemsSubtotal, pointsDiscount = 0) => {
+  return itemsSubtotal - pointsDiscount + SHIPPING_FEE;
 };
 
 //ฟังก์ชั่นสร้าง QR Code สำหรับพร้อมเพย์

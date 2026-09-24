@@ -8,6 +8,7 @@ import { Cart } from "../../models/Cart.model.js";
 import { User } from "../../models/User.model.js";
 import { verifyToken, requireAdmin } from "./users.routes.js";
 import { priceOrder } from "../../utils/orderPricing.js";
+import { effectiveLifetime, resolveTier } from "../../utils/membership.js";
 import { recipeQtyInStockUnit } from "../../utils/units.js";
 
 const router = Router();
@@ -130,16 +131,67 @@ async function checkStockForItems(items) {
   return null;
 }
 
-// ให้แต้มสะสมครั้งเดียวต่อคำสั่งซื้อ (atomic กันเรียกซ้ำ)
+// ให้เบี้ยสะสมครั้งเดียวต่อคำสั่งซื้อ (atomic กันเรียกซ้ำ) แล้วอัปเกรดระดับสมาชิกอัตโนมัติ
 async function awardPointsOnce(order) {
   if (!order?.earnedPoints || !mongoose.Types.ObjectId.isValid(order.userId)) return;
   const claimed = await Order.findOneAndUpdate(
     { _id: order._id, pointsAwarded: false },
     { $set: { pointsAwarded: true } },
   );
+  if (!claimed) return;
+  order.pointsAwarded = true;
+
+  const before = await User.findById(order.userId).select("points lifetimePoints membership.tier").lean();
+  if (!before) return;
+  // ผู้ใช้เก่าที่ยังไม่มี lifetimePoints เริ่มจากยอดเบี้ยคงเหลือเดิม
+  const lifetime = effectiveLifetime(before) + order.earnedPoints;
+  const tier = resolveTier(before.membership?.tier, lifetime);
+  await User.updateOne(
+    { _id: order.userId },
+    { $inc: { points: order.earnedPoints }, $set: { lifetimePoints: lifetime, "membership.tier": tier } },
+  );
+}
+
+// ข้อมูลที่ใช้คิดเบี้ย: เบี้ยคงเหลือจริง + ระดับสมาชิก (ไม่เชื่อค่าจาก Frontend)
+async function getMemberContext(userId) {
+  if (!mongoose.Types.ObjectId.isValid(userId)) return { availablePoints: 0, tier: "BRONZE" };
+  const user = await User.findById(userId).select("points membership.tier").lean();
+  return { availablePoints: user?.points || 0, tier: user?.membership?.tier || "BRONZE" };
+}
+
+// หักเบี้ยที่ใช้ลดราคาแบบ atomic (กันใช้เบี้ยเกินเมื่อกดสั่งซื้อพร้อมกันหลายแท็บ)
+async function reservePoints(userId, points) {
+  if (!points) return true;
+  const updated = await User.findOneAndUpdate(
+    { _id: userId, points: { $gte: points } },
+    { $inc: { points: -points } },
+  );
+  return Boolean(updated);
+}
+
+// คืนเบี้ยที่ใช้ไปครั้งเดียว (ยกเลิกคำสั่งซื้อ / บันทึกคำสั่งซื้อไม่สำเร็จ)
+async function refundPointsOnce(order) {
+  if (!order?.pointsRedeemed || !mongoose.Types.ObjectId.isValid(order.userId)) return;
+  const claimed = await Order.findOneAndUpdate(
+    { _id: order._id, pointsRefunded: { $ne: true } },
+    { $set: { pointsRefunded: true } },
+  );
   if (claimed) {
-    await User.findByIdAndUpdate(order.userId, { $inc: { points: order.earnedPoints } });
-    order.pointsAwarded = true;
+    await User.updateOne({ _id: order.userId }, { $inc: { points: order.pointsRedeemed } });
+    order.pointsRefunded = true;
+  }
+}
+
+// สร้างคำสั่งซื้อพร้อมหักเบี้ย — ถ้าบันทึกไม่สำเร็จคืนเบี้ยให้ทันที
+async function saveOrderWithPoints(order, userId) {
+  if (!(await reservePoints(userId, order.pointsRedeemed))) {
+    return { error: "เบี้ยสะสมไม่พอ กรุณาตรวจสอบจำนวนเบี้ยอีกครั้ง" };
+  }
+  try {
+    return { order: await order.save() };
+  } catch (err) {
+    if (order.pointsRedeemed) await User.updateOne({ _id: userId }, { $inc: { points: order.pointsRedeemed } });
+    throw err;
   }
 }
 
@@ -175,6 +227,7 @@ const handleCreateOrder = async (req, res, next) => {
       shippingAddress,
       paymentMethod = "PROMPTPAY",
       stripePaymentIntentId,
+      pointsToRedeem = 0,
     } = req.body;
     const userId = String(req.user.id);
 
@@ -182,7 +235,8 @@ const handleCreateOrder = async (req, res, next) => {
       return res.status(400).json({ message: "กรุณาระบุที่อยู่สำหรับจัดส่ง" });
     }
 
-    const pricing = await priceOrder(items, planType);
+    const member = await getMemberContext(userId);
+    const pricing = await priceOrder(items, planType, { ...member, pointsToRedeem });
     if (pricing.error) return res.status(400).json({ message: pricing.error });
 
     // 1. ตรวจสอบสต็อกวัตถุดิบก่อนดำเนินการ
@@ -208,6 +262,8 @@ const handleCreateOrder = async (req, res, next) => {
       paymentStatus: paymentMethod === "COD" ? "PENDING" : "PAID",
       orderStatus: "PROCESSING",
       itemsSubtotal: pricing.itemsSubtotal,
+      pointsRedeemed: pricing.pointsRedeemed,
+      pointsDiscount: pricing.pointsDiscount,
       shippingFee: pricing.shippingFee,
       grandTotal: pricing.grandTotal,
       earnedPoints: pricing.earnedPoints,
@@ -215,7 +271,9 @@ const handleCreateOrder = async (req, res, next) => {
       stripePaymentIntentId: stripePaymentIntentId || null,
     });
 
-    const savedOrder = await newOrder.save();
+    const saved = await saveOrderWithPoints(newOrder, userId);
+    if (saved.error) return res.status(400).json({ message: saved.error });
+    const savedOrder = saved.order;
 
     // 4. ตัดสต็อกสินค้าและวัตถุดิบ
     await adjustStockForOrder(pricing.items, 1);
@@ -250,6 +308,7 @@ const handleCreateStripeSession = async (req, res, next) => {
       orderId,
       planType,
       shippingAddress = {},
+      pointsToRedeem = 0,
     } = req.body;
     const userId = String(req.user.id);
 
@@ -270,7 +329,8 @@ const handleCreateStripeSession = async (req, res, next) => {
         return res.status(400).json({ message: "คำสั่งซื้อนี้ถูกยกเลิกแล้ว" });
       }
     } else {
-      const pricing = await priceOrder(items, planType);
+      const member = await getMemberContext(userId);
+      const pricing = await priceOrder(items, planType, { ...member, pointsToRedeem });
       if (pricing.error) return res.status(400).json({ message: pricing.error });
 
       const stockError = await checkStockForItems(pricing.items);
@@ -289,13 +349,17 @@ const handleCreateStripeSession = async (req, res, next) => {
         orderStatus: "PENDING",
         status: "PENDING",
         itemsSubtotal: pricing.itemsSubtotal,
+        pointsRedeemed: pricing.pointsRedeemed,
+        pointsDiscount: pricing.pointsDiscount,
         shippingFee: pricing.shippingFee,
         grandTotal: pricing.grandTotal,
         earnedPoints: pricing.earnedPoints,
         pointsAwarded: false,
       });
 
-      await existingOrder.save();
+      // หักเบี้ยตอนสร้างคำสั่งซื้อ (คืนให้อัตโนมัติถ้าแอดมินยกเลิกคำสั่งซื้อ)
+      const saved = await saveOrderWithPoints(existingOrder, userId);
+      if (saved.error) return res.status(400).json({ message: saved.error });
       // ตัดสต็อกสินค้าและวัตถุดิบ (คืนให้อัตโนมัติถ้าแอดมินยกเลิกคำสั่งซื้อ)
       await adjustStockForOrder(pricing.items, 1);
     }
@@ -319,7 +383,9 @@ const handleCreateStripeSession = async (req, res, next) => {
                 name: existingOrder.planDetails?.planName
                   ? `แพ็กเกจ ${existingOrder.planDetails.planName} (${existingOrder.orderId})`
                   : `คำสั่งซื้อ Cooking Kit (${existingOrder.orderId})`,
-                description: `${summary} + ค่าจัดส่ง ${existingOrder.shippingFee} บาท`,
+                description: `${summary} + ค่าจัดส่ง ${existingOrder.shippingFee} บาท${
+                  existingOrder.pointsDiscount ? ` - ส่วนลดเบี้ย ${existingOrder.pointsDiscount} บาท` : ""
+                }`,
               },
               unit_amount: Math.round(Number(existingOrder.grandTotal) * 100),
             },
@@ -573,6 +639,11 @@ const handleUpdateStatus = async (req, res, next) => {
       }
     }
     if (paymentStatus) order.paymentStatus = paymentStatus;
+
+    // ยกเลิกคำสั่งซื้อ → คืนเบี้ยที่ใช้ลดราคา (ครั้งเดียว)
+    if (order.orderStatus === "CANCELLED") {
+      await refundPointsOnce(order);
+    }
 
     // ยกเลิกคำสั่งซื้อ → คืนสต็อกสินค้าและวัตถุดิบ (ครั้งเดียว)
     if (order.orderStatus === "CANCELLED" && !order.stockRestored) {

@@ -129,8 +129,12 @@ export function buildSiteDocs({ shippingFee, pointRule, plans }) {
     {
       key: "site-points",
       title: "แต้มสะสมและระดับสมาชิก",
-      text: `แต้มสะสม: เมื่อยอดสินค้าตั้งแต่ ${pointRule.MIN_AMOUNT_TO_EARN} บาทขึ้นไป จะได้ ${pointRule.POINTS_PER_BASE} แต้มทุก ๆ ${pointRule.BASE_AMOUNT} บาท
-ระดับสมาชิก: BRONZE, SILVER, GOLD, PLATINUM ดูแต้มและระดับของตัวเองได้ที่หน้า /profile`,
+      text: `แต้มสะสมของร้านเรียกว่า "เบี้ย" ได้หลังชำระเงินสำเร็จ
+ซื้อแบบ A La Carte: ทุก ${pointRule.BAHT_PER_POINT} บาท ได้ 1 เบี้ย (ไม่มียอดขั้นต่ำ)
+ซื้อแบบกล่องแพ็กเกจ (ยิ่งกล่องใหญ่ยิ่งคุ้ม): ${Object.entries(pointRule.PLAN_POINTS).map(([k, v]) => `SIZE ${k} ได้ ${v} เบี้ย`).join(", ")} เมนูเสริมที่เกินโควตาคิดแบบ A La Carte
+ระดับสมาชิกขึ้นอัตโนมัติจากเบี้ยสะสมตลอดชีพ (ใช้เบี้ยแล้วระดับไม่ลด): ${pointRule.TIERS.map((t) => `${t.name} ${t.minLifetime.toLocaleString()} เบี้ยขึ้นไป ได้เบี้ย x${t.multiplier}`).join(", ")}
+ใช้เบี้ยเป็นส่วนลดตอนชำระเงิน: ${pointRule.REDEEM.POINTS_PER_BAHT} เบี้ย = 1 บาท ใช้ขั้นต่ำ ${pointRule.REDEEM.MIN} เบี้ยและเพิ่มทีละ ${pointRule.REDEEM.STEP} ลดได้ไม่เกินค่าสินค้า (ค่าจัดส่งต้องจ่ายเสมอ)
+ดูเบี้ยและระดับของตัวเองได้ที่หน้า /profile`,
     },
     {
       key: "site-quiz",

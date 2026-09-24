@@ -19,6 +19,7 @@ import {
   calculateGrandTotal,
   generatePromptPayQrUrl,
 } from "../utils/checkoutHelpers";
+import { maxRedeemablePoints, REDEEM } from "../constants/membership";
 
 // Components
 import CheckoutUserStatus from "../components/checkout/CheckoutUserStatus";
@@ -37,7 +38,7 @@ export default function CheckoutPage() {
   const isCanceledFromStripe =
     new URLSearchParams(window.location.search).get("canceled") === "true";
 
-  const { currentUser: authUser } = useAuth();
+  const { currentUser: authUser, refreshUser } = useAuth();
   const currentUser = authUser || users[0];
   const currentUserId = currentUser?.id || currentUser?._id || "USR-001";
 
@@ -210,8 +211,22 @@ export default function CheckoutPage() {
     ? selectedPlan.price + extraSubtotal
     : cartItems.reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 1), 0);
 
-  const earnedPoints = calculateEarnedPoints(itemsSubtotal);
-  const grandTotal = calculateGrandTotal(itemsSubtotal);
+  // ใช้เบี้ยลดราคา (10 เบี้ย = 1 บาท, ขั้นต่ำ 10 เพิ่มทีละ 10) — Server ตรวจซ้ำกับเบี้ยจริงอีกครั้ง
+  const availablePoints = authUser ? Number(authUser.biaPoints ?? authUser.points) || 0 : 0;
+  const maxRedeem = maxRedeemablePoints(availablePoints, itemsSubtotal);
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
+  const flooredRedeem = Math.floor(Math.min(pointsToRedeem, maxRedeem) / REDEEM.STEP) * REDEEM.STEP;
+  const redeemPoints = flooredRedeem >= REDEEM.MIN ? flooredRedeem : 0;
+  const pointsDiscount = redeemPoints / REDEEM.POINTS_PER_BAHT;
+
+  const earnedPoints = calculateEarnedPoints({
+    planId: selectedPlan?.id,
+    itemsSubtotal,
+    extraSubtotal,
+    discount: pointsDiscount,
+    tier: authUser?.tierStatus,
+  });
+  const grandTotal = calculateGrandTotal(itemsSubtotal, pointsDiscount);
   const promptPayQrUrl = generatePromptPayQrUrl("0812345678", grandTotal);
 
   // นับเวลาถอยหลังสำหรับ Modal PromptPay (เฉพาะ v1)
@@ -245,7 +260,15 @@ export default function CheckoutPage() {
         headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(orderPayload),
       });
+      // Server ปฏิเสธ (เช่น เบี้ยไม่พอ / สต็อกไม่พอ) → แจ้งผู้ใช้ ไม่ล้างตะกร้า
+      if (response.status === 400) {
+        const data = await response.json().catch(() => ({}));
+        setErrors({ payment: data.message || "ไม่สามารถสร้างคำสั่งซื้อได้" });
+        return;
+      }
       if (handleClearCart) handleClearCart();
+      // เบี้ยคงเหลือ/ระดับสมาชิกเปลี่ยน → โหลดข้อมูลผู้ใช้ใหม่
+      refreshUser?.();
       const result = response.ok ? await response.json() : null;
       const finalOrder = result?.order || orderPayload;
       try {
@@ -347,6 +370,8 @@ export default function CheckoutPage() {
       },
       paymentMethod,
       itemsSubtotal,
+      pointsToRedeem: redeemPoints,
+      pointsDiscount,
       shippingFee: SHIPPING_FEE,
       grandTotal,
       earnedPoints,
@@ -551,7 +576,7 @@ export default function CheckoutPage() {
         
 
         {/* ข้อมูลสมาชิก */}
-        <CheckoutUserStatus currentUser={currentUser} />
+        <CheckoutUserStatus currentUser={authUser || currentUser} />
 
         {/* ข้อมูลแพ็กเกจที่เลือกมาจากหน้าตะกร้า */}
         {selectedPlan ? (
@@ -649,6 +674,12 @@ export default function CheckoutPage() {
               itemsSubtotal={itemsSubtotal}
               grandTotal={grandTotal}
               earnedPoints={earnedPoints}
+              availablePoints={availablePoints}
+              maxRedeem={maxRedeem}
+              pointsToRedeem={Math.min(pointsToRedeem, maxRedeem)}
+              onPointsToRedeemChange={setPointsToRedeem}
+              pointsDiscount={pointsDiscount}
+              canRedeem={Boolean(authUser)}
               totalKitsCount={totalKitsCount}
               requiredKits={requiredKits}
               kitsDifference={kitsDifference}

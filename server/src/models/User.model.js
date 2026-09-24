@@ -123,6 +123,12 @@ const userSchema = new mongoose.Schema({
     default: 0,
     min: 0,
   },
+  // เบี้ยสะสมตลอดชีพ (ไม่ลดเมื่อใช้เบี้ย) — ใช้คำนวณการขึ้นระดับสมาชิกอัตโนมัติ
+  lifetimePoints: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
   deliveryAddress: {
     street: { type: String, default: "" },
     subdistrict: { type: String, default: "" },   // ตำบล / แขวง

@@ -117,6 +117,22 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // ใช้เบี้ยลดราคา (10 เบี้ย = 1 บาท) — หักเบี้ยตอนสร้างคำสั่งซื้อ
+    pointsRedeemed: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    pointsDiscount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    // true = คืนเบี้ยที่ใช้แล้ว (ตอนยกเลิกคำสั่งซื้อ)
+    pointsRefunded: {
+      type: Boolean,
+      default: false,
+    },
     // ช่องทางที่จ่ายจริงผ่าน Stripe: card / promptpay / apple_pay / google_pay
     paymentChannel: {
       type: String,

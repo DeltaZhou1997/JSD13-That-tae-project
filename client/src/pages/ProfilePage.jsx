@@ -7,6 +7,7 @@ import defaultAvatar from "../assets/default-avatar.svg";
 import { getUserElement, ELEMENT_TH_TO_EN } from "../utils/quizHelpers.js";
 import { getAuthHeaders, getApiUrl } from "../utils/authHeader.js";
 import { THAI_PROVINCES } from "../constants/thaiProvinces";
+import { getTier, tierProgress as getTierProgress } from "../constants/membership";
 
 // =========================================================================
 // 🌟 SVGs & Visual Icons (User-friendly & Premium)
@@ -475,16 +476,17 @@ export default function ProfilePage() {
   };
 
   const isAdmin = currentUser.role === "admin";
-  const tier = currentUser.tierStatus || "Bronze";
   const points = currentUser.biaPoints ?? currentUser.points ?? 0;
 
-  // คำนวณแต้มสำหรับระดับสิทธิพิเศษถัดไป
-  const tierProgress = tier === "Bronze" ? Math.min(100, Math.round((points / 500) * 100))
-    : tier === "Silver" ? Math.min(100, Math.round((points / 1500) * 100))
-      : tier === "Gold" ? Math.min(100, Math.round((points / 3000) * 100))
-        : 100;
-
-  const nextTierName = tier === "Bronze" ? "Silver" : tier === "Silver" ? "Gold" : tier === "Gold" ? "Platinum" : "สูงสุดแล้ว";
+  // ความคืบหน้าไประดับถัดไป คิดจากเบี้ยสะสมตลอดชีพ (ใช้เบี้ยแล้วระดับไม่ลด)
+  const lifetimePoints = Number(currentUser.lifetimePoints) || points;
+  const progressInfo = getTierProgress(currentUser.tierStatus, lifetimePoints);
+  const tierInfo = getTier(progressInfo.tier);
+  const nextTierInfo = progressInfo.nextTier ? getTier(progressInfo.nextTier) : null;
+  const tier = tierInfo.name;
+  const tierProgress = nextTierInfo
+    ? Math.max(0, Math.min(100, Math.round(((lifetimePoints - tierInfo.minLifetime) / (nextTierInfo.minLifetime - tierInfo.minLifetime)) * 100)))
+    : 100;
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] py-6 sm:py-10 px-4 sm:px-6 lg:px-8 text-[#2F2119]">
@@ -584,6 +586,12 @@ export default function ProfilePage() {
                       </div>
                       <span className="text-[10px] text-[#8D593A] font-bold">{tierProgress}%</span>
                     </div>
+                    <span className="text-[10px] text-[#A09289]">
+                      {nextTierInfo
+                        ? `อีก ${progressInfo.pointsToNext.toLocaleString()} เบี้ยสะสม ขึ้นเป็น ${nextTierInfo.name}`
+                        : "ระดับสูงสุดแล้ว"}
+                      {tierInfo.multiplier > 1 ? ` • รับเบี้ย x${tierInfo.multiplier}` : ""}
+                    </span>
                   </div>
                 )}
 

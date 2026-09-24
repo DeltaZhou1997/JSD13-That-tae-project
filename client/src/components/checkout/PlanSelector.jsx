@@ -2,6 +2,7 @@
 import React, { useRef } from "react";
 import gsap from "gsap";
 import { SUBSCRIPTION_PLANS } from "../../constants/checkout";
+import { PLAN_POINTS, BAHT_PER_POINT } from "../../constants/membership";
 
 export default function PlanSelector({ selectedPlan, onSelectPlan }) {
   const isALaCarte = selectedPlan === null;
@@ -61,7 +62,7 @@ export default function PlanSelector({ selectedPlan, onSelectPlan }) {
             ซื้อแยกตามชุด
           </div>
           <div className={`text-xs mt-2 pt-2 border-t border-current/10 font-medium ${isALaCarte ? "text-stone-300" : "text-stone-500"}`}>
-            ไม่จำกัดจำนวน
+            ไม่จำกัดจำนวน • ฿{BAHT_PER_POINT} = 1 เบี้ย
           </div>
         </button>
 
@@ -97,6 +98,15 @@ export default function PlanSelector({ selectedPlan, onSelectPlan }) {
               </div>
               <div className={`text-xs mt-2 pt-2 border-t border-current/10 font-medium ${isSelected ? "text-stone-300" : "text-stone-500"}`}>
                 {plan.kitsPerWeek} Kits
+              </div>
+              {/* เบี้ยต่อกล่อง — กล่องใหญ่ได้อัตราคุ้มกว่า A La Carte */}
+              <div className={`mt-1.5 text-[11px] font-bold ${isSelected ? "text-amber-300" : "text-amber-700"}`}>
+                +{PLAN_POINTS[plan.id]} เบี้ย
+                {PLAN_POINTS[plan.id] > Math.floor(plan.price / BAHT_PER_POINT) && (
+                  <span className="font-semibold opacity-80">
+                    {" "}(x{(PLAN_POINTS[plan.id] / Math.floor(plan.price / BAHT_PER_POINT)).toFixed(2).replace(/\.?0+$/, "")})
+                  </span>
+                )}
               </div>
             </button>
           );

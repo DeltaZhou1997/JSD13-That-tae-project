@@ -1,24 +1,15 @@
 import mongoose from "mongoose";
 import { Product } from "../models/Product.model.js";
+import { calculateEarnedPoints, validateRedeem } from "./membership.js";
 
 // ⚠️ ต้องตรงกับ client/src/constants/checkout.js
 export const SHIPPING_FEE = 120;
-export const POINT_CALCULATION = {
-  MIN_AMOUNT_TO_EARN: 1499,
-  BASE_AMOUNT: 10,
-  POINTS_PER_BASE: 1,
-};
 export const SUBSCRIPTION_PLANS = {
   S: { id: "S", name: "SIZE S", kitsPerWeek: 4, price: 599 },
   M: { id: "M", name: "SIZE M", kitsPerWeek: 6, price: 899 },
   L: { id: "L", name: "SIZE L", kitsPerWeek: 8, price: 1169 },
   XL: { id: "XL", name: "SIZE XL", kitsPerWeek: 12, price: 1599 },
 };
-
-export function calculateEarnedPoints(itemsSubtotal) {
-  if (!itemsSubtotal || itemsSubtotal < POINT_CALCULATION.MIN_AMOUNT_TO_EARN) return 0;
-  return Math.floor(itemsSubtotal / POINT_CALCULATION.BASE_AMOUNT) * POINT_CALCULATION.POINTS_PER_BASE;
-}
 
 function firstImage(imageUrl) {
   return (Array.isArray(imageUrl) ? imageUrl[0] : imageUrl) || "";
@@ -27,9 +18,10 @@ function firstImage(imageUrl) {
 /**
  * คำนวณราคาคำสั่งซื้อฝั่ง Server จากราคาสินค้าใน DB (ไม่เชื่อราคา/ยอดรวม/แต้มที่ Frontend ส่งมา)
  * ใช้สูตรเดียวกับ CheckoutPage.jsx: ถ้าเลือกแพ็กเกจ = ราคาแพ็กเกจ + เมนูที่เกินโควตา
- * @returns {{ error?: string, items, planType, planDetails, itemsSubtotal, shippingFee, grandTotal, earnedPoints, extraLines }}
+ * ใช้เบี้ยลดราคา: ตรวจกับเบี้ยคงเหลือจริงของผู้ใช้ (availablePoints) และคูณเบี้ยที่ได้ตาม tier
+ * @returns {{ error?: string, items, planType, planDetails, itemsSubtotal, pointsRedeemed, pointsDiscount, shippingFee, grandTotal, earnedPoints, extraLines }}
  */
-export async function priceOrder(rawItems = [], planType) {
+export async function priceOrder(rawItems = [], planType, { tier, availablePoints = 0, pointsToRedeem = 0 } = {}) {
   if (!Array.isArray(rawItems) || rawItems.length === 0) {
     return { error: "ไม่มีสินค้าในรายการสั่งซื้อ" };
   }
@@ -69,6 +61,10 @@ export async function priceOrder(rawItems = [], planType) {
     extraLines.push(...items);
   }
 
+  const redeem = validateRedeem(pointsToRedeem, availablePoints, itemsSubtotal);
+  if (redeem.error) return { error: redeem.error };
+  const extraSubtotal = plan ? itemsSubtotal - plan.price : 0;
+
   return {
     items,
     planType: plan ? plan.id : "SINGLE_KIT",
@@ -78,8 +74,16 @@ export async function priceOrder(rawItems = [], planType) {
     plan,
     extraLines,
     itemsSubtotal,
+    pointsRedeemed: redeem.points,
+    pointsDiscount: redeem.discount,
     shippingFee: SHIPPING_FEE,
-    grandTotal: itemsSubtotal + SHIPPING_FEE,
-    earnedPoints: calculateEarnedPoints(itemsSubtotal),
+    grandTotal: itemsSubtotal - redeem.discount + SHIPPING_FEE,
+    earnedPoints: calculateEarnedPoints({
+      planId: plan?.id,
+      itemsSubtotal,
+      extraSubtotal,
+      discount: redeem.discount,
+      tier,
+    }),
   };
 }

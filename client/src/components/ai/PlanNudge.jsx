@@ -42,7 +42,7 @@ export default function PlanNudge({ cartItems = [], selectedPlan, onSelectPlan, 
     title = `เลือกไว้ ${count} ชุด`;
     body = `เกินแพ็กเกจใหญ่สุด (${PLANS.at(-1).name} ${PLANS.at(-1).kitsPerWeek} ชุด) — เลือก ${PLANS.at(-1).name} แล้วชุดที่เกินคิดราคาเพิ่มรายชุด`;
   } else if (complete) {
-    title = `ครบ ${target.name} แล้ว! 🎉`;
+    title = `ครบ ${target.name} แล้ว!`;
     body =
       saving > 0
         ? `สั่งเป็นแพ็กเกจรายสัปดาห์ ${target.price.toLocaleString()} ฿ ถูกกว่าซื้อแยก ${saving.toLocaleString()} ฿`
@@ -54,9 +54,8 @@ export default function PlanNudge({ cartItems = [], selectedPlan, onSelectPlan, 
 
   return (
     <div
-      className={`mb-3 w-[88vw] max-w-[320px] rounded-2xl border border-[#e8dfd1] bg-white p-3.5 shadow-xl transition-all duration-500 ease-out ${
-        visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0"
-      }`}
+      className={`mb-3 w-[88vw] max-w-[320px] rounded-2xl border border-[#e8dfd1] bg-white p-3.5 shadow-xl transition-all duration-500 ease-out ${visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0"
+        }`}
       style={{ transformOrigin: "bottom right" }}
       role="status"
     >

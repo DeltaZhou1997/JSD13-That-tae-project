@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { User } from "../../models/User.model.js";
 import { actorFromReq, stripAuditFields, diffFields, logAudit } from "../../utils/audit.js";
+import { effectiveLifetime } from "../../utils/membership.js";
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "that-tae-secret-key-2026";
@@ -35,6 +36,7 @@ function toPublicUser(user) {
         tierStatus: tier.charAt(0).toUpperCase() + tier.slice(1).toLowerCase(),
         conditions: obj.restrictions || [],
         biaPoints: obj.points || 0,
+        lifetimePoints: effectiveLifetime(obj),
     };
 }
 

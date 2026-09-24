@@ -1,6 +1,83 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { SHIPPING_FEE, PAYMENT_METHODS } from "../../constants/checkout";
+import { REDEEM } from "../../constants/membership";
+
+// เลือกจำนวนเบี้ยที่จะใช้ลดราคา: ขั้นต่ำ 10 เพิ่ม/ลดทีละ 10 หรือใช้ทั้งหมด
+function PointsRedeemBox({ availablePoints, maxRedeem, pointsToRedeem, onChange, pointsDiscount }) {
+  const step = REDEEM.STEP;
+  const clamp = (n) => {
+    const v = Math.floor((Number(n) || 0) / step) * step;
+    return Math.max(0, Math.min(maxRedeem, v));
+  };
+  const canUse = maxRedeem >= REDEEM.MIN;
+
+  return (
+    <div className="mb-5 rounded-2xl border border-[#e8dfd1] bg-white p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-bold text-[#3d2c2e]">ใช้เบี้ยเป็นส่วนลด</p>
+          <p className="text-[11px] text-[#6f675f]">
+            มี {availablePoints.toLocaleString()} เบี้ย • {REDEEM.POINTS_PER_BAHT} เบี้ย = ฿1
+          </p>
+        </div>
+        {canUse && (
+          <button
+            type="button"
+            onClick={() => onChange(pointsToRedeem === maxRedeem ? 0 : maxRedeem)}
+            className="shrink-0 rounded-full border border-[#8d593a] px-3 py-1 text-[11px] font-bold text-[#8d593a] hover:bg-[#f6ede5] transition-colors cursor-pointer"
+          >
+            {pointsToRedeem === maxRedeem ? "ไม่ใช้เบี้ย" : `ใช้ทั้งหมด (${maxRedeem.toLocaleString()})`}
+          </button>
+        )}
+      </div>
+
+      {canUse ? (
+        <>
+          <div className="mt-3 flex items-center gap-2">
+            <button
+              type="button"
+              aria-label="ลดเบี้ย 10"
+              disabled={pointsToRedeem <= 0}
+              onClick={() => onChange(clamp(pointsToRedeem - step))}
+              className="h-9 w-9 shrink-0 rounded-full border border-[#d9cbbd] text-lg font-bold text-[#4c1f08] hover:bg-[#f1ead7] disabled:opacity-40 cursor-pointer"
+            >
+              −
+            </button>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={maxRedeem}
+              step={step}
+              value={pointsToRedeem}
+              onChange={(e) => onChange(Math.max(0, Math.min(maxRedeem, Number(e.target.value) || 0)))}
+              onBlur={(e) => onChange(clamp(e.target.value))}
+              className="h-9 w-full min-w-0 rounded-xl border border-[#d9cbbd] px-3 text-center text-sm font-bold text-[#3d2c2e] focus:outline-none focus:ring-2 focus:ring-[#8d593a]/40"
+            />
+            <button
+              type="button"
+              aria-label="เพิ่มเบี้ย 10"
+              disabled={pointsToRedeem >= maxRedeem}
+              onClick={() => onChange(clamp(pointsToRedeem + step))}
+              className="h-9 w-9 shrink-0 rounded-full border border-[#d9cbbd] text-lg font-bold text-[#4c1f08] hover:bg-[#f1ead7] disabled:opacity-40 cursor-pointer"
+            >
+              +
+            </button>
+          </div>
+          <p className="mt-2 text-[11px] text-[#6f675f]">
+            {pointsDiscount > 0
+              ? `ลด ฿${pointsDiscount.toLocaleString()} • `
+              : ""}
+            ใช้ขั้นต่ำ {REDEEM.MIN} เพิ่มทีละ {step} เบี้ย (สูงสุด {maxRedeem.toLocaleString()} เบี้ย ไม่รวมค่าจัดส่ง)
+          </p>
+        </>
+      ) : (
+        <p className="mt-2 text-[11px] text-[#6f675f]">ต้องมีอย่างน้อย {REDEEM.MIN} เบี้ยจึงจะใช้เป็นส่วนลดได้</p>
+      )}
+    </div>
+  );
+}
 
 export default function CheckoutSummary({
   cartItems = [],
@@ -8,6 +85,12 @@ export default function CheckoutSummary({
   itemsSubtotal,
   grandTotal,
   earnedPoints,
+  availablePoints = 0,
+  maxRedeem = 0,
+  pointsToRedeem = 0,
+  onPointsToRedeemChange = () => {},
+  pointsDiscount = 0,
+  canRedeem = false,
   totalKitsCount = 0,
   requiredKits = 0,
   kitsDifference = 0,
@@ -149,6 +232,17 @@ export default function CheckoutSummary({
         )}
       </div>
 
+      {/* ใช้เบี้ยลดราคา (เฉพาะสมาชิกที่ล็อกอิน) */}
+      {canRedeem && (
+        <PointsRedeemBox
+          availablePoints={availablePoints}
+          maxRedeem={maxRedeem}
+          pointsToRedeem={pointsToRedeem}
+          onChange={onPointsToRedeemChange}
+          pointsDiscount={pointsDiscount}
+        />
+      )}
+
       {/* สรุปราคา */}
       <div className="space-y-2 text-sm text-[#6f675f] border-t border-[#e8dfd1] pt-4">
         <div className="flex justify-between">
@@ -161,6 +255,12 @@ export default function CheckoutSummary({
           <span>ค่าจัดส่ง (ควบคุมอุณหภูมิ)</span>
           <span className="font-medium text-[#2f2119]">฿{SHIPPING_FEE}</span>
         </div>
+        {pointsDiscount > 0 && (
+          <div className="flex justify-between text-emerald-700">
+            <span>ส่วนลดจากเบี้ย ({(pointsDiscount * REDEEM.POINTS_PER_BAHT).toLocaleString()} เบี้ย)</span>
+            <span className="font-medium">-฿{pointsDiscount.toLocaleString()}</span>
+          </div>
+        )}
       </div>
 
       <div className="border-t border-[#3d2c2e]/20 pt-4 mt-4 flex justify-between items-baseline">
@@ -184,7 +284,7 @@ export default function CheckoutSummary({
             <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
             <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
           </svg>
-          <span>คุณจะได้รับแต้มสะสม +{earnedPoints} แต้มจากคำสั่งซื้อนี้</span>
+          <span>คุณจะได้รับ +{earnedPoints.toLocaleString()} เบี้ยหลังชำระเงินสำเร็จ</span>
         </div>
       ) : (
         <div className="mt-3 bg-[#f6ede5] p-2.5 rounded-xl text-center text-xs text-[#8d593a] font-semibold flex items-center justify-center gap-1.5">
@@ -193,7 +293,7 @@ export default function CheckoutSummary({
             <line x1="12" y1="16" x2="12" y2="12" />
             <line x1="12" y1="8" x2="12.01" y2="8" />
           </svg>
-          <span>สั่งซื้อครบ ฿1,499 ขึ้นไป เพื่อรับแต้มสะสม</span>
+          <span>ทุก ๆ ฿10 ได้รับ 1 เบี้ย • กล่องแพ็กเกจยิ่งใหญ่ยิ่งได้เบี้ยคุ้ม</span>
         </div>
       )}
 

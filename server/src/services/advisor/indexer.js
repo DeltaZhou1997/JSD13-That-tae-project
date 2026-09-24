@@ -5,7 +5,8 @@ import crypto from "crypto";
 import { Product } from "../../models/Product.model.js";
 import { Ingredient } from "../../models/Ingredient.model.js";
 import { AdvisorChunk } from "../../models/AdvisorChunk.model.js";
-import { SHIPPING_FEE, POINT_CALCULATION, SUBSCRIPTION_PLANS } from "../../utils/orderPricing.js";
+import { SHIPPING_FEE, SUBSCRIPTION_PLANS } from "../../utils/orderPricing.js";
+import { BAHT_PER_POINT, PLAN_POINTS, TIERS, REDEEM } from "../../utils/membership.js";
 import { ELEMENT_KNOWLEDGE_BASE, RESTRICTION_LABELS, REGION_LABELS, buildSiteDocs } from "./knowledgeBase.js";
 import { embedDocuments } from "./geminiClient.js";
 import { getAdvisorConfig } from "./config.js";
@@ -86,7 +87,7 @@ function elementDocs() {
 }
 
 function siteDocs() {
-  return buildSiteDocs({ shippingFee: SHIPPING_FEE, pointRule: POINT_CALCULATION, plans: SUBSCRIPTION_PLANS }).map(
+  return buildSiteDocs({ shippingFee: SHIPPING_FEE, pointRule: { BAHT_PER_POINT, PLAN_POINTS, TIERS, REDEEM }, plans: SUBSCRIPTION_PLANS }).map(
     (d) => ({ key: d.key, sourceType: "site", sourceId: d.key, visibility: "public", title: d.title, text: d.text }),
   );
 }
