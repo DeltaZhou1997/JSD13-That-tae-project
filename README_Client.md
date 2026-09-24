@@ -16,6 +16,7 @@
    - 4.4 [ระบบตะกร้าและการคำนวณโภชนาการ (Cart & Nutrition Summary)](#44-ระบบตะกร้าและการคำนวณโภชนาการ-cart--nutrition-summary)
    - 4.5 [ระบบสั่งซื้อและชำระเงิน (Checkout & Payment Flow)](#45-ระบบสั่งซื้อและชำระเงิน-checkout--payment-flow)
    - 4.6 [วิดเจ็ต AI Advisor (RAG Nutrition Consultant)](#46-วิดเจ็ต-ai-advisor-rag-nutrition-consultant)
+   - 4.7 [หลังบ้านแอดมิน (Admin Back-office)](#47-หลังบ้านแอดมิน-admin-back-office)
 5. [ระบบการออกแบบ (Design System & Bento UI Standards)](#-ระบบการออกแบบ-design-system--bento-ui-standards)
 6. [เหตุผลและเบื้องหลังการตัดสินใจเชิงเทคนิค (Architectural Decisions)](#-เหตุผลและเบื้องหลังการตัดสินใจเชิงเทคนิค-architectural-decisions)
 
@@ -94,9 +95,13 @@ graph TD
 | `/cart` | `Cart.jsx` | สมาชิก / Guest | ตะกร้าสินค้า, ปรับจำนวน, ตรวจสอบยอดรวมและแคลอรี |
 | `/checkout` | `CheckoutPage.jsx` | สมาชิก (Auth) | กรอกที่อยู่จัดส่ง, เลือกแพ็กเกจ, ชำระเงิน (PromptPay/Stripe/COD) |
 | `/order-success` | `OrderSuccess.jsx` | สมาชิก (Auth) | ยืนยันคำสั่งซื้อสำเร็จ, สรุปเลข Order, นับถอยหลังไปหน้าออเดอร์ |
-| `/orders` | `OrdersPage.jsx` | สมาชิก (Auth) | ประวัติคำสั่งซื้อทั้งหมด, แสดงผลแบบ 2 คอลัมน์ Bento บนมือถือ |
+| `/orders` | `OrdersPage.jsx` | สมาชิก (Auth) | ประวัติคำสั่งซื้อทั้งหมด, แสดงเลขพัสดุ + ปุ่มคัดลอกเมื่อจัดส่งแล้ว |
 | `/profile` | `ProfilePage.jsx` | สมาชิก (Auth) | จัดการข้อมูลส่วนตัว, ธาตุเจ้าเรือน, ที่อยู่จัดส่ง, แต้มสะสม |
-| `/admin/*` | `admin/AdminDashboard.jsx` | แอดมิน (Admin) | สรุปยอดขายรวม, จัดการสินค้า, อัปเดตสถานะคำสั่งซื้อ |
+| `/admin/dashboard` | `admin/AdminDashboard.jsx` | แอดมิน (Admin) | สรุปยอดขายรวม |
+| `/admin/products(/new, /edit/:id)` | `admin/AdminProductList.jsx`, `admin/ProductForm.jsx` | แอดมิน (Admin) | จัดการเมนู + สร้างสูตรจากวัตถุดิบในสต็อกของภาค |
+| `/admin/ingredients(/new, /edit/:id)` | `admin/AdminIngredientList.jsx`, `admin/IngredientForm.jsx` | แอดมิน (Admin) | คลังวัตถุดิบ สต็อกรายภาค |
+| `/admin/orders` | `admin/AdminOrderList.jsx` | แอดมิน (Admin) | อัปเดตสถานะคำสั่งซื้อ (จัดส่งแล้วต้องใส่เลขพัสดุ) |
+| `/admin/users` | `admin/AdminUserList.jsx` | แอดมิน (Admin) | จัดการผู้ใช้ |
 | `*` | `NotFoundPage.jsx` | ทุกคน (Public) | หน้า 404 แจ้งเตือนเมื่อเข้า URL ที่ไม่มีในระบบ |
 
 ---
@@ -185,6 +190,13 @@ sequenceDiagram
 - **Admin Mode:** แอดมินเห็น widget แบบอ่านอย่างเดียว พร้อม Quick prompts เรื่องสต็อก/คำสั่งซื้อ
 - **Offline Fallback:** ถ้า server/AI ไม่พร้อม ใช้ตัวตอบเดิมใน `utils/aiAdvisorEngine.js`
 - รายละเอียดทั้งหมด: **[RAG_AI_ADVISOR.md](RAG_AI_ADVISOR.md)**
+
+### 4.7 หลังบ้านแอดมิน (Admin Back-office)
+- **ฟอร์มเมนู (`ProductForm.jsx`):** เลือก **ภูมิภาคอาหาร** เป็นอย่างแรก (บนสุดของฟอร์ม) เพราะเมนูจะใช้/ตัดสต็อกวัตถุดิบของภาคนั้น (ไทยฟิวชั่น → ภาคกลาง)
+- **ช่องเลือกวัตถุดิบ (`components/admin/IngredientCombobox.jsx`):** พิมพ์ค้นหาได้ (ชื่อไทย/อังกฤษ/หมวด), ↑ ↓ Enter Esc, ไฮไลต์คำที่ตรง และ **แสดงเฉพาะวัตถุดิบที่มีสต็อกในภาคของเมนู** พร้อมจำนวนคงเหลือของภาคนั้น
+- **อัปเดตสถานะคำสั่งซื้อ (`AdminOrderList.jsx`):** กด "จัดส่งแล้ว" → ฟอร์มเลือกบริษัทขนส่ง + เลขพัสดุ ปุ่มบันทึกกดได้เมื่อกรอกถูกต้องเท่านั้น (รายชื่อขนส่งอยู่ที่ `constants/shipping.js`)
+- **Audit stamp (`components/admin/AuditStamp.jsx`):** ใต้แต่ละรายการในหน้า list เมนู / วัตถุดิบ / ผู้ใช้ แสดง "อัปเดตล่าสุด {วันเวลา} โดย แอดมิน {ชื่อ}" (hover ดูทั้งผู้สร้างและผู้แก้ไขล่าสุด)
+- หน้า "ออกแบบสูตรอาหาร" ถูกถอดออกแล้ว — สร้างสูตรผ่านฟอร์มเมนูโดยตรง
 
 ---
 

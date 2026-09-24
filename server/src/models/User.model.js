@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import { auditPlugin } from "./auditPlugin.js";
 
 
 const addressSchema = new mongoose.Schema({
@@ -154,6 +155,9 @@ const userSchema = new mongoose.Schema({
     timestamps: true,
   }
 );
+
+// createdBy / updatedBy (ใครสร้าง / แก้ไขล่าสุด — ผู้ใช้สมัครเอง createdBy = ตัวเอง)
+userSchema.plugin(auditPlugin);
 
 // Hash password before saving to db
 userSchema.pre("save", async function () {

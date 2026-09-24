@@ -77,7 +77,7 @@ flowchart TB
     subgraph ClientLayer ["💻 Client Layer (React 19 + Vite @ Port 5173)"]
         UI["Storefront Pages\n(Home, Menus, Detail, Quiz, Randomizer)"]
         CartCheckout["Cart & Checkout Flow\n(Cart, Checkout, Orders, Success)"]
-        AdminUI["Admin Dashboard & Management\n(Products, Orders, Users, RecipeBuilder)"]
+        AdminUI["Admin Dashboard & Management\n(Products, Ingredients, Orders, Users, Audit Log)"]
         AIWidget["AI Advisor Floating Widget\n(RAG Chat & Recommendations)"]
         ClientContext["Context Providers\n(AuthContext, ProductsContext, ToastContext)"]
     end
@@ -238,7 +238,9 @@ PJ-G4-SP2/
     │   │       ├── reviews.routes.js
     │   │       └── admin.routes.js
     │   ├── scripts/
-    │   │   └── seedProducts.js     # สคริปต์โหลด 30 เมนูเข้าสู่ MongoDB Atlas อัตโนมัติ
+    │   │   ├── seedProducts.js     # สคริปต์โหลด 30 เมนูเข้าสู่ MongoDB Atlas อัตโนมัติ
+    │   │   ├── seedIngredients.js  # seed วัตถุดิบทั้งหมดจาก data-source/nutrients.xlsx (สต็อกแยกตามภาค)
+    │   │   └── buildAdvisorIndex.js # สร้าง index เวกเตอร์ของ RAG AI Advisor
     │   └── server.js               # Express Server Entry Point
     └── package.json
 ```
@@ -319,6 +321,19 @@ node src/scripts/seedProducts.js
 ```
 *(ระบบจะนำเข้า 30 เมนูอาหาร Cooking Kit และสูตรแยกย่อยเข้าสู่คอลเลกชัน `products` ทันที)*
 
+**Seed วัตถุดิบทั้งหมดจาก `data-source/nutrients.xlsx`** (ครบสารอาหาร รสยา ธาตุ หน่วย และสต็อกตามภาค)
+```bash
+cd server
+npm run seed:ingredients            # dry-run: แสดงสรุป ไม่แตะฐานข้อมูล
+npm run seed:ingredients -- --yes   # สำรองวัตถุดิบเดิม → ลบ → seed ใหม่ → ผูกสูตรเมนูเดิมใหม่
+```
+*(146 วัตถุดิบ, สต็อก 50,000 หน่วยต่อภาคที่วัตถุดิบนั้นอยู่ — ไทยฟิวชั่น/ขนมหวานใช้สต็อกภาคกลาง, ไฟล์สำรองอยู่ที่ `server/backups/`)*
+
+**สร้าง index ของ AI Advisor** (ต้องตั้ง `GEMINI_API_KEY` ก่อน)
+```bash
+npm run advisor:index
+```
+
 ### 4. รันโปรเจกต์พร้อมกันทั้งหน้าบ้านและหลังบ้าน
 ```bash
 # Terminal 1: รัน Backend Server (Port 3001)
@@ -331,6 +346,20 @@ npm run dev
 ```
 
 เปิด Browser ไปที่: **`http://localhost:5173`** เพื่อเริ่มใช้งานเว็บไซต์ "ธาตุแท้"
+
+---
+
+## 🆕 อัปเดตล่าสุด (Changelog)
+
+| หัวข้อ | รายละเอียด |
+|---|---|
+| **RAG AI Advisor** | Gemini 3.5 Flash Lite + `gemini-embedding-001` ตอบจากข้อมูลจริงใน MongoDB จำกัดขอบเขตตาม role (Guest / Customer / Admin) กันการใช้งานผิดวัตถุประสงค์ — ดู [RAG_AI_ADVISOR.md](RAG_AI_ADVISOR.md) |
+| **Audit Log** | ทุกการสร้าง/แก้ไข/ลบ ผู้ใช้ วัตถุดิบ และเมนู บันทึก `createdBy` / `updatedBy` + เวลา และประวัติย้อนหลังใน collection `auditlogs` หน้า list แอดมินแสดง "อัปเดตล่าสุด … โดย …" |
+| **เลขพัสดุ** | แอดมินต้องกรอกบริษัทขนส่ง + เลขพัสดุก่อนเปลี่ยนสถานะเป็น "จัดส่งแล้ว" (ตรวจทั้งหน้าเว็บและ server) ลูกค้าเห็นเลขพัสดุพร้อมปุ่มคัดลอกในหน้าคำสั่งซื้อ |
+| **Seed วัตถุดิบ** | `npm run seed:ingredients` นำเข้า 146 วัตถุดิบจาก Excel พร้อมคำนวณธาตุจากรสยา ใส่สต็อกตามภาค |
+| **ฟอร์มเมนู (แอดมิน)** | เลือกภูมิภาคอาหารก่อน (อยู่บนสุด) ช่องเลือกวัตถุดิบพิมพ์ค้นหาได้ และแสดงเฉพาะวัตถุดิบที่มีสต็อกในภาคนั้น |
+| **หน้าสุ่มเมนู** | ซ่อนการ์ด "เมนูแนะนำ" ของภาคที่ยังไม่มีเมนู |
+| **ถอดออก** | หน้า "ออกแบบสูตรอาหาร" (`/admin/recipe-builder`) — สร้างสูตรผ่านฟอร์มเพิ่ม/แก้ไขเมนูแทน |
 
 ---
 

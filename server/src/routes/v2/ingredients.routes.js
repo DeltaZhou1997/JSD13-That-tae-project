@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Ingredient } from "../../models/Ingredient.model.js";
 import { Product } from "../../models/Product.model.js";
 import { verifyToken, requireAdmin } from "./users.routes.js";
+import { actorFromReq, stripAuditFields, diffFields, logAudit } from "../../utils/audit.js";
 import { convertQty } from "../../utils/units.js";
 
 const router = Router();
@@ -103,6 +104,7 @@ router.get("/:id", async (req, res, next) => {
 // =========================================================================
 router.post("/", verifyToken, requireAdmin, async (req, res, next) => {
   try {
+    req.body = stripAuditFields(req.body);
     const { nameTh, category } = req.body;
     const unit = req.body.unit || "g";
     req.body.unit = unit;
@@ -151,8 +153,10 @@ router.post("/", verifyToken, requireAdmin, async (req, res, next) => {
       req.body.currentStockGrams = sum;
     }
 
-    const newIngredient = new Ingredient(req.body);
+    const actor = actorFromReq(req);
+    const newIngredient = new Ingredient({ ...req.body, createdBy: actor, updatedBy: actor });
     const saved = await newIngredient.save();
+    await logAudit({ action: "create", entity: "ingredient", doc: saved, actor });
 
     return res.status(201).json({
       success: true,
@@ -170,6 +174,7 @@ router.post("/", verifyToken, requireAdmin, async (req, res, next) => {
 // =========================================================================
 router.put("/:id", verifyToken, requireAdmin, async (req, res, next) => {
   try {
+    req.body = stripAuditFields(req.body);
     // ค่าสารอาหารล็อกเป็นต่อ 100 กรัมเสมอ (มาตรฐานกลาง)
     req.body.basisWeightG = 100;
     if (req.body.nutrientsPer100g || req.body.nutritionPer100G) {
@@ -206,19 +211,28 @@ router.put("/:id", verifyToken, requireAdmin, async (req, res, next) => {
       req.body.currentStockGrams = Number(req.body.stockQuantity) || 0;
     }
 
-    const previous = await Ingredient.findById(req.params.id).select("unit").lean();
+    const previous = await Ingredient.findById(req.params.id).lean();
     if (!previous) {
       return res.status(404).json({ success: false, message: "ไม่พบวัตถุดิบเพื่อทำการแก้ไข" });
     }
 
-    const updated = await Ingredient.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const actor = actorFromReq(req);
+    const updated = await Ingredient.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body, updatedBy: actor },
+      { new: true, runValidators: true },
+    );
 
     if (!updated) {
       return res.status(404).json({ success: false, message: "ไม่พบวัตถุดิบเพื่อทำการแก้ไข" });
     }
+    await logAudit({
+      action: "update",
+      entity: "ingredient",
+      doc: updated,
+      actor,
+      changes: diffFields(previous, updated, Object.keys(req.body)),
+    });
 
     // เปลี่ยนหน่วย → ปรับปริมาณในสูตรของทุกเมนูที่ใช้วัตถุดิบนี้ให้เป็นหน่วยใหม่
     // (สต็อกของวัตถุดิบ Frontend แปลงมาให้แล้วใน payload)
@@ -247,6 +261,7 @@ router.patch("/:id/stock", verifyToken, requireAdmin, async (req, res, next) => 
     if (!ingredient) {
       return res.status(404).json({ success: false, message: "ไม่พบวัตถุดิบ" });
     }
+    const stockBefore = { regionalStocks: { ...ingredient.toObject().regionalStocks }, currentStockGrams: ingredient.currentStockGrams };
 
     if (regionalStocks && typeof regionalStocks === "object") {
       ingredient.regionalStocks = {
@@ -291,7 +306,16 @@ router.patch("/:id/stock", verifyToken, requireAdmin, async (req, res, next) => 
       ingredient.currentStockGrams = sum;
     }
 
+    const actor = actorFromReq(req);
+    ingredient.updatedBy = actor;
     await ingredient.save();
+    await logAudit({
+      action: "stock",
+      entity: "ingredient",
+      doc: ingredient,
+      actor,
+      changes: diffFields(stockBefore, ingredient, ["regionalStocks", "currentStockGrams"]),
+    });
 
     return res.status(200).json({
       success: true,
@@ -309,15 +333,17 @@ router.patch("/:id/stock", verifyToken, requireAdmin, async (req, res, next) => 
 // =========================================================================
 router.delete("/:id", verifyToken, requireAdmin, async (req, res, next) => {
   try {
+    const actor = actorFromReq(req);
     const deleted = await Ingredient.findByIdAndUpdate(
       req.params.id,
-      { isActive: false },
+      { isActive: false, updatedBy: actor },
       { new: true }
     );
 
     if (!deleted) {
       return res.status(404).json({ success: false, message: "ไม่พบวัตถุดิบเพื่อทำการลบ" });
     }
+    await logAudit({ action: "delete", entity: "ingredient", doc: deleted, actor, changes: [{ field: "isActive", from: true, to: false }] });
 
     return res.status(200).json({
       success: true,

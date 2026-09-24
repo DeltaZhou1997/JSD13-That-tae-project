@@ -30,7 +30,6 @@ const ADMIN_PAGES = {
   "/admin/products/new": "เพิ่มเมนูใหม่",
   "/admin/ingredients": "จัดการวัตถุดิบ/สต็อก",
   "/admin/ingredients/new": "เพิ่มวัตถุดิบใหม่",
-  "/admin/recipe-builder": "สร้างสูตรอาหาร",
 };
 
 export function pagesForRole(role) {

@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { User } from "../../models/User.model.js";
+import { actorFromReq, stripAuditFields, diffFields, logAudit } from "../../utils/audit.js";
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "that-tae-secret-key-2026";
@@ -226,7 +227,14 @@ const handleRegister = async (req, res, next) => {
                 : {}),
         });
 
+        const adminCaller = isAdminCaller ? getOptionalUser(req) : null;
+        const actor = adminCaller
+            ? actorFromReq({ user: adminCaller })
+            : { id: String(newUser._id), name: newUser.firstName, email: newUser.email, role: "customer" };
+        newUser.createdBy = actor;
+        newUser.updatedBy = actor;
         await newUser.save();
+        await logAudit({ action: "create", entity: "user", doc: newUser, actor });
         const token = generateToken(newUser);
 
         return res.status(201).json({
@@ -347,7 +355,7 @@ router.put("/:id", verifyToken, async (req, res, next) => {
         }
 
         // ป้องกันไม่ให้ Customer ทั่วไปแอบแก้ role ตัวเองเป็น admin
-        const updateData = { ...req.body };
+        const updateData = stripAuditFields(req.body);
         delete updateData._id;
         if (req.user?.role !== "admin") {
             delete updateData.role;
@@ -374,7 +382,9 @@ router.put("/:id", verifyToken, async (req, res, next) => {
             ? { _id: targetId }
             : { $or: [{ email: targetId }, { phone: targetId }] };
 
-        const updated = await User.findOneAndUpdate(query, updateData, {
+        const before = await User.findOne(query).select("-password").lean();
+        const actor = actorFromReq(req);
+        const updated = await User.findOneAndUpdate(query, { ...updateData, updatedBy: actor }, {
             new: true,
             runValidators: false,
         }).select("-password");
@@ -383,6 +393,13 @@ router.put("/:id", verifyToken, async (req, res, next) => {
             // ห้ามตอบว่าสำเร็จ ไม่งั้น Frontend จะคิดว่าบันทึกแล้ว แต่ล็อกอินใหม่ข้อมูลจะกลับเป็นค่าเดิม
             return res.status(404).json({ message: "ไม่พบผู้ใช้ที่ต้องการอัปเดต" });
         }
+        await logAudit({
+            action: "update",
+            entity: "user",
+            doc: updated,
+            actor,
+            changes: diffFields(before, updated, Object.keys(updateData).map((k) => k.split(".")[0])),
+        });
 
         return res.status(200).json({ message: "อัปเดตข้อมูลสำเร็จ", user: toPublicUser(updated) });
     } catch (err) {
@@ -399,6 +416,9 @@ router.delete("/:id", verifyToken, requireAdmin, async (req, res, next) => {
             : { $or: [{ email: targetId }, { phone: targetId }] };
 
         const deleted = await User.findOneAndDelete(query);
+        if (deleted) {
+            await logAudit({ action: "delete", entity: "user", doc: deleted, actor: actorFromReq(req) });
+        }
         if (!deleted) {
             return res.status(200).json({ message: "ลบผู้ใช้สำเร็จ", id: targetId });
         }

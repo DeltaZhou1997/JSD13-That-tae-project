@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AddUserModal from "../../components/admin/AddUserModal.jsx";
+import AuditStamp from "../../components/admin/AuditStamp.jsx";
 import useToast from "../../hooks/useToast.js";
 import { getAuthHeaders } from "../../utils/authHeader.js";
 
@@ -340,6 +341,7 @@ export default function AdminUserList() {
                             <div className="text-xs text-[#8d593a]">
                               รหัส: {uid} • {u.gender === "male" ? "ชาย" : u.gender === "female" ? "หญิง" : "-"} (เลือด {u.bloodType || "-"})
                             </div>
+                            <AuditStamp doc={u} />
                           </div>
                         </div>
                       </td>

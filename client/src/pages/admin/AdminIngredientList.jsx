@@ -8,6 +8,7 @@ import {
   useIngredients,
 } from "../../context/IngredientsContext.js";
 import useToast from "../../hooks/useToast.js";
+import AuditStamp from "../../components/admin/AuditStamp.jsx";
 
 const PAGE_SIZE = 20;
 
@@ -72,12 +73,6 @@ function AdminIngredientList() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Link
-            to="/admin/recipe-builder"
-            className="rounded-full border border-[#4c1f08] px-4 py-2 font-medium text-[#4c1f08] transition duration-200 hover:-translate-y-0.5 hover:bg-[#f1ead7]"
-          >
-            ออกแบบสูตรอาหาร
-          </Link>
           <Link
             to="/admin/ingredients/new"
             className="rounded-full bg-[#4c1f08] px-4 py-2 font-medium text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215]"
@@ -164,6 +159,7 @@ function AdminIngredientList() {
                               {item.nameEn}
                             </span>
                           )}
+                          <AuditStamp doc={item} />
                         </div>
                       </div>
                     </td>

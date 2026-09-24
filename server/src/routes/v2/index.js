@@ -7,6 +7,7 @@ import cartRouter from "./cart.routes.js";
 import checkoutRouter from "./checkout.routes.js";
 import paymentRouter from "./payment.routes.js";
 import advisorRouter from "./advisor.routes.js";
+import auditLogsRouter from "./auditLogs.routes.js";
 
 export const router = Router();
 
@@ -38,5 +39,8 @@ router.use("/payment", paymentRouter);
 
 // 8. That-Tae Advisor (RAG AI — Gemini, จำกัดขอบเขตตาม role)
 router.use("/advisor", advisorRouter);
+
+// 9. Audit Logs — ประวัติใครสร้าง/แก้ไข/ลบ ข้อมูลหลังบ้าน (Admin)
+router.use("/audit-logs", auditLogsRouter);
 
 export default router;

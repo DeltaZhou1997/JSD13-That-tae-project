@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { recipeQtyInStockUnit } from "../utils/units.js";
+import { auditPlugin } from "./auditPlugin.js";
 
 const productSchema = new mongoose.Schema(
   {
@@ -176,6 +177,9 @@ const productSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// createdBy / updatedBy (ใครสร้าง / แก้ไขล่าสุด)
+productSchema.plugin(auditPlugin);
 
 // Pre-save hook: ซิงค์ nameTh/name และ Auto-generate imageUrl จาก imageId ของ GridFS
 productSchema.pre("save", function () {

@@ -17,6 +17,7 @@ import {
   toGrams,
 } from "../../context/IngredientsContext.js";
 import useToast from "../../hooks/useToast.js";
+import IngredientCombobox from "../../components/admin/IngredientCombobox.jsx";
 
 // ปริมาณเริ่มต้นต่อชุดตามหน่วยของวัตถุดิบ
 const DEFAULT_QTY_BY_UNIT = { g: 50, ml: 50, kg: 0.1, l: 0.1, piece: 1 };
@@ -317,8 +318,7 @@ export default function ProductForm() {
   }, [id, isEditMode, getProductById]);
 
   // 3. เมื่อเลือกวัตถุดิบใน Dropdown ให้เปลี่ยน Unit ตาม
-  const handlePickerChange = (e) => {
-    const ingId = e.target.value;
+  const handlePickerChange = (ingId) => {
     setPickerIngId(ingId);
     const found = availableIngredients.find((i) => (i._id || i.id) === ingId);
     if (found) {
@@ -698,6 +698,37 @@ export default function ProductForm() {
 
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
               {/* ─────────────────────────────────────────────────────────
+              ภูมิภาคอาหาร — เลือกก่อน เพราะเมนูจะใช้/ตัดสต็อกวัตถุดิบของภาคนี้
+          ────────────────────────────────────────────────────────── */}
+              <div className="rounded-2xl border-2 border-[#d9b98f] bg-[#fbf3e6] p-4 sm:p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <label htmlFor="product-region" className="block text-sm font-bold uppercase tracking-wider text-[#4c1f08]">
+                      ภูมิภาคอาหาร <span className="text-red-500">*</span>
+                    </label>
+                    <p className="mt-0.5 text-xs text-[#7a5c4d]">
+                      เลือกก่อนเพิ่มวัตถุดิบ — เมนูนี้จะใช้สต็อกวัตถุดิบของ
+                      <strong className="text-[#4c1f08]"> {REGION_TH_TITLES[REGION_MAP_TO_INGREDIENT[formData.region] || "central"]}</strong>
+                      {formData.region === "fusion" && " (ไทยฟิวชั่นใช้วัตถุดิบภาคกลาง)"}
+                    </p>
+                  </div>
+                  <select
+                    id="product-region"
+                    name="region"
+                    value={formData.region}
+                    onChange={handleChange}
+                    className={`${inputClass} font-semibold sm:w-56`}
+                  >
+                    {Object.entries(regionMap).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* ─────────────────────────────────────────────────────────
               ส่วน 1: ข้อมูลชื่อ และภาพถ่ายอาหาร
           ────────────────────────────────────────────────────────── */}
               <div className="rounded-2xl border border-[#f1ead7] bg-[#fdfbf7] p-4 sm:p-5">
@@ -860,21 +891,14 @@ export default function ProductForm() {
                     <label className="block text-[11px] font-bold text-[#4c1f08] mb-1">
                       เลือกวัตถุดิบในสต็อก
                     </label>
-                    <select
+                    <IngredientCombobox
+                      ingredients={availableIngredients}
                       value={pickerIngId}
                       onChange={handlePickerChange}
-                      className="w-full rounded-lg border border-[#d9cbbd] p-2 text-xs text-[#4c1f08] cursor-pointer"
-                    >
-                      {loadingIngredients ? (
-                        <option>กำลังโหลดวัตถุดิบ...</option>
-                      ) : (
-                        availableIngredients.map((ing) => (
-                          <option key={ing._id || ing.id} value={ing._id || ing.id}>
-                            {ing.nameTh} ({ing.regionNameTh || "ทั่วไป"}) — คงเหลือ {ing.stockQuantity} {ing.unit}
-                          </option>
-                        ))
-                      )}
-                    </select>
+                      loading={loadingIngredients}
+                      stockRegion={REGION_MAP_TO_INGREDIENT[formData.region] || "central"}
+                      stockRegionLabel={REGION_TH_TITLES[REGION_MAP_TO_INGREDIENT[formData.region] || "central"]}
+                    />
                   </div>
 
                   <div className="w-24">
@@ -1018,28 +1042,9 @@ export default function ProductForm() {
               </div>
 
               {/* ─────────────────────────────────────────────────────────
-              ส่วน 3: ภูมิภาค, ธาตุเจ้าเรือน และราคา/สต็อก
+              ส่วน 3: ธาตุเจ้าเรือน และราคา/สต็อก (ภูมิภาคย้ายไปไว้บนสุดของฟอร์ม)
           ────────────────────────────────────────────────────────── */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {/* ภูมิภาคอาหาร */}
-                <div>
-                  <label className={labelClass}>
-                    ภูมิภาคอาหาร <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="region"
-                    value={formData.region}
-                    onChange={handleChange}
-                    className={inputClass}
-                  >
-                    {Object.entries(regionMap).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
                 {/* ธาตุเด่นประจำเมนู — แสดงผลลัพธ์ที่คำนวณได้อัตโนมัติ */}
                 <div>
                   <label className={labelClass}>

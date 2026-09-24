@@ -214,7 +214,7 @@ AI เสนอ path → server ตรวจกับ whitelist ตาม role (
 
 - Guest: `/`, `/menus`, `/element-quiz`, `/menu-randomizer`, `/cart`, `/login`, `/register`
 - Customer: + `/checkout`, `/orders`, `/profile`, `/profile/edit`
-- Admin: + `/admin/dashboard`, `/admin/orders`, `/admin/users`, `/admin/products(/new)`, `/admin/ingredients(/new)`, `/admin/recipe-builder`
+- Admin: + `/admin/dashboard`, `/admin/orders`, `/admin/users`, `/admin/products(/new)`, `/admin/ingredients(/new)`
 
 ---
 

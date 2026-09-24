@@ -237,6 +237,26 @@ flowchart LR
 - `recipe` ([Mixed]) — โครงสร้างวัตถุดิบและสัดส่วนกรัม
 - `cookingSteps` ([Mixed]) — ขั้นตอนการปรุง
 
+### 2.1 `Ingredient.model.js` (คอลเลกชัน `ingredients`)
+- `nameTh`, `nameEn`, `category` / `categoryTh`, `medicinalTaste`, `elements` (ธาตุคำนวณจากรสยา)
+- `unit` (`g` / `kg` / `ml` / `l` / `piece`), `gramsPerPiece`
+- `nutrientsPer100g` (calories, carb/carbs, sugar, fiber, protein, fat, sodium)
+- `regionalStocks` (`north` / `northeast` / `central` / `south`) — **เมนูตัดสต็อกจากภาคของเมนู** (fusion → central)
+- `currentStockGrams`, `lowStockThresholdGrams`, `timestamps`
+
+### 2.2 ฟิลด์ Audit (ใช้ร่วมใน `User`, `Product`, `Ingredient` ผ่าน `models/auditPlugin.js`)
+- `createdBy` / `updatedBy`: `{ id, name, email, role }` — **มาจาก JWT ฝั่ง server เท่านั้น** (client ส่งมาจะถูกตัดทิ้ง)
+- คู่กับ `createdAt` / `updatedAt` → บอกได้ว่า "ใคร" สร้าง/แก้ไขล่าสุด "เมื่อไร"
+- ผู้ใช้สมัครเอง `createdBy` = ตัวเอง, แอดมินสร้างให้ = แอดมิน, seed script = `role: "system"`
+
+### 2.3 `AuditLog.model.js` (คอลเลกชัน `auditlogs`) — ประวัติย้อนหลังทุกครั้ง
+- `action`: `create` / `update` / `delete` / `stock`
+- `entity`: `user` / `ingredient` / `product`, `entityId`, `entityName`
+- `actor`: `{ id, name, email, role }`
+- `changes`: `[{ field, from, to }]` เฉพาะฟิลด์ที่เปลี่ยนจริง (ไม่เก็บรหัสผ่าน)
+- `createdAt` (เวลาที่เกิด)
+- ถ้าเขียน log ไม่สำเร็จ งานหลักจะไม่ล้ม (บันทึก error ใน console)
+
 ### 3. `Cart.js` (คอลเลกชัน `carts`)
 - `userId` (ObjectId, Ref: `User`, Unique)
 - `items`: Array of `{ product: ObjectId (Ref: Product), quantity: Number }`
@@ -250,6 +270,11 @@ flowchart LR
 - `paymentStatus`: Enum: `["UNPAID", "PAID", "REFUNDED"]`
 - `status`: Enum: `["PENDING", "PAID", "PREPARING", "SHIPPED", "DELIVERED", "CANCELLED"]`
 - `grandTotal`, `earnedPoints`
+- `trackingNumber`, `shippingCarrier` (`thailandpost` / `kerry` / `flash` / `jt` / `dhl` / `other`), `shippedAt`
+  — **เปลี่ยนสถานะเป็น `SHIPPED` ได้ต่อเมื่อมีเลขพัสดุที่ถูกต้อง** (A-Z, 0-9, `-` 6–30 ตัว) ไม่งั้นตอบ 400
+
+### 5. `AdvisorChunk.model.js` (คอลเลกชัน `advisorchunks`)
+- เอกสาร + เวกเตอร์สำหรับ RAG AI — ดู [RAG_AI_MONGODB.md](RAG_AI_MONGODB.md)
 
 ---
 
@@ -277,12 +302,19 @@ Base URL: **`http://localhost:3001/api/v2`**
 | **POST** | `/checkout` | requireAuth | สั่งซื้อสินค้า, ตัดสต็อก, สร้างออเดอร์, และสะสมแต้ม |
 | **GET** | `/orders/my` | requireAuth | ดูประวัติคำสั่งซื้อทั้งหมดของตนเอง |
 | **GET** | `/orders/:id` | requireAuth | ดูรายละเอียดคำสั่งซื้อรายออเดอร์ |
-| **PUT** | `/orders/:id/status` | requireAdmin | แอดมินปรับสถานะการจัดส่ง (PREPARING, SHIPPED, etc.) |
+| **PATCH** | `/orders/:id/status` | requireAdmin | แอดมินปรับสถานะ `{ status }` — ถ้า `SHIPPED` ต้องส่ง `{ trackingNumber, shippingCarrier }` |
 | **POST** | `/upload/avatar` | requireAuth | อัปโหลดรูปโปรไฟล์เข้าสู่ MongoDB GridFS |
 | **POST** | `/upload/product` | requireAdmin | อัปโหลดรูปภาพสินค้าเข้าสู่ MongoDB GridFS |
 | **GET** | `/upload/image/:id` | Public | สตรีมรูปภาพจาก MongoDB GridFS ส่งให้ Browser |
-| **GET** | `/advisor/recommend` | Public | ดึงเมนูแนะนำตามธาตุเจ้าเรือนจาก MongoDB |
-| **POST** | `/advisor/chat` | Public | ปรึกษาโภชนาการกับ RAG AI (เชื่อมต่อ Gemini API) |
+| **POST** | `/advisor/chat` | Public (token ไม่บังคับ) | ปรึกษา RAG AI — ขอบเขตข้อมูลตาม role จาก token |
+| **GET** | `/advisor/status` | requireAdmin | สถานะ index / โมเดล AI |
+| **POST** | `/advisor/reindex` | requireAdmin | ซิงก์ index เวกเตอร์ทันที (`?force=true` ฝังใหม่ทั้งหมด) |
+| **POST** | `/ingredients` | requireAdmin | เพิ่มวัตถุดิบ (บันทึก createdBy + audit log) |
+| **PUT** | `/ingredients/:id` | requireAdmin | แก้ไขวัตถุดิบ (บันทึก updatedBy + audit log) |
+| **PATCH** | `/ingredients/:id/stock` | requireAdmin | ปรับสต็อกรายภาค (audit action = `stock`) |
+| **DELETE** | `/ingredients/:id` | requireAdmin | ปิดใช้งานวัตถุดิบ (soft delete) |
+| **GET** | `/audit-logs` | requireAdmin | ประวัติการสร้าง/แก้ไข/ลบ กรองได้ `?entity=&entityId=&actorId=&action=&from=&to=&page=&limit=` |
+| **GET** | `/audit-logs/:entity/:id` | requireAdmin | ประวัติของข้อมูลชิ้นเดียว เช่น `/audit-logs/product/<id>` |
 | **GET** | `/users/me` | requireAuth | ดูข้อมูลโปรไฟล์ตนเอง |
 | **PUT** | `/users/me` | requireAuth | อัปเดตข้อมูลตนเอง (ชื่อ, เบอร์โทร, ธาตุ, ที่อยู่) |
 | **GET** | `/users` | requireAdmin | รายชื่อผู้ใช้ทั้งหมดในระบบ |
@@ -314,6 +346,18 @@ app.use((err, req, res, next) => {
    - MongoDB Multi-document Transactions ต้องการ Replica Set ในการทำงาน หากทีมงานนำโค้ดไปรันบน Standalone MongoDB หรือ Atlas Sandbox ในบางช่วงเวลา Session จะ Error ทันที การใช้ `async/await` ตรวจสต็อกแล้วหักด้วย `$inc` มีความเสถียรสูงสุดและไม่เกิดข้อผิดพลาด
 3. **ทำไมต้องทำ RAG (Retrieval-Augmented Generation) แทนที่จะถาม AI ตรงๆ?**
    - AI ทั่วไปไม่ทราบว่าร้าน "ธาตุแท้" มีเมนูอะไรขายอยู่บ้าง หากไม่ส่ง Context ไป AI อาจแนะนำอาหารที่ร้านไม่มีขาย การดึงเมนูจริงจาก MongoDB ไปประกอบ Prompt ทำให้ AI แนะนำได้เฉพาะเมนูที่มีในร้านจริงเท่านั้น
+
+## 🌱 Seed วัตถุดิบจาก Excel (`npm run seed:ingredients`)
+
+- แหล่งข้อมูล: `data-source/nutrients.xlsx` (6 ชีต: 4 ภาค + ไทยฟิวชั่น + ขนมหวาน) อ่านด้วย `utils/xlsxReader.js` (ไม่ต้องติดตั้ง package)
+- รวมชื่อซ้ำเป็นชื่อสั้น (เช่น กะทิ 4 แบบ → `กะทิ`) ได้ 146 วัตถุดิบ
+- ธาตุคำนวณจากรสยาด้วยสูตรเดียวกับฟอร์มแอดมิน (เสมอกัน → ใช้คอลัมน์ "ธาตุของคนที่ควรกิน" ตัดสิน)
+- **สต็อก 50,000 หน่วยต่อภาค เฉพาะภาคที่วัตถุดิบอยู่ในชีตของภาคนั้น** (ไทยฟิวชั่น/ขนมหวาน → ภาคกลาง) ภาคอื่น = 0
+- ชื่ออังกฤษ / หมวด / หน่วย กำหนดที่ `src/data/ingredientSeedSpec.js`
+- ไม่ใส่ราคาวัตถุดิบ (ราคากำหนดที่เมนูอาหาร)
+- ตรวจ schema ครบทุกตัวก่อนลบของเดิม, สำรองของเดิมไว้ที่ `server/backups/`, ผูก `recipe.ingredient` ของเมนูเดิมใหม่ตามชื่อ
+
+---
 
 ## 🧠 That-Tae Advisor (RAG AI — Google Gemini 3.5 Flash Lite)
 

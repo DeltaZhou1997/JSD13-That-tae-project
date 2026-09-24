@@ -14,7 +14,6 @@ import ProductForm from './pages/admin/ProductForm.jsx'
 import AdminUserList from './pages/admin/AdminUserList.jsx'
 import AdminIngredientList from './pages/admin/AdminIngredientList.jsx'
 import IngredientForm from './pages/admin/IngredientForm.jsx'
-import AdminRecipeBuilder from './pages/admin/AdminRecipeBuilder.jsx'
 import ProductsProvider from './context/ProductsProvider.jsx'
 import IngredientsProvider from './context/IngredientsProvider.jsx'
 import AuthProvider from './context/AuthProvider.jsx'
@@ -93,10 +92,6 @@ const router = createBrowserRouter([
           {
             path: "ingredients/edit/:id",
             element: <IngredientForm />,
-          },
-          {
-            path: "recipe-builder",
-            element: <AdminRecipeBuilder />,
           },
         ],
       },

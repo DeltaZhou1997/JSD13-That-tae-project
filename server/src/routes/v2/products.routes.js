@@ -2,6 +2,7 @@ import { Router } from "express";
 import { Product } from "../../models/Product.model.js";
 import { Ingredient } from "../../models/Ingredient.model.js";
 import { verifyToken, requireAdmin } from "./users.routes.js";
+import { actorFromReq, stripAuditFields, diffFields, logAudit } from "../../utils/audit.js";
 import { withAvailability } from "../../utils/stockAvailability.js";
 
 const router = Router();
@@ -159,8 +160,14 @@ router.post("/", verifyToken, requireAdmin, async (req, res, next) => {
       });
     }
 
-    const newProduct = new Product(normalizeProductTags(req.body));
+    const actor = actorFromReq(req);
+    const newProduct = new Product({
+      ...normalizeProductTags(stripAuditFields(req.body)),
+      createdBy: actor,
+      updatedBy: actor,
+    });
     const saved = await newProduct.save();
+    await logAudit({ action: "create", entity: "product", doc: saved, actor });
 
     return res.status(201).json({
       message: `สร้างเมนู "${saved.nameTh || saved.name}" สำเร็จ`,
@@ -177,14 +184,29 @@ router.post("/", verifyToken, requireAdmin, async (req, res, next) => {
 // =========================================================================
 router.put("/:id", verifyToken, requireAdmin, async (req, res, next) => {
   try {
-    const updated = await Product.findByIdAndUpdate(req.params.id, normalizeProductTags(req.body), {
-      new: true,
-      runValidators: true,
-    });
+    const actor = actorFromReq(req);
+    const payload = normalizeProductTags(stripAuditFields(req.body));
+    const before = await Product.findById(req.params.id).lean();
+    if (!before) {
+      return res.status(404).json({ message: "ไม่พบเมนูอาหารเพื่อทำการแก้ไข" });
+    }
+
+    const updated = await Product.findByIdAndUpdate(
+      req.params.id,
+      { ...payload, updatedBy: actor },
+      { new: true, runValidators: true },
+    );
 
     if (!updated) {
       return res.status(404).json({ message: "ไม่พบเมนูอาหารเพื่อทำการแก้ไข" });
     }
+    await logAudit({
+      action: "update",
+      entity: "product",
+      doc: updated,
+      actor,
+      changes: diffFields(before, updated, Object.keys(payload)),
+    });
 
     return res.status(200).json({
       message: `แก้ไขเมนู "${updated.nameTh || updated.name}" สำเร็จ`,
@@ -201,15 +223,17 @@ router.put("/:id", verifyToken, requireAdmin, async (req, res, next) => {
 // =========================================================================
 router.delete("/:id", verifyToken, requireAdmin, async (req, res, next) => {
   try {
+    const actor = actorFromReq(req);
     const deleted = await Product.findByIdAndUpdate(
       req.params.id,
-      { isActive: false },
+      { isActive: false, updatedBy: actor },
       { new: true }
     );
 
     if (!deleted) {
       return res.status(404).json({ message: "ไม่พบเมนูอาหารเพื่อทำการลบ" });
     }
+    await logAudit({ action: "delete", entity: "product", doc: deleted, actor, changes: [{ field: "isActive", from: true, to: false }] });
 
     return res.status(200).json({
       message: `ลบเมนู "${deleted.nameTh || deleted.name}" สำเร็จ`,

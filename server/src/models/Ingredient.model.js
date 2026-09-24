@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { auditPlugin } from "./auditPlugin.js";
 
 export const INGREDIENT_CATEGORIES = {
   meat: "เนื้อสัตว์ & โปรตีน",
@@ -208,7 +209,13 @@ const ingredientSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+}, {
+  // createdAt / updatedAt — ใช้คู่กับ createdBy / updatedBy
+  timestamps: true,
 });
+
+// createdBy / updatedBy (ใครสร้าง / แก้ไขล่าสุด)
+ingredientSchema.plugin(auditPlugin);
 
 // Middleware auto-fill categoryTh, sync regions, sync stock fields และ sync สารอาหาร ก่อน validate
 ingredientSchema.pre("validate", function () {

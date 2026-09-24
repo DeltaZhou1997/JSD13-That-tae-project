@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import { useProducts } from "../../context/ProductsContext.js";
+import AuditStamp from "../../components/admin/AuditStamp.jsx";
 function PlusIcon({ className = "h-4 w-4" }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
@@ -122,8 +123,11 @@ function AdminProductList() {
                       </div>
 
                       {/* ชื่อเมนู */}
-                      <div className="font-semibold text-[#4c1f08] truncate" title={product.name}>
-                        {product.name}
+                      <div className="min-w-0">
+                        <div className="font-semibold text-[#4c1f08] truncate" title={product.name}>
+                          {product.name}
+                        </div>
+                        <AuditStamp doc={product} />
                       </div>
 
                       {/* ภูมิภาค */}
