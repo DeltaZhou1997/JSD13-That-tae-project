@@ -46,51 +46,62 @@ export default function ProductsProvider({ children }) {
     [products],
   );
 
+  // เพิ่ม/แก้ไขเมนู — คืน { ok, message, product } ให้หน้าฟอร์มแจ้งผลตามจริง (ไม่บันทึก = ย้อนหน้าจอกลับ)
   const addProduct = useCallback(
     async (data) => {
       const tempId = createTempObjectId();
-      const newProduct = { ...data, _id: tempId };
-      setProducts((prev) => [...prev, newProduct]);
+      setProducts((prev) => [...prev, { ...data, _id: tempId }]);
       try {
         const res = await fetch(`${apiUrl}/api/v2/products`, {
           method: "POST",
           headers: getAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify(data),
         });
-        const json = await res.json();
+        const json = await res.json().catch(() => ({}));
         const serverProduct = json?.product && normalizeProductImage(json.product);
-
-        if (res.ok && serverProduct?._id && serverProduct._id !== tempId) {
-          setProducts((prev) =>
-            prev.map((product) => (product._id === tempId ? serverProduct : product)),
-          );
-          return serverProduct;
+        if (res.ok && serverProduct?._id) {
+          setProducts((prev) => prev.map((p) => (p._id === tempId ? serverProduct : p)));
+          return { ok: true, product: serverProduct };
         }
+        setProducts((prev) => prev.filter((p) => p._id !== tempId));
+        return { ok: false, status: res.status, message: json?.message || `บันทึกไม่สำเร็จ (${res.status})` };
       } catch (err) {
-        console.warn("Offline addProduct:", err.message);
+        setProducts((prev) => prev.filter((p) => p._id !== tempId));
+        return { ok: false, message: `เชื่อมต่อเซิร์ฟเวอร์ไม่ได้: ${err.message}` };
       }
-      return newProduct;
     },
     [apiUrl],
   );
 
   const updateProduct = useCallback(
     async (id, data) => {
+      let previous = null;
       setProducts((prev) =>
-        prev.map((product) =>
-          (product._id || product.id) === id
-            ? { ...product, ...data, _id: id }
-            : product,
-        ),
+        prev.map((product) => {
+          if ((product._id || product.id) !== id) return product;
+          previous = product;
+          return { ...product, ...data, _id: id };
+        }),
       );
+      const rollback = () =>
+        previous && setProducts((prev) => prev.map((p) => ((p._id || p.id) === id ? previous : p)));
       try {
-        await fetch(`${apiUrl}/api/v2/products/${id}`, {
+        const res = await fetch(`${apiUrl}/api/v2/products/${id}`, {
           method: "PUT",
           headers: getAuthHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify(data),
         });
+        const json = await res.json().catch(() => ({}));
+        if (res.ok) {
+          const serverProduct = json?.product && normalizeProductImage(json.product);
+          if (serverProduct) setProducts((prev) => prev.map((p) => ((p._id || p.id) === id ? serverProduct : p)));
+          return { ok: true, product: serverProduct };
+        }
+        rollback();
+        return { ok: false, status: res.status, message: json?.message || `บันทึกไม่สำเร็จ (${res.status})` };
       } catch (err) {
-        console.warn("Offline updateProduct:", err.message);
+        rollback();
+        return { ok: false, message: `เชื่อมต่อเซิร์ฟเวอร์ไม่ได้: ${err.message}` };
       }
     },
     [apiUrl],

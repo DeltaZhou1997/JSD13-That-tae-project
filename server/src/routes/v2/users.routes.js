@@ -95,11 +95,25 @@ export function getOptionalUser(req) {
 }
 
 // Middleware 2: ตรวจสอบว่าเป็น Admin หรือไม่
-export function requireAdmin(req, res, next) {
-    if (req.user?.role !== "admin") {
-        return res.status(403).json({ message: "ปฏิเสธการเข้าถึง: สำหรับผู้ดูแลระบบ (Admin) เท่านั้น" });
+// เช็ก role จากฐานข้อมูลจริง (token เก็บ role ตอนล็อกอิน — ถ้าเปลี่ยน role ภายหลัง token จะไม่อัปเดตตาม)
+export async function requireAdmin(req, res, next) {
+    try {
+        const user = mongoose.Types.ObjectId.isValid(req.user?.id)
+            ? await User.findById(req.user.id).select("role firstName email").lean()
+            : null;
+        if (user?.role !== "admin") {
+            return res.status(403).json({
+                message: user
+                    ? "บัญชีนี้ไม่มีสิทธิ์ผู้ดูแลระบบ (Admin) — ถ้าเพิ่งได้รับสิทธิ์ ให้ออกจากระบบแล้วเข้าใหม่"
+                    : "ไม่พบบัญชีผู้ใช้ กรุณาเข้าสู่ระบบใหม่",
+            });
+        }
+        // ใช้ข้อมูลล่าสุดจาก DB (ชื่อที่บันทึกใน createdBy/updatedBy จะเป็นชื่อปัจจุบัน)
+        req.user = { ...req.user, role: user.role, firstName: user.firstName, email: user.email };
+        next();
+    } catch (err) {
+        next(err);
     }
-    next();
 }
 
 // -------------------------------------------------------------

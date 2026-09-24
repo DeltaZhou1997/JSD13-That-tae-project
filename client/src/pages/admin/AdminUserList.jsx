@@ -14,6 +14,41 @@ const PRESET_CONDITIONS = [
   { id: "gluten_free", label: "แพ้กลูเตน" },
 ];
 
+// ไอคอน role
+function ShieldIcon({ className = "h-3.5 w-3.5" }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6L12 3z" />
+      <path d="m9 12 2 2 4-4" />
+    </svg>
+  );
+}
+function UserIcon({ className = "h-3.5 w-3.5" }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <circle cx="12" cy="8" r="3.5" />
+      <path d="M5 20a7 7 0 0 1 14 0" />
+    </svg>
+  );
+}
+function PencilIcon({ className = "h-3.5 w-3.5" }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+    </svg>
+  );
+}
+function TrashIcon({ className = "h-3.5 w-3.5" }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
+      <path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />
+    </svg>
+  );
+}
+
+const conditionLabel = (id) =>
+  (PRESET_CONDITIONS.find((c) => c.id === id)?.label || id).replace(/\s*\(.*?\)\s*/g, "") || id;
+
 export default function AdminUserList() {
   const toast = useToast();
   const [users, setUsers] = useState([]);
@@ -265,22 +300,22 @@ export default function AdminUserList() {
       ────────────────────────────────────────────────────────────── */}
       <div className="overflow-hidden rounded-3xl border border-[#f1ead7] bg-white shadow-sm">
         <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full border-collapse text-left text-sm">
+          <table className="w-full min-w-[1040px] border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-[#f1ead7] bg-[#fdfbf7] text-xs font-bold uppercase text-[#8d593a]">
-                <th className="p-4">ผู้ใช้งาน</th>
-                <th className="p-4">ข้อมูลติดต่อ</th>
-                <th className="p-4">สิทธิ์ (Role)</th>
-                <th className="p-4">ระดับสมาชิก (Tier)</th>
-                <th className="p-4">สุขภาพ/แพ้อาหาร</th>
-                <th className="p-4 text-center">การจัดการ</th>
+              <tr className="whitespace-nowrap border-b border-[#f1ead7] bg-[#fdfbf7] text-xs font-bold text-[#8d593a]">
+                <th className="px-5 py-3.5">ผู้ใช้งาน</th>
+                <th className="px-5 py-3.5">ข้อมูลติดต่อ</th>
+                <th className="px-5 py-3.5">Role</th>
+                <th className="px-5 py-3.5">Tier</th>
+                <th className="px-5 py-3.5">สุขภาพ / แพ้อาหาร</th>
+                <th className="px-5 py-3.5 text-right">การจัดการ</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f8ede3]">
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td className="p-4">
+                    <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
                         <div className="skeleton-warm h-10 w-10 rounded-full shrink-0" />
                         <div className="space-y-1.5">
@@ -289,20 +324,20 @@ export default function AdminUserList() {
                         </div>
                       </div>
                     </td>
-                    <td className="p-4">
+                    <td className="px-5 py-4">
                       <div className="skeleton-warm h-3.5 w-24 rounded" />
                       <div className="skeleton-warm mt-1.5 h-3 w-36 rounded" />
                     </td>
-                    <td className="p-4">
+                    <td className="px-5 py-4">
                       <div className="skeleton-warm h-6 w-20 rounded-full" />
                     </td>
-                    <td className="p-4">
+                    <td className="px-5 py-4">
                       <div className="skeleton-warm h-6 w-16 rounded-full" />
                     </td>
-                    <td className="p-4">
+                    <td className="px-5 py-4">
                       <div className="skeleton-warm h-5 w-24 rounded-md" />
                     </td>
-                    <td className="p-4 text-center">
+                    <td className="px-5 py-4 text-right">
                       <div className="flex justify-center gap-1.5">
                         <div className="skeleton-warm h-7 w-12 rounded-full" />
                         <div className="skeleton-warm h-7 w-12 rounded-full" />
@@ -324,7 +359,7 @@ export default function AdminUserList() {
                   return (
                     <tr key={uid} className="hover:bg-[#fffbf8] transition-colors">
                       {/* ผู้ใช้งาน (รูป/ตัวอักษรแรก + ชื่อ) */}
-                      <td className="p-4">
+                      <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <div
                             className={`grid h-10 w-10 shrink-0 place-items-center rounded-full font-bold text-sm ${isAdmin
@@ -347,51 +382,59 @@ export default function AdminUserList() {
                       </td>
 
                       {/* ข้อมูลติดต่อ */}
-                      <td className="p-4">
+                      <td className="px-5 py-4">
                         <div className="font-medium text-[#4c1f08]">{u.email}</div>
                         <div className="text-xs text-[#7a5c4d]">{u.phone || "-"}</div>
                       </td>
 
                       {/* สิทธิ์ */}
-                      <td className="p-4">
+                      <td className="px-5 py-4">
                         <span
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${isAdmin
-                            ? "bg-purple-100 text-purple-800 border border-purple-200"
-                            : "bg-[#eaf4eb] text-emerald-800 border border-emerald-200"
+                          className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold ${isAdmin
+                            ? "border-purple-200 bg-purple-50 text-purple-800"
+                            : "border-emerald-200 bg-emerald-50 text-emerald-800"
                             }`}
+                          title={isAdmin ? "ผู้ดูแลระบบ" : "ลูกค้าสมาชิก"}
                         >
-                          {isAdmin ? "👑 ผู้ดูแลระบบ" : "👤 ลูกค้าสมาชิก"}
+                          {isAdmin ? <ShieldIcon /> : <UserIcon />}
+                          {isAdmin ? "Admin" : "Customer"}
                         </span>
                       </td>
 
                       {/* ระดับสมาชิก (Tier) */}
-                      <td className="p-4">
+                      <td className="whitespace-nowrap px-5 py-4">
                         {u.tierStatus ? (
-                          <span className="inline-flex items-center rounded-full bg-[#f8ede3] px-2.5 py-0.5 text-xs font-semibold text-[#8b5e34]">
-                            ★ {u.tierStatus}
+                          <span className="inline-flex items-center gap-1 rounded-full bg-[#f8ede3] px-2.5 py-0.5 text-xs font-semibold text-[#8b5e34]">
+                            <svg viewBox="0 0 24 24" className="h-3 w-3" fill="currentColor" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" /></svg>
+                            {u.tierStatus}
                           </span>
                         ) : (
                           <span className="text-xs text-gray-400">-</span>
                         )}
                         {u.biaPoints !== undefined && (
-                          <div className="text-[11px] text-[#8d593a]">
-                            {u.biaPoints.toLocaleString()} พอยท์
+                          <div className="mt-1 text-[11px] text-[#8d593a]">
+                            {u.biaPoints.toLocaleString()} pts
                           </div>
                         )}
                       </td>
 
                       {/* สุขภาพ / แพ้อาหาร */}
-                      <td className="p-4">
+                      <td className="px-5 py-4">
                         {Array.isArray(u.conditions) && u.conditions.length > 0 ? (
-                          <div className="flex flex-wrap gap-1">
-                            {u.conditions.map((c) => (
+                          <div className="flex max-w-[260px] flex-wrap gap-1" title={u.conditions.map(conditionLabel).join(", ")}>
+                            {u.conditions.slice(0, 3).map((c) => (
                               <span
                                 key={c}
-                                className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 border border-amber-200"
+                                className="whitespace-nowrap rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-800"
                               >
-                                {c}
+                                {conditionLabel(c)}
                               </span>
                             ))}
+                            {u.conditions.length > 3 && (
+                              <span className="whitespace-nowrap rounded-md bg-stone-100 px-1.5 py-0.5 text-[11px] font-semibold text-stone-600">
+                                +{u.conditions.length - 3}
+                              </span>
+                            )}
                           </div>
                         ) : (
                           <span className="text-xs text-gray-400">ไม่มี</span>
@@ -399,9 +442,9 @@ export default function AdminUserList() {
                       </td>
 
                       {/* ปุ่มการจัดการ */}
-                      <td className="p-4 text-center">
+                      <td className="whitespace-nowrap px-5 py-4 text-right">
                         {pendingDeleteId === uid ? (
-                          <div className="flex flex-col items-center gap-1.5">
+                          <div className="inline-flex flex-col items-end gap-1.5">
                             <span className="text-xs font-bold text-red-600">
                               ยืนยันลบผู้ใช้นี้?
                             </span>
@@ -423,22 +466,24 @@ export default function AdminUserList() {
                             </div>
                           </div>
                         ) : (
-                          <div className="flex justify-center gap-2">
+                          <div className="inline-flex items-center gap-2">
                             {/* ปุ่มแก้ไขข้อมูลผู้ใช้ */}
                             <button
                               type="button"
                               onClick={() => handleOpenEdit(u)}
-                              className="rounded-lg bg-[#4c1f08] px-3 py-1.5 text-xs font-bold text-white transition hover:bg-[#6b3215] cursor-pointer"
+                              className="inline-flex items-center gap-1.5 rounded-full bg-[#4c1f08] px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-[#6b3215] cursor-pointer"
                             >
-                              แก้ไขข้อมูล
+                              <PencilIcon />
+                              แก้ไข
                             </button>
                             {/* ปุ่มลบผู้ใช้ */}
                             <button
                               type="button"
                               onClick={() => setPendingDeleteId(uid)}
-                              className="rounded-lg bg-red-100 px-2.5 py-1.5 text-xs font-bold text-red-700 transition hover:bg-red-200 cursor-pointer"
+                              className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100 cursor-pointer"
                               title="ลบผู้ใช้นี้"
                             >
+                              <TrashIcon />
                               ลบ
                             </button>
                           </div>

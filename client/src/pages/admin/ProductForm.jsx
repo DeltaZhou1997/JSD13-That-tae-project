@@ -670,16 +670,20 @@ export default function ProductForm() {
     saveProduct(payload);
   };
 
-  const saveProduct = (payload) => {
+  const [saving, setSaving] = useState(false);
+  const saveProduct = async (payload) => {
     setSimilarPrompt(null);
-    if (isEditMode) {
-      updateProduct(id, payload);
-      toast.success(`อัปเดตเมนู "${payload.nameTh}" เรียบร้อยแล้ว ✨`);
-    } else {
-      addProduct(payload);
-      toast.success(`เพิ่มเมนู "${payload.nameTh}" เข้าระบบเรียบร้อยแล้ว 🍲`);
+    setSaving(true);
+    const result = isEditMode ? await updateProduct(id, payload) : await addProduct(payload);
+    setSaving(false);
+    if (!result?.ok) {
+      // แสดงเหตุผลจริงจาก server (เช่น ไม่มีสิทธิ์ 403 / ข้อมูลไม่ครบ 400) และอยู่หน้าเดิมให้แก้ต่อ
+      toast.error(result?.message || "บันทึกเมนูไม่สำเร็จ");
+      return;
     }
-
+    toast.success(
+      isEditMode ? `อัปเดตเมนู "${payload.nameTh}" เรียบร้อยแล้ว ✨` : `เพิ่มเมนู "${payload.nameTh}" เข้าระบบเรียบร้อยแล้ว 🍲`,
+    );
     navigate("/admin/products");
   };
 
@@ -1347,9 +1351,10 @@ export default function ProductForm() {
               <div className="flex items-center gap-3 border-t border-[#f1ead7] pt-4">
                 <button
                   type="submit"
+                  disabled={saving}
                   className="rounded-xl bg-[#4c1f08] px-8 py-3 text-sm font-bold text-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-[#6b3215] cursor-pointer"
                 >
-                  {isEditMode ? "💾 บันทึกการแก้ไขเมนู" : "🍲 สร้างเมนู Cooking Kit ใหม่"}
+                  {saving ? "กำลังบันทึก..." : isEditMode ? "💾 บันทึกการแก้ไขเมนู" : "🍲 สร้างเมนู Cooking Kit ใหม่"}
                 </button>
                 <button
                   type="button"

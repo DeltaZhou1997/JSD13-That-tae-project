@@ -9,8 +9,12 @@ import paymentRouter from "./payment.routes.js";
 import advisorRouter from "./advisor.routes.js";
 import auditLogsRouter from "./auditLogs.routes.js";
 import importRouter from "./import.routes.js";
+import { liveActorNames } from "../../utils/liveActorNames.js";
 
 export const router = Router();
+
+// ชื่อผู้สร้าง/ผู้แก้ไข (createdBy / updatedBy / actor) แสดงเป็นชื่อปัจจุบันของผู้ใช้เสมอ
+router.use(liveActorNames);
 
 // =========================================================================
 // 🎯 Mount All v2 Routes Under /api/v2
