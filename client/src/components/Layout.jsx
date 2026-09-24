@@ -177,6 +177,8 @@ function Layout({ context }) {
         cartItems={currentCartItems}
         onAddToCart={context?.handleAddToCart ?? handleAddToCart}
         onAddSet={handleAddSetToCart}
+        selectedPlan={selectedPlan}
+        onSelectPlan={setSelectedPlan}
       />
 
       <Footer />

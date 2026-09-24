@@ -1,6 +1,7 @@
 // client/src/components/ai/AIAdvisorWidget.jsx
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import PlanNudge from "./PlanNudge.jsx";
 import gsap from "gsap";
 import { useAuth } from "../../context/AuthContext.js";
 import { useProducts } from "../../context/ProductsContext.js";
@@ -63,8 +64,9 @@ function ProductChip({ product, onAdd, canAdd }) {
   );
 }
 
-export default function AIAdvisorWidget({ cartItems = [], onAddToCart, onAddSet }) {
+export default function AIAdvisorWidget({ cartItems = [], onAddToCart, onAddSet, selectedPlan, onSelectPlan }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser } = useAuth();
   const { products } = useProducts();
 
@@ -102,16 +104,47 @@ export default function AIAdvisorWidget({ cartItems = [], onAddToCart, onAddSet 
     }
   }, [messages, isTyping, isOpen]);
 
-  // GSAP animation on toggle
+  // แอนิเมชันตอนเปิด: หน้าต่างเด้งขึ้นจากปุ่ม แล้วส่วนหัว/ข้อความ/ช่องพิมพ์ค่อย ๆ ไล่โผล่
   useEffect(() => {
-    if (isOpen && chatWindowRef.current) {
-      gsap.fromTo(
-        chatWindowRef.current,
-        { scale: 0.85, opacity: 0, y: 20 },
-        { scale: 1, opacity: 1, y: 0, duration: 0.35, ease: "back.out(1.4)" }
-      );
-    }
+    const el = chatWindowRef.current;
+    if (!isOpen || !el) return undefined;
+    const ctx = gsap.context(() => {
+      gsap
+        .timeline()
+        .fromTo(
+          el,
+          { opacity: 0, y: 24, scale: 0.92, filter: "blur(6px)" },
+          { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 0.45, ease: "expo.out" },
+        )
+        .from(el.querySelectorAll("[data-anim]"), { opacity: 0, y: 10, duration: 0.35, stagger: 0.06, ease: "power2.out" }, "-=0.25");
+    }, el);
+    return () => ctx.revert();
   }, [isOpen]);
+
+  // ปิดแบบนุ่มนวล: ย่อกลับลงไปที่ปุ่มก่อนค่อยถอดออก
+  const closingRef = useRef(false);
+  const closeChat = (after) => {
+    const el = chatWindowRef.current;
+    if (!el || closingRef.current) {
+      setIsOpen(false);
+      after?.();
+      return;
+    }
+    closingRef.current = true;
+    gsap.to(el, {
+      opacity: 0,
+      y: 18,
+      scale: 0.94,
+      filter: "blur(4px)",
+      duration: 0.25,
+      ease: "power2.in",
+      onComplete: () => {
+        closingRef.current = false;
+        setIsOpen(false);
+        after?.();
+      },
+    });
+  };
 
   const pushAi = (msg) =>
     setMessages((prev) => [...prev, { id: Date.now() + Math.random(), sender: "ai", time: nowTime(), ...msg }]);
@@ -162,8 +195,7 @@ export default function AIAdvisorWidget({ cartItems = [], onAddToCart, onAddSet 
   };
 
   const handleNavigate = (path) => {
-    navigate(path);
-    setIsOpen(false);
+    closeChat(() => navigate(path));
   };
 
   return (
@@ -177,10 +209,16 @@ export default function AIAdvisorWidget({ cartItems = [], onAddToCart, onAddSet 
       {isOpen && (
         <div
           ref={chatWindowRef}
+          style={{ transformOrigin: "bottom right" }}
           className="mb-3.5 w-[92vw] sm:w-[380px] max-h-[78vh] h-[560px] bg-white rounded-3xl border border-[#e8dfd1] shadow-2xl flex flex-col overflow-hidden text-[#2f2119] transition-all"
         >
           {/* Header */}
-          <div className="p-4 bg-gradient-to-r from-[#4a3228] to-[#6e432a] text-white flex items-center justify-between shadow-xs shrink-0">
+          <style>{`
+            @keyframes advisorMsgIn { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+            .advisor-msg-in { animation: advisorMsgIn .32s cubic-bezier(.2,.8,.2,1) both; }
+            @media (prefers-reduced-motion: reduce) { .advisor-msg-in { animation: none; } }
+          `}</style>
+          <div data-anim className="p-4 bg-gradient-to-r from-[#4a3228] to-[#6e432a] text-white flex items-center justify-between shadow-xs shrink-0">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="relative">
                 <div className="w-9 h-9 rounded-2xl bg-white/15 backdrop-blur-xs flex items-center justify-center border border-white/20 text-amber-300 shadow-inner">
@@ -207,7 +245,7 @@ export default function AIAdvisorWidget({ cartItems = [], onAddToCart, onAddSet 
 
             <button
               type="button"
-              onClick={() => setIsOpen(false)}
+              onClick={() => closeChat()}
               className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
               title="ย่อหน้าต่าง"
             >
@@ -239,9 +277,9 @@ export default function AIAdvisorWidget({ cartItems = [], onAddToCart, onAddSet 
             ))}
 
           {/* Message List */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#fdfbf7] text-xs">
+          <div data-anim className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-[#fdfbf7] text-xs">
             {messages.map((m) => (
-              <div key={m.id} className={`flex flex-col ${m.sender === "user" ? "items-end" : "items-start"}`}>
+              <div key={m.id} className={`advisor-msg-in flex flex-col ${m.sender === "user" ? "items-end" : "items-start"}`}>
                 <div
                   className={`max-w-[88%] rounded-2xl px-3.5 py-2.5 shadow-2xs leading-relaxed ${m.sender === "user"
                     ? "bg-[#8d593a] text-white rounded-br-xs"
@@ -307,7 +345,7 @@ export default function AIAdvisorWidget({ cartItems = [], onAddToCart, onAddSet 
           </div>
 
           {/* Quick Questions Tag Carousel */}
-          <div className="px-3 py-2 bg-[#f8f3eb] border-t border-[#ede3d6] flex gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+          <div data-anim className="px-3 py-2 bg-[#f8f3eb] border-t border-[#ede3d6] flex gap-1.5 overflow-x-auto no-scrollbar shrink-0">
             {quickQuestions.map((q) => (
               <button
                 key={q}
@@ -327,6 +365,7 @@ export default function AIAdvisorWidget({ cartItems = [], onAddToCart, onAddSet 
               e.preventDefault();
               handleSend();
             }}
+            data-anim
             className="p-2.5 bg-white border-t border-[#e8dfd1] flex items-center gap-2 shrink-0"
           >
             <input
@@ -352,11 +391,22 @@ export default function AIAdvisorWidget({ cartItems = [], onAddToCart, onAddSet 
       )}
 
       {/* ------------------------------------------------------------- */}
+      {/* คำแนะนำแพ็กเกจ (หน้าเมนู เมื่อมีของในตะกร้า และหน้าต่างแชทปิดอยู่) */}
+      {!isOpen && !isAdmin && location.pathname.startsWith("/menus") && (
+        <PlanNudge
+          cartItems={cartItems}
+          selectedPlan={selectedPlan}
+          onSelectPlan={onSelectPlan}
+          onGoCart={() => navigate("/cart")}
+          onBrowse={() => (location.pathname === "/menus" ? window.scrollTo({ top: 0, behavior: "smooth" }) : navigate("/menus"))}
+        />
+      )}
+
       {/* 2. Floating Action Button (FAB) AI Advisor                    */}
       {/* ------------------------------------------------------------- */}
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => (isOpen ? closeChat() : setIsOpen(true))}
         className="group relative flex items-center gap-2.5 px-4 py-3 rounded-full
         bg-gradient-to-r from-[#4a3228] to-[#754a32] hover:from-[#3b271f] hover:to-[#613c28]
         text-white shadow-2xl transition-all duration-300 hover:scale-105 hover:-translate-y-0.5
