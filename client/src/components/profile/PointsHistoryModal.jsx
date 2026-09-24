@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { CoinIcon, TrophyIcon } from "./MembershipIcons";
+import { SadFaceIcon, TrophyIcon } from "./MembershipIcons";
 import TierBadge from "./TierBadge";
 import { TIER_THEME } from "../../constants/tierTheme";
 import TierDetailsModal from "./TierDetailsModal";
@@ -291,7 +291,7 @@ export default function PointsHistoryModal({ open, onClose, currentUser }) {
                 </div>
               ) : transactions.length === 0 ? (
                 <div className="flex h-40 flex-col items-center justify-center text-center text-sm text-[#7A6B63]">
-                  <CoinIcon className="mb-1 h-9 w-9 text-[#C9A27E]" />
+                  <SadFaceIcon className="mb-1.5 h-10 w-10 text-[#C9A27E]" />
                   ยังไม่มีรายการเบี้ย{filter !== "ALL" && "ในหมวดนี้"}
                   <span className="text-[11px]">สั่งซื้อครั้งแรกเพื่อเริ่มสะสมเบี้ย (฿10 = 1 เบี้ย)</span>
                 </div>
